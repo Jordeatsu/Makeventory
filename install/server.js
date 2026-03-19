@@ -17,8 +17,8 @@ const app = express();
 const PORT = 3000;
 const OS = process.env.MAKEVENTORY_OS || "linux";
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000'] }));
+app.use(express.json({ limit: '10mb' })); // 10mb allowed here for logo uploads during install
 app.use(express.static(path.join(__dirname, "dist")));
 
 // ─── npm install tracking ─────────────────────────────────────────────────────
@@ -222,16 +222,16 @@ app.post("/api/database/create", async (req, res) => {
         return res.status(400).json({ error: "Database name must contain letters only." });
     }
 
-    const envContentServer = `MONGODB_URI=mongodb://localhost:27017/${dbName}\n` + `PORT=5001\n`;
-
-    const envContentClient = `HOST=0.0.0.0\n` + `DANGEROUSLY_DISABLE_HOST_CHECK=true\n`;
+    const jwtSecret = randomBytes(64).toString("hex");
+    const envContentServer = `MONGODB_URI=mongodb://localhost:27017/${dbName}\n`
+        + `PORT=5001\n`
+        + `JWT_SECRET=${jwtSecret}\n`
+        + `CLIENT_ORIGIN=http://localhost:3000\n`;
 
     const envPathServer = path.join(__dirname, "..", "server", ".env");
-    const envPathClient = path.join(__dirname, "..", "client", ".env");
 
     try {
         await fs.writeFile(envPathServer, envContentServer, "utf8");
-        await fs.writeFile(envPathClient, envContentClient, "utf8");
 
         // Seed initial modules into the new database
         const mongoUri = `mongodb://localhost:27017/${dbName}`;

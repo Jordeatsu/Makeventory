@@ -10,6 +10,8 @@ import ColorLensIcon from "@mui/icons-material/ColorLens";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CategoryIcon from "@mui/icons-material/Category";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useAuth } from "../context/AuthContext";
 
 const DRAWER_WIDTH = 240;
 
@@ -27,6 +29,12 @@ export default function Layout({ children }) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login", { replace: true });
+    };
 
     const drawerContent = (
         <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -72,11 +80,22 @@ export default function Layout({ children }) {
                 })}
             </List>
             <Divider />
-            <Box sx={{ px: 3, py: 1.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                    v1.0.0
-                </Typography>
-            </Box>
+            <List sx={{ pt: 0.5, pb: 0.5 }}>
+                <ListItem disablePadding sx={{ px: 1.5 }}>
+                    <ListItemButton
+                        onClick={handleLogout}
+                        sx={{ borderRadius: 2, color: "text.secondary" }}
+                    >
+                        <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><LogoutIcon /></ListItemIcon>
+                        <ListItemText
+                            primary={user ? `${user.firstName} ${user.lastName}` : "Sign out"}
+                            secondary="Sign out"
+                            primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
+                            secondaryTypographyProps={{ variant: "caption" }}
+                        />
+                    </ListItemButton>
+                </ListItem>
+            </List>
         </Box>
     );
 
