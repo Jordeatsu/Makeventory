@@ -226,7 +226,8 @@ app.post("/api/database/create", async (req, res) => {
     const envContentServer = `MONGODB_URI=mongodb://localhost:27017/${dbName}\n`
         + `PORT=5001\n`
         + `JWT_SECRET=${jwtSecret}\n`
-        + `CLIENT_ORIGIN=http://localhost:3000\n`;
+        + `CLIENT_ORIGIN=http://localhost:3000\n`
+        + `COOKIE_SECURE=false\n`;
 
     const envPathServer = path.join(__dirname, "..", "server", ".env");
 

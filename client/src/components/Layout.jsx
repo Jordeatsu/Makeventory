@@ -1,27 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, useTheme, useMediaQuery, Divider, Tooltip } from "@mui/material";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import InventoryIcon from "@mui/icons-material/Inventory2";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import PeopleIcon from "@mui/icons-material/People";
+import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, useTheme, useMediaQuery, Divider, Tooltip, Skeleton } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
-import StorefrontIcon from "@mui/icons-material/Storefront";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import CategoryIcon from "@mui/icons-material/Category";
 import LogoutIcon from "@mui/icons-material/Logout";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useAuth } from "../context/AuthContext";
+import { useModules } from "../hooks/useModules.jsx";
 
 const DRAWER_WIDTH = 240;
-
-const navItems = [
-    { label: "Orders", path: "/orders", icon: <ReceiptLongIcon /> },
-    { label: "Products", path: "/products", icon: <CategoryIcon /> },
-    { label: "Materials", path: "/materials", icon: <InventoryIcon /> },
-    { label: "Customers", path: "/customers", icon: <PeopleIcon /> },
-    { label: "Year Review", path: "/year-review", icon: <CalendarMonthIcon /> },
-];
 
 export default function Layout({ children }) {
     const theme = useTheme();
@@ -30,6 +18,7 @@ export default function Layout({ children }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
+    const { navItems, loading: modulesLoading } = useModules();
 
     const handleLogout = async () => {
         await logout();
@@ -52,7 +41,13 @@ export default function Layout({ children }) {
             </Box>
             <Divider />
             <List sx={{ pt: 1, flex: 1 }}>
-                {navItems.map((item) => {
+                {modulesLoading
+                    ? [1, 2, 3].map((n) => (
+                        <ListItem key={n} sx={{ px: 2.5, py: 0.75 }}>
+                            <Skeleton variant="rounded" width="100%" height={36} />
+                        </ListItem>
+                    ))
+                    : navItems.map((item) => {
                     const active = location.pathname.startsWith(item.path);
                     return (
                         <ListItem key={item.path} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
@@ -83,16 +78,36 @@ export default function Layout({ children }) {
             <List sx={{ pt: 0.5, pb: 0.5 }}>
                 <ListItem disablePadding sx={{ px: 1.5 }}>
                     <ListItemButton
+                        onClick={() => { navigate(`/profile?id=${user?._id}`); if (isMobile) setMobileOpen(false); }}
+                        selected={location.pathname.startsWith('/profile')}
+                        sx={{ borderRadius: 2, color: "text.secondary", "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "& .MuiListItemIcon-root": { color: "primary.contrastText" } } }}
+                    >
+                        <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><AccountCircleIcon /></ListItemIcon>
+                        <ListItemText
+                            primary={user ? `${user.firstName}` : "Profile"}
+                            secondary="My profile"
+                            primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
+                            secondaryTypographyProps={{ variant: "caption" }}
+                        />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding sx={{ px: 1.5 }}>
+                    <ListItemButton
+                        onClick={() => { navigate('/settings'); if (isMobile) setMobileOpen(false); }}
+                        selected={location.pathname.startsWith('/settings')}
+                        sx={{ borderRadius: 2, color: "text.secondary", "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "& .MuiListItemIcon-root": { color: "primary.contrastText" } } }}
+                    >
+                        <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><SettingsIcon /></ListItemIcon>
+                        <ListItemText primary="Settings" primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding sx={{ px: 1.5 }}>
+                    <ListItemButton
                         onClick={handleLogout}
                         sx={{ borderRadius: 2, color: "text.secondary" }}
                     >
                         <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><LogoutIcon /></ListItemIcon>
-                        <ListItemText
-                            primary={user ? `${user.firstName} ${user.lastName}` : "Sign out"}
-                            secondary="Sign out"
-                            primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
-                            secondaryTypographyProps={{ variant: "caption" }}
-                        />
+                        <ListItemText primary="Sign out" primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
                     </ListItemButton>
                 </ListItem>
             </List>
