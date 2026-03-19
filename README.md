@@ -24,7 +24,7 @@ This will:
 
 1. Install the installer's own dependencies
 2. Build the installer UI
-3. Open the installation wizard in your browser at `http://localhost:3001`
+3. Open the installation wizard in your browser at `http://localhost:3000`
 4. Install the `client/` and `server/` dependencies in the background while you complete setup
 
 ---

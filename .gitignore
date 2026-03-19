@@ -3,3 +3,4 @@
 **/.env
 **/install/dist/**
 **/client/dist/**
+**/server/dist/**
