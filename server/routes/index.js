@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import BusinessInfo from '../models/BusinessInfo.js';
 import Module from '../models/Module.js';
+import MaterialSettings from '../models/MaterialSettings.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -257,3 +258,33 @@ router.delete('/material-types/:id', requireAuth, async (req, res) => {
 });
 
 export default router;
+
+// ── Material Settings (singleton) ─────────────────────────────────────────────────
+
+// Get (or initialise with defaults if none exist yet)
+router.get('/settings/materials', requireAuth, async (_req, res) => {
+  try {
+    let settings = await MaterialSettings.findOne().lean();
+    if (!settings) {
+      settings = await MaterialSettings.create({});
+    }
+    res.json({ settings });
+  } catch {
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// Upsert
+router.put('/settings/materials', requireAuth, async (req, res) => {
+  try {
+    const { defaultLowStockThreshold, currency, autoDeductOnOrderComplete, trackFractionalQuantities } = req.body ?? {};
+    const settings = await MaterialSettings.findOneAndUpdate(
+      {},
+      { defaultLowStockThreshold, currency, autoDeductOnOrderComplete, trackFractionalQuantities },
+      { new: true, upsert: true, runValidators: true }
+    );
+    res.json({ settings });
+  } catch {
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
