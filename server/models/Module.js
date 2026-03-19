@@ -11,3 +11,5 @@ const moduleSchema = new mongoose.Schema(
 );
 
 const Module = mongoose.model("Module", moduleSchema, "modules");
+
+export default Module;
