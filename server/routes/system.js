@@ -21,17 +21,25 @@ router.get('/system/update-check', requireAuth, requireAdmin, async (_req, res) 
         const { tag_name: latestTag } = await ghRes.json();
 
         await execAsync('git fetch --tags origin', { cwd: REPO_ROOT, timeout: 30_000 });
+
+        // Compare by SHA so multiple tags on the same commit don't trigger a false update
+        const [{ stdout: headShaOut }, { stdout: tagShaOut }] = await Promise.all([
+            execAsync('git rev-parse HEAD',                    { cwd: REPO_ROOT }),
+            execAsync(`git rev-list -n 1 ${latestTag}`,        { cwd: REPO_ROOT }),
+        ]);
+        const headSha = headShaOut.trim();
+        const tagSha  = tagShaOut.trim();
+
+        // Best-effort: find a human-readable tag for the current HEAD
         let currentTag = null;
         try {
             const { stdout } = await execAsync('git describe --tags --exact-match HEAD', { cwd: REPO_ROOT });
             currentTag = stdout.trim();
-        } catch {
-            // HEAD is not at a tagged commit — treat as behind
-        }
+        } catch { /* HEAD is untagged */ }
 
         res.json({
-            upToDate:   currentTag === latestTag,
-            currentTag: currentTag ?? '(untagged)',
+            upToDate:   headSha === tagSha,
+            currentTag: currentTag ?? headSha.slice(0, 7),
             remoteTag:  latestTag,
         });
     } catch {
@@ -50,7 +58,9 @@ router.post('/system/update', requireAuth, requireAdmin, async (_req, res) => {
         const { tag_name: latestTag } = await ghRes.json();
 
         await execAsync('git fetch --tags origin', { cwd: REPO_ROOT, timeout: 30_000 });
-        await execAsync(`git checkout ${latestTag}`, { cwd: REPO_ROOT, timeout: 30_000 });
+        // Ensure we are on main (not detached HEAD) then move to the release commit
+        await execAsync('git checkout main',               { cwd: REPO_ROOT, timeout: 15_000 });
+        await execAsync(`git reset --hard ${latestTag}`,   { cwd: REPO_ROOT, timeout: 15_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'server'), timeout: 120_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'client'), timeout: 120_000 });
         // Send response before the process is killed by the restart script
