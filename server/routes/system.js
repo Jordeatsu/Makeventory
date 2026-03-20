@@ -63,13 +63,32 @@ router.post('/system/update', requireAuth, requireAdmin, async (_req, res) => {
         await execAsync(`git reset --hard ${latestTag}`,   { cwd: REPO_ROOT, timeout: 15_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'server'), timeout: 120_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'client'), timeout: 120_000 });
-        // Send response before the process is killed by the restart script
+        // Send response before triggering the restart
         res.json({ ok: true });
-        const child = spawn('bash', [path.join(REPO_ROOT, 'systemfiles', 'restart.sh')], {
-            detached: true,
-            stdio:    'ignore',
-            cwd:      REPO_ROOT,
-        });
+
+        // Spawn start.sh as a fully detached process so it survives this Node process
+        // being killed by kill_port inside start.sh.
+        // start.sh handles killing stale ports itself — no need to call stop.sh first.
+        const startScript = path.join(REPO_ROOT, 'systemfiles', 'start.sh');
+        const updateLog   = path.join(REPO_ROOT, 'logs', 'update.log');
+        const isWindows   = process.platform === 'win32';
+        let child;
+        if (isWindows) {
+            // On Windows (Git Bash assumed) use start /B to background bash
+            child = spawn(
+                'cmd.exe',
+                ['/C', `start /B bash "${startScript}" >> "${updateLog}" 2>&1`],
+                { detached: true, stdio: 'ignore', cwd: REPO_ROOT, shell: false }
+            );
+        } else {
+            // On macOS/Linux: run via bash -c with nohup so the grandchild is
+            // reparented to init/launchd before this process is killed.
+            child = spawn(
+                'bash',
+                ['-c', `nohup bash "${startScript}" >> "${updateLog}" 2>&1 &`],
+                { detached: true, stdio: 'ignore', cwd: REPO_ROOT }
+            );
+        }
         child.unref();
     } catch (err) {
         res.status(500).json({ error: err.message || 'Update failed.' });
