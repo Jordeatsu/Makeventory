@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-    Alert, Box, Button, Chip, CircularProgress, Divider,
-    Grid, IconButton, Paper, Stack, Tooltip, Typography,
+    Alert, Box, Button, Chip, CircularProgress,
+    Grid, IconButton, Paper, Snackbar, Stack, Tooltip, Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -45,6 +45,8 @@ export default function MaterialDetailPage() {
     const [loading, setLoading]           = useState(true);
     const [error, setError]               = useState("");
     const [editOpen, setEditOpen]         = useState(false);
+    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
+    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -68,9 +70,14 @@ export default function MaterialDetailPage() {
     useEffect(() => { load(); }, [load]);
 
     const handleSave = async (form) => {
-        await api.put(`/materials/${id}`, form);
-        setEditOpen(false);
-        await load();
+        try {
+            await api.put(`/materials/${id}`, form);
+            setEditOpen(false);
+            showToast(t("materials.toast.updated", "Material updated"));
+            await load();
+        } catch (e) {
+            showToast(e.response?.data?.message || t("materials.toast.saveFailed", "Save failed."), "error");
+        }
     };
 
     if (loading) {
@@ -205,8 +212,10 @@ export default function MaterialDetailPage() {
                     <DetailRow label={t("materials.form.supplier", "Supplier")} value={m.supplier} />
                     <DetailRow label={t("materials.form.description", "Description / Notes")} value={m.description} />
                 </Grid>
+            </Paper>
 
-                <Divider sx={{ my: 2.5 }} />
+            {/* Record Info */}
+            <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
                     {t("materials.detail.systemInfo", "Record Info")}
                 </Typography>
@@ -248,6 +257,22 @@ export default function MaterialDetailPage() {
                 initial={m}
                 materialTypes={materialTypes}
             />
+
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={3000}
+                onClose={() => setToast((p) => ({ ...p, open: false }))}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={() => setToast((p) => ({ ...p, open: false }))}
+                    severity={toast.severity}
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

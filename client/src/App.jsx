@@ -21,6 +21,12 @@ import LanguageRegionPage from './pages/settings/LanguageRegionPage';
 import DashboardPage from './pages/DashboardPage';
 import MaterialsPage from './pages/MaterialsPage';
 import MaterialDetailPage from './pages/MaterialDetailPage';
+import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import CustomersPage from './pages/CustomersPage';
+import CustomerDetailPage from './pages/CustomerDetailPage';
 
 // ── Protected route wrapper ───────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -77,6 +83,12 @@ function AppRoutes() {
                                 <Route index element={<DashboardPage />} />
                                 <Route path="materials" element={<MaterialsPage />} />
                                 <Route path="materials/:id" element={<MaterialDetailPage />} />
+                                <Route path="products" element={<ProductsPage />} />
+                                <Route path="products/:id" element={<ProductDetailPage />} />
+                                <Route path="orders" element={<OrdersPage />} />
+                                <Route path="orders/:id" element={<OrderDetailPage />} />
+                                <Route path="customers" element={<CustomersPage />} />
+                                <Route path="customers/:id" element={<CustomerDetailPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="*" element={<NotFoundPage />} />
                             </Routes>
