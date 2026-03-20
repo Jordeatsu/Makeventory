@@ -208,7 +208,7 @@
     "totalChargedTooltip": "Montant facturé au client"
   },
   "update": {
-    "available": "Une nouvelle mise \u00e0 jour est disponible ({{commit}})",
+    "available": "Une nouvelle version est disponible ({{tag}})",
     "updateNow": "Mettre \u00e0 jour",
     "updating": "Mise \u00e0 jour...",
     "restarting": "Mise \u00e0 jour appliqu\u00e9e. Le serveur red\u00e9marre \u2014 actualisez la page dans quelques secondes."
