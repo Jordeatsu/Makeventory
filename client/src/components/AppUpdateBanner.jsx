@@ -17,7 +17,7 @@ export default function AppUpdateBanner() {
         api.get('/system/update-check')
             .then((r) => {
                 if (!r.data.upToDate) {
-                    setUpdateInfo({ remoteCommit: r.data.remoteCommit });
+                    setUpdateInfo({ remoteTag: r.data.remoteTag });
                 } else {
                     setUpdateInfo(null);
                 }
@@ -73,7 +73,7 @@ export default function AppUpdateBanner() {
             }
             sx={{ borderRadius: 0, py: 0.5 }}
         >
-            {t('update.available', { commit: updateInfo.remoteCommit })}
+            {t('update.available', { tag: updateInfo.remoteTag })}
         </Alert>
     );
 }

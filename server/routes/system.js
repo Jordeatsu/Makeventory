@@ -10,32 +10,47 @@ const router    = Router();
 const execAsync = promisify(exec);
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// Returns whether origin/main is ahead of the running commit.
+// Returns whether a newer GitHub release exists compared to the currently running tag.
 // Requires admin — runs `git fetch` on the server which is a privileged operation.
 router.get('/system/update-check', requireAuth, requireAdmin, async (_req, res) => {
     try {
-        await execAsync('git fetch origin', { cwd: REPO_ROOT, timeout: 30_000 });
-        const [{ stdout: headOut }, { stdout: remoteOut }] = await Promise.all([
-            execAsync('git rev-parse HEAD',        { cwd: REPO_ROOT }),
-            execAsync('git rev-parse origin/main', { cwd: REPO_ROOT }),
-        ]);
-        const currentCommit = headOut.trim();
-        const remoteCommit  = remoteOut.trim();
+        const ghRes = await fetch('https://api.github.com/repos/Jordeatsu/Makeventory/releases/latest', {
+            headers: { 'User-Agent': 'Makeventory-UpdateCheck' },
+        });
+        if (!ghRes.ok) return res.status(502).json({ error: 'Could not reach GitHub API.' });
+        const { tag_name: latestTag } = await ghRes.json();
+
+        await execAsync('git fetch --tags origin', { cwd: REPO_ROOT, timeout: 30_000 });
+        let currentTag = null;
+        try {
+            const { stdout } = await execAsync('git describe --tags --exact-match HEAD', { cwd: REPO_ROOT });
+            currentTag = stdout.trim();
+        } catch {
+            // HEAD is not at a tagged commit — treat as behind
+        }
+
         res.json({
-            upToDate:      currentCommit === remoteCommit,
-            currentCommit: currentCommit.slice(0, 7),
-            remoteCommit:  remoteCommit.slice(0, 7),
+            upToDate:   currentTag === latestTag,
+            currentTag: currentTag ?? '(untagged)',
+            remoteTag:  latestTag,
         });
     } catch {
         res.status(500).json({ error: 'Could not check for updates.' });
     }
 });
 
-// Pulls latest code, installs dependencies, then restarts the server.
+// Checks out the latest GitHub release tag, installs dependencies, then restarts the server.
 // Requires admin — destructive server-side operation.
 router.post('/system/update', requireAuth, requireAdmin, async (_req, res) => {
     try {
-        await execAsync('git pull origin main', { cwd: REPO_ROOT, timeout: 60_000 });
+        const ghRes = await fetch('https://api.github.com/repos/Jordeatsu/Makeventory/releases/latest', {
+            headers: { 'User-Agent': 'Makeventory-UpdateCheck' },
+        });
+        if (!ghRes.ok) throw new Error('Could not reach GitHub API.');
+        const { tag_name: latestTag } = await ghRes.json();
+
+        await execAsync('git fetch --tags origin', { cwd: REPO_ROOT, timeout: 30_000 });
+        await execAsync(`git checkout ${latestTag}`, { cwd: REPO_ROOT, timeout: 30_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'server'), timeout: 120_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'client'), timeout: 120_000 });
         // Send response before the process is killed by the restart script
