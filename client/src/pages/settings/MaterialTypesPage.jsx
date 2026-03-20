@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Alert, Box, Button, Chip, CircularProgress, IconButton,
-    Paper, Table, TableBody, TableCell, TableContainer, TableHead,
+    Paper, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Tooltip, Typography,
 } from '@mui/material';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -12,7 +13,7 @@ import MaterialTypeModal from '../../components/modals/MaterialTypeModal';
 import DeleteBlockedModal from '../../components/modals/DeleteBlockedModal';
 import { useTranslation } from 'react-i18next';
 
-const USAGE_KEY = { 'Whole Item': 'wholeItem', 'Percentage': 'percentage' };
+const USAGE_KEY = { 'Whole Item': 'wholeItem', 'Percentage': 'percentage', 'Bulk': 'bulk' };
 
 export default function MaterialTypesPage() {
     const [types, setTypes]           = useState([]);
@@ -25,6 +26,9 @@ export default function MaterialTypesPage() {
     const [blockedOpen, setBlockedOpen]           = useState(false);
     const [blockedMaterials, setBlockedMaterials] = useState([]);
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+    const showToast = (message, severity = 'success') => setToast({ open: true, message, severity });
 
     const load = useCallback(() => {
         setLoading(true);
@@ -41,6 +45,7 @@ export default function MaterialTypesPage() {
         setTypes((prev) =>
             isEdit ? prev.map((t) => (t._id === type._id ? type : t)) : [...prev, type]
         );
+        if (!isEdit) showToast(t('settings.materialTypes.created', 'Material type created successfully'));
     };
 
     const handleDelete = async (id) => {
@@ -53,6 +58,7 @@ export default function MaterialTypesPage() {
         }
         if (!r.ok) return;
         setTypes((prev) => prev.filter((t) => t._id !== id));
+        showToast(t('settings.materialTypes.deleted', 'Material type deleted'));
     };
 
     return (
@@ -115,7 +121,12 @@ export default function MaterialTypesPage() {
                         ) : types.map((mt) => (
                             <TableRow key={mt._id} hover>
                                 <TableCell>
-                                    <Typography variant="body2" fontWeight={500}>{mt.name}</Typography>
+                                    <Typography
+                                        variant="body2"
+                                        fontWeight={500}
+                                        sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main', textDecoration: 'underline' } }}
+                                        onClick={() => navigate(`/settings/material-types/${mt._id}`)}
+                                    >{mt.name}</Typography>
                                     {mt.description && (
                                         <Typography variant="caption" color="text.secondary">{mt.description}</Typography>
                                     )}
@@ -159,6 +170,21 @@ export default function MaterialTypesPage() {
                 materials={blockedMaterials}
                 onClose={() => setBlockedOpen(false)}
             />
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={3000}
+                onClose={() => setToast((p) => ({ ...p, open: false }))}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={() => setToast((p) => ({ ...p, open: false }))}
+                    severity={toast.severity}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

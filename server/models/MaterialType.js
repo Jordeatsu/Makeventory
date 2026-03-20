@@ -6,10 +6,16 @@ const materialTypeSchema = new mongoose.Schema(
         description: { type: String, default: null },
         usageType: {
             type: String,
-            enum: ["Whole Item", "Percentage"],
+            enum: ["Whole Item", "Percentage", "Bulk"],
             required: true,
             default: "Whole Item",
         },
+
+        // Default values pre-populated when creating a material of this type
+        defaultStockQty:   { type: Number, default: null },
+        lowStockThreshold: { type: Number, default: null },
+        defaultCostPrice:  { type: Number, default: null },
+        purchaseQty:       { type: Number, default: null },
 
         unitOfMeasure: {
             type: String,
@@ -18,7 +24,9 @@ const materialTypeSchema = new mongoose.Schema(
             required: true,
             default: "piece",
         },
-        isActive: { type: Boolean, default: true },
+        isActive:  { type: Boolean, default: true },
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     },
     { timestamps: true },
 );

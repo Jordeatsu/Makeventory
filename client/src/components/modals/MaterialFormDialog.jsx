@@ -1,170 +1,199 @@
 /**
- * @file MaterialFormDialog.js
- * @description Modal dialog used to create or edit a single material record.
+ * @file MaterialFormDialog.jsx
+ * @description Modal dialog for creating or editing a material record.
  *
- * Behaviour highlights
- * --------------------
- * - Switching the `type` field pre-fills sensible defaults (quantity, cost,
- *   unitsPerPack, lowStockThreshold) for each material category.
- * - Duplicate-name detection: if a material with the same name and type already
- *   exists the dialog offers an "Add to existing" shortcut that calls
- *   adjust-stock instead of creating a duplicate record.
- * - Bulk types (Thread, Box, Bag, Needle, Hoop) show the `unitsPerPack` field
- *   so the per-unit cost can be derived from pack price.
- * - Fabric types show a dimension helper (width × length → cm²) in create mode.
- * - Exposes `onSaveMore` prop so the parent can keep the dialog open after a
- *   successful save for rapid bulk entry.
+ * Adapts dynamically to the selected MaterialType's usageType:
+ *   - Whole Item  → cost per item, no pack concept
+ *   - Percentage  → continuous measurement (cut from roll/sheet); cost = pack price / pack qty
+ *   - Bulk        → counted discrete items; cost = pack price / items per pack
+ *
+ * Pre-fills defaults from the MaterialType when a type is selected.
+ * Offers "Add to existing" shortcut when a duplicate name is detected.
  */
 import React, { useState, useEffect } from "react";
-import { Alert, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField, MenuItem, InputAdornment, Typography, Divider, Paper, Box } from "@mui/material";
+import {
+    Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
+    Divider, Grid, InputAdornment, MenuItem, Paper, TextField, Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import api from "../../api";
 import { useGlobalSettings } from "../../context/GlobalSettingsContext";
 
-// Types that are purchased by the pack and broken into individual units
-const BULK_TYPES = ["Thread", "Cardboard Box", "Postage Bag", "Needle", "Hoop"];
-// Types whose stock quantity is tracked as a continuous area (cm²)
-const FABRIC_TYPES = ["Patterned Fabric", "White Fabric", "Aida Fabric"];
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-// Default values pre-filled per type when creating a new material.
-// These match common type names — if the type name doesn't match, numeric
-// fields start blank.
-const TYPE_DEFAULTS = {
-    Thread:              { quantity: "8",      costPerUnit: "1.80", unitsPerPack: "8",      lowStockThreshold: "1"    },
-    "Patterned Fabric":  { quantity: "200000", costPerUnit: "15.00", unitsPerPack: "200000", lowStockThreshold: "2000" },
-    "White Fabric":      { quantity: "200000", costPerUnit: "10.00", unitsPerPack: "200000", lowStockThreshold: "2000" },
-    "Aida Fabric":       { quantity: "200000", costPerUnit: "12.00", unitsPerPack: "200000", lowStockThreshold: "2000" },
+const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
+
+// Human-readable labels for each unitOfMeasure key
+const UNIT_LABELS = {
+    mm: "mm", mm2: "mm²", cm: "cm", cm2: "cm²",
+    m: "m",   m2: "m²",  in: "in", in2: "in²", piece: "pcs",
 };
 
-const EMPTY = {
-    name: "",
-    type: "",
-    color: "",
-    quantity: "",
-    costPerUnit: "",
-    unitsPerPack: "",
-    lowStockThreshold: "",
-    sku: "",
-    supplier: "",
-    description: "",
+// Reference quantities shown in the cost-insight panel (secondary figure)
+const INSIGHT_REF = {
+    mm:  { qty: 100,  label: "100 mm (10 cm)" },
+    cm:  { qty: 10,   label: "10 cm" },
+    m:   { qty: 1,    label: "1 m" },
+    in:  { qty: 12,   label: "1 ft (12 in)" },
+    mm2: { qty: 100,  label: "10 mm × 10 mm" },
+    cm2: { qty: 100,  label: "10 cm × 10 cm" },
+    m2:  { qty: 1,    label: "1 m × 1 m" },
+    in2: { qty: 144,  label: "1 ft × 1 ft" },
 };
 
-/**
- * @component
- * @param {Object}        props
- * @param {boolean}       props.open               - Whether the dialog is visible
- * @param {Function}      props.onClose            - Called when the user dismisses the dialog
- * @param {Function}      props.onSave             - Called with the built payload; closes dialog after
- * @param {Function}      [props.onSaveMore]       - Called with the payload but keeps dialog open
- * @param {Function}      [props.onStockAdjusted]  - Called after adjust-stock succeeds
- * @param {Object|null}   [props.initial]          - Existing material document when editing; null when creating
- * @param {Array}         [props.materialTypes]    - Array of { _id, name } from /api/material-types
- * @returns {JSX.Element}
- */
-export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, onStockAdjusted, initial, materialTypes = [] }) {
+const EMPTY_FORM = {
+    name: "", typeId: "", color: "", quantity: "",
+    costPerUnit: "", unitsPerPack: "", lowStockThreshold: "",
+    sku: "", supplier: "", description: "",
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export default function MaterialFormDialog({
+    open, onClose, onSave, onSaveMore, onStockAdjusted, initial, materialTypes = [],
+}) {
     const { t } = useTranslation();
-    const { currency } = useGlobalSettings();
-    const currencySymbol = currency === "GBP" ? "£" : currency === "EUR" ? "€" : currency === "USD" ? "$" : currency;
+    const { settings } = useGlobalSettings();
+    const currencySymbol = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
 
-    const defaultType = materialTypes.length > 0 ? materialTypes[0].name : "";
-    const defaults = TYPE_DEFAULTS[defaultType] || {};
-    const EMPTY_WITH_TYPE = { ...EMPTY, type: defaultType, ...defaults };
+    const [form, setForm]                     = useState(EMPTY_FORM);
+    const [errors, setErrors]                 = useState({});
+    const [saveError, setSaveError]           = useState("");
+    const [existingMaterial, setExisting]     = useState(null);
 
-    const [form, setForm] = useState(EMPTY_WITH_TYPE);
-    const [errors, setErrors] = useState({});
-    const [saveError, setSaveError] = useState("");
-    const [existingMaterial, setExistingMaterial] = useState(null);
-    const [fabricRollW, setFabricRollW] = useState("200");
-    const [fabricRollL, setFabricRollL] = useState("1000");
+    // ── Derived from selected type ───────────────────────────────────────────
+    const selectedType  = materialTypes.find((mt) => mt._id === form.typeId) ?? null;
+    const usageType     = selectedType?.usageType ?? "Whole Item";
+    const isPercentage  = usageType === "Percentage";
+    const isBulk        = usageType === "Bulk";
+    const isWhole       = usageType === "Whole Item";
+    const needsPack     = isPercentage || isBulk;
 
-    const isThread = form.type === "Thread";
-    const isBulk   = BULK_TYPES.includes(form.type);
-    const isFabric = FABRIC_TYPES.includes(form.type);
+    // Unit of measure for this material: type's unit for Percentage, 'piece' otherwise
+    const unitKey   = isPercentage ? (selectedType?.unitOfMeasure ?? "piece") : "piece";
+    const unitLabel = UNIT_LABELS[unitKey] ?? unitKey;
 
+    // ── Initialise form on open ──────────────────────────────────────────────
     useEffect(() => {
-        if (open) {
-            if (initial) {
-                setForm({
-                    ...EMPTY_WITH_TYPE,
-                    ...initial,
-                    unitsPerPack:      initial.unitsPerPack      ?? "",
-                    lowStockThreshold: initial.lowStockThreshold ?? "",
-                });
-            } else {
-                setForm(EMPTY_WITH_TYPE);
-            }
+        if (!open) return;
+
+        if (initial) {
+            // In edit mode: resolve typeId from the materialType ObjectId
+            const typeId = typeof initial.materialType === "string"
+                ? initial.materialType
+                : initial.materialType?._id ?? "";
+            setForm({
+                name:              initial.name              ?? "",
+                typeId,
+                color:             initial.color             ?? "",
+                quantity:          initial.quantity          ?? "",
+                costPerUnit:       initial.costPerUnit       ?? "",
+                unitsPerPack:      initial.unitsPerPack      ?? "",
+                lowStockThreshold: initial.lowStockThreshold ?? "",
+                sku:               initial.sku               ?? "",
+                supplier:          initial.supplier          ?? "",
+                description:       initial.description       ?? "",
+            });
+        } else {
+            // In create mode: seed from first active type's defaults
+            const first = materialTypes.find((mt) => mt.isActive) ?? materialTypes[0];
+            setForm({
+                ...EMPTY_FORM,
+                typeId:            first?._id              ?? "",
+                quantity:          first?.defaultStockQty  ?? "",
+                lowStockThreshold: first?.lowStockThreshold ?? "",
+                costPerUnit:       first?.defaultCostPrice  ?? "",
+                unitsPerPack:      first?.purchaseQty       ?? "",
+            });
         }
+
         setErrors({});
         setSaveError("");
-        setExistingMaterial(null);
-        setFabricRollW("200");
-        setFabricRollL("1000");
+        setExisting(null);
     }, [open, initial]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Sync roll dimensions → quantity + unitsPerPack (create mode only)
-    useEffect(() => {
-        if (!FABRIC_TYPES.includes(form.type) || initial) return;
-        const area = Math.round(Number(fabricRollW) * Number(fabricRollL));
-        if (area > 0) setForm((f) => ({ ...f, quantity: String(area), unitsPerPack: String(area) }));
-    }, [form.type, fabricRollW, fabricRollL, initial]);
-
+    // ── Helpers ──────────────────────────────────────────────────────────────
     const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
     const handleTypeChange = (e) => {
-        const newType = e.target.value;
-        const newIsBulk = BULK_TYPES.includes(newType);
-        const defaults = TYPE_DEFAULTS[newType] || {};
+        const typeId = e.target.value;
+        const mt = materialTypes.find((t) => t._id === typeId);
         setForm((p) => ({
             ...p,
-            type: newType,
-            quantity:          defaults.quantity          ?? (newIsBulk ? p.quantity          : ""),
-            costPerUnit:       defaults.costPerUnit       ?? (newIsBulk ? p.costPerUnit       : ""),
-            unitsPerPack:      defaults.unitsPerPack      ?? (newIsBulk ? p.unitsPerPack      : ""),
-            lowStockThreshold: defaults.lowStockThreshold ?? (newIsBulk ? p.lowStockThreshold : ""),
+            typeId,
+            quantity:          mt?.defaultStockQty   ?? "",
+            lowStockThreshold: mt?.lowStockThreshold  ?? "",
+            costPerUnit:       mt?.defaultCostPrice   ?? "",
+            unitsPerPack:      mt?.purchaseQty        ?? "",
         }));
-        setExistingMaterial(null);
+        setExisting(null);
     };
 
-    const validate = () => {
-        const e = {};
-        if (!form.name.trim()) e.name = t("materials.form.nameRequired", "Required");
-        else if (existingMaterial) e.name = t("materials.form.duplicate", `A material called "${form.name.trim()}" already exists`, { name: form.name.trim() });
-        if (form.quantity === "" || isNaN(Number(form.quantity))) e.quantity = t("materials.form.mustBeNumber", "Must be a number");
-        if (form.costPerUnit === "" || isNaN(Number(form.costPerUnit))) e.costPerUnit = t("materials.form.mustBeNumber", "Must be a number");
-        if (isBulk) {
-            if (!form.unitsPerPack || isNaN(Number(form.unitsPerPack)) || Number(form.unitsPerPack) <= 0)
-                e.unitsPerPack = isFabric
-                    ? t("materials.form.unitsPerPackFabric", "Required — enter roll dimensions above")
-                    : isThread
-                    ? t("materials.form.unitsPerPackThread", "Required — metres per pack")
-                    : t("materials.form.unitsPerPackBulk", "Required — items per pack");
+    // Duplicate-name check on blur
+    const handleNameBlur = async () => {
+        if (!form.name.trim() || !selectedType) return;
+        try {
+            const res = await api.get("/materials", {
+                params: { type: selectedType.name, search: form.name.trim() },
+            });
+            const match = (res.data.materials ?? []).find(
+                (m) => m.name.toLowerCase() === form.name.trim().toLowerCase()
+                    && m._id !== initial?._id
+            );
+            setExisting(match ?? null);
+            if (match) {
+                setErrors((p) => ({
+                    ...p,
+                    name: t("materials.form.duplicate", `"${form.name.trim()}" already exists.`, { name: form.name.trim() }),
+                }));
+            }
+        } catch {
+            // silently ignore network errors
         }
-        setErrors(e);
-        return Object.keys(e).length === 0;
     };
-
-    const buildPayload = () => ({
-        ...form,
-        unit:              isFabric ? "cm\u00b2" : isThread ? "metres" : "pieces",
-        quantity:          Number(form.quantity),
-        costPerUnit:       Number(form.costPerUnit),
-        unitsPerPack:      isBulk ? Number(form.unitsPerPack) : 0,
-        lowStockThreshold: Number(form.lowStockThreshold) || (isThread ? 5 : isFabric ? 2000 : 2),
-    });
 
     const handleAddToExisting = async () => {
         if (!existingMaterial || form.quantity === "" || isNaN(Number(form.quantity))) return;
         setSaveError("");
         try {
             await api.post(`/materials/${existingMaterial._id}/adjust-stock`, { delta: Number(form.quantity) });
-            setForm({ ...EMPTY_WITH_TYPE, type: form.type, ...(TYPE_DEFAULTS[form.type] || {}), name: "" });
+            setExisting(null);
             setErrors({});
-            setExistingMaterial(null);
-            (onStockAdjusted || onClose)();
+            setForm((p) => ({ ...p, name: "" }));
+            (onStockAdjusted ?? onClose)();
         } catch (e) {
-            setSaveError(e.response?.data?.error || t("materials.form.updateStockFailed", "Failed to update stock"));
+            setSaveError(e.response?.data?.error ?? t("materials.form.updateStockFailed", "Failed to update stock"));
         }
     };
+
+    const validate = () => {
+        const e = {};
+        if (!form.name.trim())  e.name = t("materials.form.nameRequired", "Required");
+        else if (existingMaterial) e.name = t("materials.form.duplicate", `"${form.name.trim()}" already exists.`, { name: form.name.trim() });
+        if (!form.typeId)       e.type = t("materials.form.typeRequired", "Required");
+        if (form.quantity === "" || isNaN(Number(form.quantity)))
+            e.quantity = t("materials.form.mustBeNumber", "Must be a number");
+        if (form.costPerUnit === "" || isNaN(Number(form.costPerUnit)))
+            e.costPerUnit = t("materials.form.mustBeNumber", "Must be a number");
+        if (needsPack && (!form.unitsPerPack || isNaN(Number(form.unitsPerPack)) || Number(form.unitsPerPack) <= 0))
+            e.unitsPerPack = t("materials.form.purchaseQtyRequired", "Required — enter the purchase quantity per pack");
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    };
+
+    const buildPayload = () => ({
+        name:              form.name.trim(),
+        type:              selectedType?.name ?? "",
+        color:             form.color.trim()       || null,
+        quantity:          Number(form.quantity),
+        unit:              unitKey,
+        costPerUnit:       Number(form.costPerUnit),
+        unitsPerPack:      needsPack ? Number(form.unitsPerPack) : 0,
+        lowStockThreshold: Number(form.lowStockThreshold) || 1,
+        sku:               form.sku.trim()          || null,
+        supplier:          form.supplier.trim()     || null,
+        description:       form.description.trim()  || null,
+    });
 
     const handleSave = async () => {
         if (!validate()) return;
@@ -172,7 +201,7 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
         try {
             await onSave(buildPayload());
         } catch (e) {
-            setSaveError(e.response?.data?.error || e.message || t("materials.form.saveFailed", "Save failed"));
+            setSaveError(e.response?.data?.error ?? e.message ?? t("materials.form.saveFailed", "Save failed"));
         }
     };
 
@@ -181,27 +210,90 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
         setSaveError("");
         try {
             await onSaveMore(buildPayload());
-            setForm({ ...EMPTY_WITH_TYPE, type: form.type, ...(TYPE_DEFAULTS[form.type] || {}), name: "" });
+            // Keep dialog open; clear name & quantity only
+            setForm((p) => ({
+                ...p,
+                name:     "",
+                quantity: selectedType?.defaultStockQty ?? "",
+            }));
             setErrors({});
+            setExisting(null);
         } catch (e) {
-            setSaveError(e.response?.data?.error || e.message || t("materials.form.saveFailed", "Save failed"));
+            setSaveError(e.response?.data?.error ?? e.message ?? t("materials.form.saveFailed", "Save failed"));
         }
     };
 
-    const costPerUse =
-        isBulk && form.costPerUnit !== "" && form.unitsPerPack !== "" && Number(form.unitsPerPack) > 0
-            ? (Number(form.costPerUnit) / Number(form.unitsPerPack)).toFixed(4)
-            : null;
+    // ── Cost insight ─────────────────────────────────────────────────────────
+    const costNum = parseFloat(form.costPerUnit);
+    const packNum = parseFloat(form.unitsPerPack);
+    const validCost = !isNaN(costNum) && costNum > 0;
+    const validPack = !isNaN(packNum) && packNum > 0;
 
+    let insight = null;
+    if (isWhole && validCost) {
+        insight = {
+            primary:   { label: "Cost per item",       value: costNum.toFixed(2) },
+            secondary: null,
+        };
+    } else if (needsPack && validCost && validPack) {
+        const perUnit = costNum / packNum;
+        const ref     = INSIGHT_REF[unitKey];
+        insight = {
+            primary: {
+                label: `Cost per ${unitLabel}`,
+                value: perUnit < 0.001 ? perUnit.toFixed(6) : perUnit < 0.01 ? perUnit.toFixed(5) : perUnit.toFixed(4),
+            },
+            secondary: ref ? {
+                label: `${ref.label} costs`,
+                value: (perUnit * ref.qty).toFixed(2),
+            } : null,
+        };
+    }
+
+    // ── Dynamic labels ───────────────────────────────────────────────────────
+    const stockLabel = isPercentage
+        ? `Current Stock (${unitLabel})`
+        : "Quantity in Stock";
+    const stockHelp = isPercentage
+        ? `How many ${unitLabel} you currently have available`
+        : isBulk
+        ? "Number of individual items in stock"
+        : "How many complete items you have";
+
+    const packLabel = isPercentage
+        ? `Purchase Quantity (${unitLabel} per purchase)`
+        : "Items per Pack";
+    const packHelp = isPercentage
+        ? `How much you receive per purchase — e.g. 10${unitLabel} per roll`
+        : "How many individual items come in one pack";
+
+    const costLabel = isPercentage
+        ? "Cost per Purchase"
+        : isBulk
+        ? "Cost per Pack"
+        : "Cost per Item";
+    const costHelp = isPercentage
+        ? "What you paid for the full purchase (e.g. one roll or sheet)"
+        : isBulk
+        ? "What you paid for one full pack"
+        : "What you paid for one individual item";
+
+    // ── Render ───────────────────────────────────────────────────────────────
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{initial ? t("materials.form.editTitle", "Edit Material") : t("materials.form.addTitle", "Add New Material")}</DialogTitle>
+            <DialogTitle>
+                {initial
+                    ? t("materials.form.editTitle", "Edit Material")
+                    : t("materials.form.addTitle", "Add New Material")}
+            </DialogTitle>
+
             <DialogContent dividers>
                 {saveError && (
                     <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSaveError("")}>
                         {saveError}
                     </Alert>
                 )}
+
                 {existingMaterial && !initial && (
                     <Alert
                         severity="info"
@@ -212,71 +304,81 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
                             </Button>
                         }
                     >
-                        {t("materials.form.duplicateAlert", "{{name}} already exists with {{qty}} in stock. Add {{add}} to it instead?", {
-                            name:  existingMaterial.name,
-                            qty:   existingMaterial.quantity,
-                            add:   form.quantity || 0,
-                        })}
+                        {t(
+                            "materials.form.duplicateAlert",
+                            "{{name}} already exists with {{qty}} in stock. Add {{add}} to it instead?",
+                            { name: existingMaterial.name, qty: existingMaterial.quantity, add: form.quantity || 0 }
+                        )}
                     </Alert>
                 )}
+
                 <Grid container spacing={2} sx={{ pt: 0.5 }}>
-                    {/* ── Basic Info ── */}
+
+                    {/* ── Basic Info ──────────────────────────────────────── */}
                     <Grid item xs={12} sm={8}>
                         <TextField
-                            label={t("materials.form.name", "Name *")}
+                            label={t("materials.form.name", "Name") + " *"}
                             fullWidth
                             value={form.name}
                             onChange={(e) => {
-                                const val = e.target.value;
-                                setExistingMaterial(null);
-                                setErrors((prev) => ({ ...prev, name: undefined }));
-                                setForm((p) => ({
-                                    ...p,
-                                    name: val,
-                                    ...(isThread && { sku: val }),
-                                }));
+                                setExisting(null);
+                                setErrors((p) => ({ ...p, name: undefined }));
+                                set("name")(e);
                             }}
-                            onBlur={async () => {
-                                if (!form.name.trim() || !form.type) return;
-                                try {
-                                    const res = await api.get("/materials", {
-                                        params: { type: form.type, search: form.name.trim() },
-                                    });
-                                    const match = (res.data.materials || []).find(
-                                        (m) => m.name.toLowerCase() === form.name.trim().toLowerCase() && m._id !== initial?._id
-                                    );
-                                    setExistingMaterial(match || null);
-                                    if (match) {
-                                        setErrors((prev) => ({
-                                            ...prev,
-                                            name: t("materials.form.duplicate", `A material called "${form.name.trim()}" already exists`, { name: form.name.trim() }),
-                                        }));
-                                    }
-                                } catch {
-                                    // silently ignore network errors during duplicate check
-                                }
-                            }}
+                            onBlur={handleNameBlur}
                             error={!!errors.name}
                             helperText={errors.name}
                         />
                     </Grid>
+
                     <Grid item xs={12} sm={4}>
-                        <TextField select label={t("materials.form.type", "Type *")} fullWidth value={form.type} onChange={handleTypeChange}>
-                            {materialTypes.map((mt) => (
-                                <MenuItem key={mt._id} value={mt.name}>
-                                    {mt.name}
-                                </MenuItem>
+                        <TextField
+                            select
+                            label={t("materials.form.type", "Type") + " *"}
+                            fullWidth
+                            value={form.typeId}
+                            onChange={handleTypeChange}
+                            error={!!errors.type}
+                            helperText={errors.type}
+                        >
+                            {materialTypes.filter((mt) => mt.isActive).map((mt) => (
+                                <MenuItem key={mt._id} value={mt._id}>{mt.name}</MenuItem>
                             ))}
                         </TextField>
                     </Grid>
+
+                    {/* Usage type badge */}
+                    {selectedType && (
+                        <Grid item xs={12}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary">Usage type:</Typography>
+                                <Typography variant="caption" fontWeight={700} color="primary.main">
+                                    {selectedType.usageType}
+                                    {isPercentage && unitLabel !== "pcs" ? ` · measured in ${unitLabel}` : ""}
+                                </Typography>
+                                {selectedType.description && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        — {selectedType.description}
+                                    </Typography>
+                                )}
+                            </Box>
+                        </Grid>
+                    )}
+
                     <Grid item xs={12} sm={6}>
-                        <TextField label={t("materials.form.colour", "Colour / Shade")} fullWidth value={form.color} onChange={set("color")} />
+                        <TextField
+                            label={t("materials.form.colour", "Colour / Shade")}
+                            fullWidth value={form.color} onChange={set("color")}
+                        />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                        <TextField label={t("materials.form.sku", "SKU / Reference")} fullWidth value={form.sku} onChange={set("sku")} />
+                        <TextField
+                            label={t("materials.form.sku", "SKU / Reference")}
+                            fullWidth value={form.sku} onChange={set("sku")}
+                        />
                     </Grid>
 
-                    {/* ── Stock ── */}
+                    {/* ── Stock ───────────────────────────────────────────── */}
                     <Grid item xs={12}>
                         <Divider>
                             <Typography variant="caption" color="text.secondary">
@@ -286,79 +388,37 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
-                        {isFabric ? (
-                            !initial ? (
-                                <>
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                                        {t("materials.form.rollDimensionsHint", "Enter the dimensions of the roll you are adding")}
-                                    </Typography>
-                                    <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                                        <TextField
-                                            label={t("materials.form.width", "Width (cm)")}
-                                            type="number"
-                                            value={fabricRollW}
-                                            onChange={(e) => setFabricRollW(e.target.value)}
-                                            inputProps={{ min: 1, step: 1 }}
-                                            helperText={t("materials.form.widthHint", "e.g. 200 for 2 m")}
-                                        />
-                                        <Typography sx={{ pt: 2, px: 0.5 }}>×</Typography>
-                                        <TextField
-                                            label={t("materials.form.length", "Length (cm)")}
-                                            type="number"
-                                            value={fabricRollL}
-                                            onChange={(e) => setFabricRollL(e.target.value)}
-                                            inputProps={{ min: 1, step: 1 }}
-                                            helperText={t("materials.form.lengthHint", "e.g. 1000 for 10 m")}
-                                        />
-                                    </Box>
-                                    {Number(fabricRollW) > 0 && Number(fabricRollL) > 0 && (
-                                        <Typography variant="caption" color="primary.main" sx={{ mt: 0.5, display: "block" }}>
-                                            {t("materials.form.rollArea", "Roll area")}: {(Number(fabricRollW) * Number(fabricRollL)).toLocaleString()} cm² — {t("materials.form.stockSetTo", "stock will be set to this value")}
-                                        </Typography>
-                                    )}
-                                </>
-                            ) : (
-                                <TextField
-                                    label={t("materials.form.currentArea", "Current Area in Stock (cm²) *")}
-                                    type="number"
-                                    fullWidth
-                                    value={form.quantity}
-                                    onChange={set("quantity")}
-                                    error={!!errors.quantity}
-                                    helperText={errors.quantity || t("materials.form.remainingArea", "Remaining fabric area in stock")}
-                                    InputProps={{ endAdornment: <InputAdornment position="end">cm²</InputAdornment> }}
-                                    inputProps={{ min: 0, step: 1 }}
-                                />
-                            )
-                        ) : (
-                            <TextField
-                                label={isThread ? t("materials.form.lengthInStock", "Total Length in Stock (metres) *") : t("materials.form.quantityInStock", "Quantity in Stock *")}
-                                type="number"
-                                fullWidth
-                                value={form.quantity}
-                                onChange={set("quantity")}
-                                error={!!errors.quantity}
-                                helperText={errors.quantity || (isThread ? t("materials.form.totalMetres", "Total metres across all packs you own") : t("materials.form.numItems", "Number of individual items"))}
-                                InputProps={{
-                                    endAdornment: <InputAdornment position="end">{isThread ? "m" : t("materials.form.items", "items")}</InputAdornment>,
-                                }}
-                                inputProps={{ min: 0, step: isThread ? 0.1 : 1 }}
-                            />
-                        )}
+                        <TextField
+                            label={stockLabel + " *"}
+                            type="number"
+                            fullWidth
+                            value={form.quantity}
+                            onChange={set("quantity")}
+                            error={!!errors.quantity}
+                            helperText={errors.quantity ?? stockHelp}
+                            InputProps={{
+                                endAdornment: <InputAdornment position="end">{unitLabel}</InputAdornment>,
+                            }}
+                            inputProps={{ min: 0, step: isPercentage ? 0.01 : 1 }}
+                        />
                     </Grid>
+
                     <Grid item xs={12} sm={6}>
                         <TextField
-                            label={isFabric ? t("materials.form.lowStockCm2", "Low-stock Alert (cm²)") : isThread ? t("materials.form.lowStockMetres", "Low-stock Alert (metres)") : t("materials.form.lowStockItems", "Low-stock Alert (items)")}
+                            label={t("materials.form.lowStockAlert", "Low Stock Alert")}
                             type="number"
                             fullWidth
                             value={form.lowStockThreshold}
                             onChange={set("lowStockThreshold")}
-                            inputProps={{ min: 0 }}
-                            helperText={t("materials.form.lowStockHint", "Alert when quantity falls below this")}
+                            inputProps={{ min: 0, step: isPercentage ? 0.01 : 1 }}
+                            helperText={t("materials.form.lowStockHint", "Alert when stock falls below this")}
+                            InputProps={{
+                                endAdornment: <InputAdornment position="end">{unitLabel}</InputAdornment>,
+                            }}
                         />
                     </Grid>
 
-                    {/* ── Pricing ── */}
+                    {/* ── Pricing ─────────────────────────────────────────── */}
                     <Grid item xs={12}>
                         <Divider>
                             <Typography variant="caption" color="text.secondary">
@@ -367,120 +427,72 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
                         </Divider>
                     </Grid>
 
-                    {isFabric ? (
-                        <>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label={t("materials.form.costPerRoll", "Cost per Roll *")}
-                                    type="number"
-                                    fullWidth
-                                    value={form.costPerUnit}
-                                    onChange={set("costPerUnit")}
-                                    error={!!errors.costPerUnit}
-                                    helperText={errors.costPerUnit || t("materials.form.costPerRollHint", "What you paid for the full roll")}
-                                    InputProps={{ startAdornment: <InputAdornment position="start">{currencySymbol}</InputAdornment> }}
-                                    inputProps={{ min: 0, step: 0.01 }}
-                                />
-                            </Grid>
-                            {initial && Number(form.unitsPerPack) > 0 && (
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        label={t("materials.form.rollArea", "Roll Area (cm²)")}
-                                        fullWidth
-                                        value={Number(form.unitsPerPack).toLocaleString()}
-                                        disabled
-                                        helperText={t("materials.form.rollAreaHint", "Area of one full roll — set when this material was created")}
-                                        InputProps={{ endAdornment: <InputAdornment position="end">cm²</InputAdornment> }}
-                                    />
-                                </Grid>
-                            )}
-                            {costPerUse !== null && (
-                                <Grid item xs={12}>
-                                    <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "background.default" }}>
-                                        <Box display="flex" gap={4} flexWrap="wrap">
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">{t("materials.form.costPerCm2", "Cost per cm²")}</Typography>
-                                                <Typography variant="subtitle1" fontWeight={700} color="primary.main">{currencySymbol}{costPerUse}</Typography>
-                                            </Box>
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">{t("materials.form.costPiece", "20 × 15 cm piece costs")}</Typography>
-                                                <Typography variant="subtitle1" fontWeight={700}>{currencySymbol}{(Number(costPerUse) * 300).toFixed(4)}</Typography>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                </Grid>
-                            )}
-                        </>
-                    ) : isBulk ? (
-                        <>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label={t("materials.form.costPerPack", "Cost per Pack *")}
-                                    type="number"
-                                    fullWidth
-                                    value={form.costPerUnit}
-                                    onChange={set("costPerUnit")}
-                                    error={!!errors.costPerUnit}
-                                    helperText={errors.costPerUnit || t("materials.form.costPerPackHint", "What you paid for one full pack")}
-                                    InputProps={{ startAdornment: <InputAdornment position="start">{currencySymbol}</InputAdornment> }}
-                                    inputProps={{ min: 0, step: 0.01 }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label={isThread ? t("materials.form.metresPerPack", "Metres per Pack *") : t("materials.form.itemsPerPack", "Items per Pack *")}
-                                    type="number"
-                                    fullWidth
-                                    value={form.unitsPerPack}
-                                    onChange={set("unitsPerPack")}
-                                    error={!!errors.unitsPerPack}
-                                    helperText={errors.unitsPerPack || (isThread ? t("materials.form.metresPerPackHint", "Length of thread in one pack (e.g. 8)") : t("materials.form.itemsPerPackHint", "How many items in one pack (e.g. 100)"))}
-                                    InputProps={{ endAdornment: <InputAdornment position="end">{isThread ? "m" : t("materials.form.items", "items")}</InputAdornment> }}
-                                    inputProps={{ min: 0.01, step: isThread ? 0.5 : 1 }}
-                                />
-                            </Grid>
-                            {costPerUse !== null && (
-                                <Grid item xs={12}>
-                                    <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "background.default" }}>
-                                        <Box display="flex" gap={4}>
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {isThread ? t("materials.form.costPerMetre", "Cost per metre") : t("materials.form.costPerItem", "Cost per item")}
-                                                </Typography>
-                                                <Typography variant="subtitle1" fontWeight={700} color="primary.main">
-                                                    {currencySymbol}{costPerUse}
-                                                </Typography>
-                                            </Box>
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {isThread ? t("materials.form.using1m", "Using 1 m costs") : t("materials.form.using1item", "Using 1 item costs")}
-                                                </Typography>
-                                                <Typography variant="subtitle1" fontWeight={700}>
-                                                    {currencySymbol}{Number(costPerUse).toFixed(2)}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Paper>
-                                </Grid>
-                            )}
-                        </>
-                    ) : (
+                    <Grid item xs={12} sm={needsPack ? 6 : 6}>
+                        <TextField
+                            label={costLabel + " *"}
+                            type="number"
+                            fullWidth
+                            value={form.costPerUnit}
+                            onChange={set("costPerUnit")}
+                            error={!!errors.costPerUnit}
+                            helperText={errors.costPerUnit ?? costHelp}
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start">{currencySymbol}</InputAdornment>,
+                            }}
+                            inputProps={{ min: 0, step: 0.01 }}
+                        />
+                    </Grid>
+
+                    {needsPack && (
                         <Grid item xs={12} sm={6}>
                             <TextField
-                                label={t("materials.form.costPerItem", "Cost per Item *")}
+                                label={packLabel + " *"}
                                 type="number"
                                 fullWidth
-                                value={form.costPerUnit}
-                                onChange={set("costPerUnit")}
-                                error={!!errors.costPerUnit}
-                                helperText={errors.costPerUnit || t("materials.form.costPerItemHint", "What you paid per individual item")}
-                                InputProps={{ startAdornment: <InputAdornment position="start">{currencySymbol}</InputAdornment> }}
-                                inputProps={{ min: 0, step: 0.01 }}
+                                value={form.unitsPerPack}
+                                onChange={set("unitsPerPack")}
+                                error={!!errors.unitsPerPack}
+                                helperText={errors.unitsPerPack ?? packHelp}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">{unitLabel}</InputAdornment>,
+                                }}
+                                inputProps={{ min: 0.001, step: isPercentage ? 0.1 : 1 }}
                             />
                         </Grid>
                     )}
 
-                    {/* ── Extra Details ── */}
+                    {/* ── Cost insight panel ───────────────────────────────── */}
+                    {insight && (
+                        <Grid item xs={12}>
+                            <Paper
+                                variant="outlined"
+                                sx={{ p: 1.75, bgcolor: "background.default", borderRadius: 2 }}
+                            >
+                                <Box display="flex" gap={4} flexWrap="wrap" alignItems="flex-start">
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary" display="block">
+                                            {insight.primary.label}
+                                        </Typography>
+                                        <Typography variant="subtitle1" fontWeight={700} color="primary.main">
+                                            {currencySymbol}{insight.primary.value}
+                                        </Typography>
+                                    </Box>
+                                    {insight.secondary && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary" display="block">
+                                                {insight.secondary.label}
+                                            </Typography>
+                                            <Typography variant="subtitle1" fontWeight={700}>
+                                                {currencySymbol}{insight.secondary.value}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+                            </Paper>
+                        </Grid>
+                    )}
+
+                    {/* ── Extra Details ────────────────────────────────────── */}
                     <Grid item xs={12}>
                         <Divider>
                             <Typography variant="caption" color="text.secondary">
@@ -488,14 +500,24 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
                             </Typography>
                         </Divider>
                     </Grid>
+
                     <Grid item xs={12} sm={6}>
-                        <TextField label={t("materials.form.supplier", "Supplier")} fullWidth value={form.supplier} onChange={set("supplier")} />
+                        <TextField
+                            label={t("materials.form.supplier", "Supplier")}
+                            fullWidth value={form.supplier} onChange={set("supplier")}
+                        />
                     </Grid>
                     <Grid item xs={12}>
-                        <TextField label={t("materials.form.description", "Description / Notes")} fullWidth multiline rows={2} value={form.description} onChange={set("description")} />
+                        <TextField
+                            label={t("materials.form.description", "Description / Notes")}
+                            fullWidth multiline rows={2}
+                            value={form.description} onChange={set("description")}
+                        />
                     </Grid>
+
                 </Grid>
             </DialogContent>
+
             <DialogActions sx={{ px: 3, py: 2 }}>
                 <Button onClick={onClose} color="inherit">
                     {t("common.cancel", "Cancel")}
@@ -506,7 +528,9 @@ export default function MaterialFormDialog({ open, onClose, onSave, onSaveMore, 
                     </Button>
                 )}
                 <Button variant="contained" onClick={handleSave}>
-                    {initial ? t("materials.form.saveChanges", "Save Changes") : t("materials.form.addMaterial", "Add Material")}
+                    {initial
+                        ? t("materials.form.saveChanges", "Save Changes")
+                        : t("materials.form.addMaterial", "Add Material")}
                 </Button>
             </DialogActions>
         </Dialog>

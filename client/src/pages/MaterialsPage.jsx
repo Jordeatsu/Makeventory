@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Typography, Button, TextField, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert, Stack } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Box, Typography, Button, TextField, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert, Snackbar, Stack } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -13,7 +14,9 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 
 export default function MaterialsPage() {
     const { t } = useTranslation();
-    const { currency } = useGlobalSettings();
+    const navigate = useNavigate();
+    const { settings } = useGlobalSettings();
+    const currency = settings?.currency ?? "GBP";
     const currencySymbol = currency === "GBP" ? "£" : currency === "EUR" ? "€" : currency === "USD" ? "$" : currency;
     const fmt = (n) => `${currencySymbol}${Number(n).toFixed(2)}`;
 
@@ -28,6 +31,8 @@ export default function MaterialsPage() {
     const [saving, setSaving] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [lowStockMaterials, setLowStockMaterials] = useState([]);
+    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
+    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     // Load material types for filter dropdown
     useEffect(() => {
@@ -63,6 +68,7 @@ export default function MaterialsPage() {
     }, [load]);
 
     const handleSave = async (form) => {
+        const wasEditing = !!editing;
         setSaving(true);
         try {
             if (editing) {
@@ -72,6 +78,7 @@ export default function MaterialsPage() {
             }
             setFormOpen(false);
             setEditing(null);
+            showToast(wasEditing ? t("materials.toast.updated", "Material updated") : t("materials.toast.created", "Material added successfully"));
             await load();
         } catch (e) {
             throw e; // let the dialog display the error inline
@@ -84,6 +91,7 @@ export default function MaterialsPage() {
         setSaving(true);
         try {
             await api.post("/materials", form);
+            showToast(t("materials.toast.created", "Material added successfully"));
             await load();
         } catch (e) {
             throw e;
@@ -97,6 +105,7 @@ export default function MaterialsPage() {
         try {
             await api.delete(`/materials/${deleteTarget._id}`);
             setDeleteTarget(null);
+            showToast(t("materials.toast.deleted", "Material deleted"));
             await load();
         } catch {
             setError(t("materials.deleteError", "Delete failed"));
@@ -240,7 +249,7 @@ export default function MaterialsPage() {
                 {typeFilter &&
                     (() => {
                         const totalValue = materials.reduce((s, m) => {
-                            const effectiveCost = (BULK_TYPES.includes(m.type) || FABRIC_TYPES.includes(m.type)) && m.unitsPerPack > 0
+                            const effectiveCost = m.unitsPerPack > 0
                                 ? m.costPerUnit / m.unitsPerPack
                                 : m.costPerUnit;
                             return s + m.quantity * effectiveCost;
@@ -263,7 +272,7 @@ export default function MaterialsPage() {
             <TableContainer component={Paper}>
                 <Table size="small">
                     <TableHead>
-                        <TableRow>
+                        <TableRow sx={{ '& th': { fontWeight: 600, bgcolor: 'background.default' } }}>
                             <TableCell>{t("materials.col.name", "Name")}</TableCell>
                             <TableCell>{t("materials.col.type", "Type")}</TableCell>
                             <TableCell>{t("materials.col.colour", "Colour")}</TableCell>
@@ -287,8 +296,6 @@ export default function MaterialsPage() {
                         ) : (
                             materials.map((m) => {
                                 const isLow = m.quantity <= m.lowStockThreshold;
-                                const isBulkType = BULK_TYPES.includes(m.type);
-                                const isFabricType = FABRIC_TYPES.includes(m.type);
                                 return (
                                     <TableRow key={m._id} hover sx={{ bgcolor: isLow ? "warning.light" : undefined, opacity: isLow ? 0.95 : 1 }}>
                                         <TableCell>
@@ -298,7 +305,12 @@ export default function MaterialsPage() {
                                                         <WarningAmberIcon fontSize="small" color="warning" />
                                                     </Tooltip>
                                                 )}
-                                                <Typography variant="body2" fontWeight={600}>
+                                                <Typography
+                                                    variant="body2"
+                                                    fontWeight={600}
+                                                    sx={{ cursor: "pointer", "&:hover": { color: "primary.main", textDecoration: "underline" } }}
+                                                    onClick={() => navigate(`/materials/${m._id}`)}
+                                                >
                                                     {m.name}
                                                 </Typography>
                                             </Stack>
@@ -383,6 +395,21 @@ export default function MaterialsPage() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={3000}
+                onClose={() => setToast((p) => ({ ...p, open: false }))}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={() => setToast((p) => ({ ...p, open: false }))}
+                    severity={toast.severity}
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 import ModuleSelectionPage from './pages/settings/ModuleSelectionPage';
 import MaterialTypesPage from './pages/settings/MaterialTypesPage';
+import MaterialTypeDetailPage from './pages/settings/MaterialTypeDetailPage';
 import MaterialSettingsPage from './pages/settings/MaterialSettingsPage';
 import ProductSettingsPage from './pages/settings/ProductSettingsPage';
 import OrderSettingsPage from './pages/settings/OrderSettingsPage';
@@ -19,6 +20,13 @@ import YearInReviewSettingsPage from './pages/settings/YearInReviewSettingsPage'
 import LanguageRegionPage from './pages/settings/LanguageRegionPage';
 import DashboardPage from './pages/DashboardPage';
 import MaterialsPage from './pages/MaterialsPage';
+import MaterialDetailPage from './pages/MaterialDetailPage';
+import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import CustomersPage from './pages/CustomersPage';
+import CustomerDetailPage from './pages/CustomerDetailPage';
 
 // ── Protected route wrapper ───────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -51,6 +59,7 @@ function AppRoutes() {
                                 <Route index element={<Navigate to="modules" replace />} />
                                 <Route path="modules" element={<ModuleSelectionPage />} />
                                 <Route path="material-types" element={<MaterialTypesPage />} />
+                                <Route path="material-types/:id" element={<MaterialTypeDetailPage />} />
                                 <Route path="materials" element={<MaterialSettingsPage />} />
                                 <Route path="products" element={<ProductSettingsPage />} />
                                 <Route path="orders" element={<OrderSettingsPage />} />
@@ -73,6 +82,13 @@ function AppRoutes() {
                             <Routes>
                                 <Route index element={<DashboardPage />} />
                                 <Route path="materials" element={<MaterialsPage />} />
+                                <Route path="materials/:id" element={<MaterialDetailPage />} />
+                                <Route path="products" element={<ProductsPage />} />
+                                <Route path="products/:id" element={<ProductDetailPage />} />
+                                <Route path="orders" element={<OrdersPage />} />
+                                <Route path="orders/:id" element={<OrderDetailPage />} />
+                                <Route path="customers" element={<CustomersPage />} />
+                                <Route path="customers/:id" element={<CustomerDetailPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="*" element={<NotFoundPage />} />
                             </Routes>

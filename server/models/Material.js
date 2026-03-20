@@ -13,6 +13,8 @@ const materialSchema = new mongoose.Schema(
         supplier:          { type: String, trim: true, default: null },
         sku:               { type: String, trim: true, default: null },
         description:       { type: String, trim: true, default: null },
+        createdBy:         { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        updatedBy:         { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     },
     { timestamps: true },
 );
