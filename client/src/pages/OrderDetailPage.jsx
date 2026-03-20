@@ -310,6 +310,41 @@ export default function OrderDetailPage() {
                 </Grid>
             </Grid>
 
+            {/* Record Info */}
+            <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
+                    Record Info
+                </Typography>
+                <Grid container spacing={2}>
+                    {order.createdAt && (
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Created
+                            </Typography>
+                            {order.createdBy?.name && (
+                                <Typography variant="body1" fontWeight={600}>{order.createdBy.name}</Typography>
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                                {new Date(order.createdAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
+                            </Typography>
+                        </Grid>
+                    )}
+                    {order.updatedAt && (
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Last Updated
+                            </Typography>
+                            {order.updatedBy?.name && (
+                                <Typography variant="body1" fontWeight={600}>{order.updatedBy.name}</Typography>
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                                {new Date(order.updatedAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
+                            </Typography>
+                        </Grid>
+                    )}
+                </Grid>
+            </Paper>
+
             <OrderFormDialog open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={order} />
 
             <Snackbar
