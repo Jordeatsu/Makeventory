@@ -216,7 +216,7 @@ app.post("/api/database/ensure-running", async (_req, res) => {
 
 // Step 6 / 7 – Validate DB name, write .env to server/
 app.post("/api/database/create", async (req, res) => {
-    const { dbName } = req.body ?? {};
+    const { dbName, language = 'en', currency = 'GBP' } = req.body ?? {};
 
     if (!dbName || !/^[a-zA-Z]+$/.test(dbName)) {
         return res.status(400).json({ error: "Database name must contain letters only." });
@@ -226,7 +226,8 @@ app.post("/api/database/create", async (req, res) => {
     const envContentServer = `MONGODB_URI=mongodb://localhost:27017/${dbName}\n`
         + `PORT=5001\n`
         + `JWT_SECRET=${jwtSecret}\n`
-        + `CLIENT_ORIGIN=http://localhost:3000\n`;
+        + `CLIENT_ORIGIN=http://localhost:3000\n`
+        + `COOKIE_SECURE=false\n`;
 
     const envPathServer = path.join(__dirname, "..", "server", ".env");
 
@@ -241,6 +242,11 @@ app.post("/api/database/create", async (req, res) => {
             const col = client.db(dbName).collection("modules");
             await col.deleteMany({});
             await col.insertMany(SEED_MODULES.map((m) => ({ ...m, createdAt: new Date(), updatedAt: new Date() })));
+
+            // Seed global settings (language + currency from locale step)
+            const settingsCol = client.db(dbName).collection("globalsettings");
+            await settingsCol.deleteMany({});
+            await settingsCol.insertOne({ language, currency, createdAt: new Date(), updatedAt: new Date() });
         } finally {
             await client.close();
         }

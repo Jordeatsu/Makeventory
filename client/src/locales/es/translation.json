@@ -1,0 +1,198 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "create": "Crear",
+    "close": "Cerrar",
+    "ok": "Aceptar",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "status": "Estado",
+    "name": "Nombre",
+    "description": "Descripción",
+    "actions": "Acciones",
+    "loading": "Cargando...",
+    "saveChanges": "Guardar cambios",
+    "signOut": "Cerrar sesión",
+    "goBack": "Volver",
+    "on": "Activado",
+    "off": "Desactivado",
+    "noDataYet": "Aún no hay datos.",
+    "serverError": "Error del servidor. Por favor, inténtelo de nuevo."
+  },
+  "app": {
+    "name": "Makeventory",
+    "tagline": "Gestor de inventario"
+  },
+  "auth": {
+    "usernameOrEmail": "Nombre de usuario o correo electrónico",
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión...",
+    "signInToContinue": "Inicia sesión para continuar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
+  },
+  "nav": {
+    "settings": "Configuración",
+    "myProfile": "Mi perfil",
+    "signOut": "Cerrar sesión",
+    "backToApp": "Volver a la aplicación",
+    "openMenu": "Abrir menú"
+  },
+  "modules": {
+    "Inventory": "Inventario",
+    "Products": "Productos",
+    "Orders": "Pedidos",
+    "Customers": "Clientes",
+    "Year Review": "Revisión anual"
+  },
+  "usageTypes": {
+    "wholeItem": "Artículo completo",
+    "percentage": "Porcentaje"
+  },
+  "units": {
+    "mm": "mm",
+    "cm": "cm",
+    "m": "m",
+    "in": "pulg",
+    "ft": "pie",
+    "yd": "yarda",
+    "piece": "pieza"
+  },
+  "settings": {
+    "title": "Configuración",
+    "nav": {
+      "moduleSelection": "Selección de módulos",
+      "materialTypes": "Tipos de materiales",
+      "materialSettings": "Configuración de materiales",
+      "productSettings": "Configuración de productos",
+      "orderSettings": "Configuración de pedidos",
+      "customerSettings": "Configuración de clientes",
+      "yearInReviewSettings": "Configuración del resumen anual",
+      "languageRegion": "Idioma y región"
+    },
+    "moduleSelection": {
+      "title": "Selección de módulos",
+      "description": "Activa o desactiva módulos para controlar qué secciones aparecen en la navegación principal.",
+      "saved": "Cambios guardados."
+    },
+    "materialTypes": {
+      "title": "Tipos de materiales",
+      "newButton": "Nuevo tipo de material",
+      "noData": "Aún no hay tipos de materiales.",
+      "table": {
+        "usageType": "Tipo de uso",
+        "unit": "Unidad"
+      },
+      "modal": {
+        "createTitle": "Nuevo tipo de material",
+        "editTitle": "Editar tipo de material",
+        "usageTypeLabel": "Tipo de uso",
+        "unitLabel": "Unidad de medida",
+        "unitRequired": "La unidad de medida es obligatoria para los tipos de porcentaje.",
+        "activeLabel": "Activo",
+        "nameRequired": "El nombre es obligatorio."
+      },
+      "deleteBlocked": {
+        "title": "No se puede eliminar el tipo de material",
+        "usedByOne": "Este tipo de material es utilizado por el siguiente material y no puede eliminarse:",
+        "usedByMany": "Este tipo de material es utilizado por los siguientes materiales y no puede eliminarse:"
+      }
+    },
+    "materialSettings": {
+      "title": "Configuración de materiales",
+      "editTitle": "Editar configuración de materiales",
+      "defaultLowStock": "Umbral de stock bajo predeterminado",
+      "defaultLowStockDesc": "Se rellena automáticamente al crear un nuevo material",
+      "currency": "Moneda",
+      "currencyDesc": "Símbolo mostrado junto a los costes de los materiales",
+      "autoDeduct": "Deducir stock automáticamente al completar un pedido",
+      "autoDeductDesc": "Reduce las cantidades de materiales cuando un pedido se marca como completado",
+      "trackFractional": "Rastrear cantidades fraccionarias",
+      "trackFractionalDesc": "Rastrear materiales a granel con 2 decimales en lugar de números enteros",
+      "invalidThreshold": "El umbral de stock bajo predeterminado debe ser 0 o más."
+    },
+    "productSettings": {
+      "title": "Configuración de productos",
+      "description": "Configure los ajustes predeterminados para los productos, incluidas las reglas de precios y las preferencias de visualización."
+    },
+    "orderSettings": {
+      "title": "Configuración de pedidos",
+      "description": "Configure los estados de los pedidos, los valores predeterminados y las preferencias de gestión de pedidos."
+    },
+    "customerSettings": {
+      "title": "Configuración de clientes",
+      "description": "Configure los campos de registro de clientes, los valores predeterminados y las preferencias de gestión de clientes."
+    },
+    "yearInReview": {
+      "title": "Configuración del resumen anual",
+      "description": "Configure qué métricas y rangos de fechas aparecen en el informe del resumen anual."
+    },
+    "languageRegion": {
+      "title": "Idioma y región",
+      "description": "Cambia el idioma y la moneda usados en toda la aplicación.",
+      "language": "Idioma",
+      "currency": "Moneda",
+      "saved": "Idioma y moneda actualizados."
+    }
+  },
+  "profile": {
+    "title": "Perfil",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "role": "Función",
+    "userId": "ID de usuario",
+    "noId": "No se proporcionó ningún ID de usuario.",
+    "loadFailed": "No se pudo cargar el perfil."
+  },
+  "notFound": {
+    "title": "404",
+    "subtitle": "Página no encontrada",
+    "message": "La página que buscas no existe o ha sido movida."
+  },
+  "locale": {
+    "title": "Idioma y moneda",
+    "subtitle": "Elige tu idioma y moneda preferidos. Puedes cambiarlos más tarde en la configuración.",
+    "language": "Idioma",
+    "currency": "Moneda",
+    "continue": "Continuar"
+  },
+  "dashboard": {
+    "title": "Panel de control",
+    "subtitle": "Resumen de tu negocio",
+    "loadError": "No se pudieron cargar los datos del panel.",
+    "welcome": "Bienvenido de nuevo, {{name}}",
+    "quickAccess": "Acceso rápido",
+    "noModules": "No hay módulos habilitados aún. Ve a la configuración para habilitarlos.",
+    "goToSettings": "Ir a configuración",
+    "totalOrders": "Pedidos totales",
+    "activeOrders": "{{count}} activos",
+    "totalRevenue": "Ingresos totales",
+    "allTime": "Desde siempre",
+    "netProfit": "Beneficio neto",
+    "margin": "{{value}}% de margen",
+    "materialsInStock": "Materiales en stock",
+    "lowStockCount": "{{count}} stock bajo",
+    "ordersByStatus": "Pedidos por estado",
+    "noOrderData": "Aún no hay datos de pedidos.",
+    "stockOverview": "Resumen de stock",
+    "viewAll": "Ver todo",
+    "totalStockValue": "Valor total del stock (al coste)",
+    "allStocked": "\u2713 Todos los materiales están suficientemente abastecidos",
+    "lowStockWarning": "{{count}} material con stock bajo",
+    "lowStockWarningPlural": "{{count}} materiales con stock bajo",
+    "recentOrders": "Pedidos recientes",
+    "noOrders": "Aún no hay pedidos.",
+    "colDate": "Fecha",
+    "colCustomer": "Cliente",
+    "colStatus": "Estado",
+    "colTotalCharged": "Total cobrado",
+    "colProfit": "Beneficio",
+    "totalChargedTooltip": "Importe cobrado al cliente"
+  }
+}
