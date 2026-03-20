@@ -17,17 +17,43 @@ router.get('/material-types', requireAuth, async (_req, res) => {
     }
 });
 
+// Get single material type by ID
+router.get('/material-types/:id', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!isValidId(id)) return res.status(400).json({ error: 'Invalid ID.' });
+        const doc = await MaterialType.findById(id)
+            .populate('createdBy', 'firstName lastName')
+            .populate('updatedBy', 'firstName lastName');
+        if (!doc) return res.status(404).json({ error: 'Material type not found.' });
+        const mt = doc.toObject();
+        const label = (u) => u ? { _id: u._id, name: `${u.firstName} ${u.lastName}`.trim() } : null;
+        res.json({ type: { ...mt, createdBy: label(mt.createdBy), updatedBy: label(mt.updatedBy) } });
+    } catch {
+        res.status(500).json({ error: 'Server error.' });
+    }
+});
+
 // Create
 router.post('/material-types', requireAuth, async (req, res) => {
     try {
-        const { name, description, usageType, unitOfMeasure, isActive } = req.body ?? {};
+        const { name, description, usageType, unitOfMeasure, isActive,
+                defaultStockQty, lowStockThreshold, defaultCostPrice, purchaseQty } = req.body ?? {};
         if (!name?.trim()) return res.status(400).json({ error: 'Name is required.' });
+        const parseNum = (v) => (v !== '' && v != null && !isNaN(Number(v))) ? Number(v) : null;
+        const userId = req.user.sub;
         const type = await MaterialType.create({
-            name:          name.trim(),
-            description:   description?.trim() || null,
+            name:              name.trim(),
+            description:       description?.trim() || null,
             usageType,
-            unitOfMeasure: unitOfMeasure || null,
-            isActive:      isActive !== false,
+            unitOfMeasure:     unitOfMeasure || null,
+            isActive:          isActive !== false,
+            defaultStockQty:   parseNum(defaultStockQty),
+            lowStockThreshold: parseNum(lowStockThreshold),
+            defaultCostPrice:  parseNum(defaultCostPrice),
+            purchaseQty:       parseNum(purchaseQty),
+            createdBy:         userId,
+            updatedBy:         userId,
         });
         res.status(201).json({ type });
     } catch (err) {
@@ -41,16 +67,23 @@ router.put('/material-types/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: 'Invalid ID.' });
-        const { name, description, usageType, unitOfMeasure, isActive } = req.body ?? {};
+        const { name, description, usageType, unitOfMeasure, isActive,
+                defaultStockQty, lowStockThreshold, defaultCostPrice, purchaseQty } = req.body ?? {};
         if (!name?.trim()) return res.status(400).json({ error: 'Name is required.' });
+        const parseNum = (v) => (v !== '' && v != null && !isNaN(Number(v))) ? Number(v) : null;
         const type = await MaterialType.findByIdAndUpdate(
             id,
             {
-                name:          name.trim(),
-                description:   description?.trim() || null,
+                name:              name.trim(),
+                description:       description?.trim() || null,
                 usageType,
-                unitOfMeasure: unitOfMeasure || null,
+                unitOfMeasure:     unitOfMeasure || null,
                 isActive,
+                defaultStockQty:   parseNum(defaultStockQty),
+                lowStockThreshold: parseNum(lowStockThreshold),
+                defaultCostPrice:  parseNum(defaultCostPrice),
+                purchaseQty:       parseNum(purchaseQty),
+                updatedBy:         req.user.sub,
             },
             { new: true, runValidators: true },
         );

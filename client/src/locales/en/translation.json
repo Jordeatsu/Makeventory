@@ -51,15 +51,18 @@
   },
   "usageTypes": {
     "wholeItem": "Whole Item",
-    "percentage": "Percentage"
+    "percentage": "Percentage",
+    "bulk": "Bulk"
   },
   "units": {
     "mm": "mm",
+    "mm2": "mm²",
     "cm": "cm",
+    "cm2": "cm²",
     "m": "m",
+    "m2": "m²",
     "in": "in",
-    "ft": "ft",
-    "yd": "yd",
+    "in2": "in²",
     "piece": "piece"
   },
   "settings": {
@@ -94,7 +97,16 @@
         "unitLabel": "Unit of measure",
         "unitRequired": "Unit of measure is required for Percentage types.",
         "activeLabel": "Active",
-        "nameRequired": "Name is required."
+        "nameRequired": "Name is required.",
+        "defaultsSection": "Default Stock Values (Optional)",
+        "defaultStockQty": "Starting Stock Quantity",
+        "defaultStockQtyHelp": "How much of this material you currently have on hand",
+        "lowStockThreshold": "Low Stock Alert Threshold",
+        "lowStockThresholdHelp": "Get notified when stock falls below this amount",
+        "defaultCostPrice": "Default Cost Price",
+        "defaultCostPriceHelp": "The cost of one unit of this material",
+        "purchaseQty": "Purchase Quantity",
+        "purchaseQtyHelp": "How much you receive per purchase (e.g. per roll, per ream)"
       },
       "deleteBlocked": {
         "title": "Cannot delete material type",

@@ -51,15 +51,18 @@
   },
   "usageTypes": {
     "wholeItem": "Article entier",
-    "percentage": "Pourcentage"
+    "percentage": "Pourcentage",
+    "bulk": "En vrac"
   },
   "units": {
     "mm": "mm",
+    "mm2": "mm²",
     "cm": "cm",
+    "cm2": "cm²",
     "m": "m",
+    "m2": "m²",
     "in": "po",
-    "ft": "pi",
-    "yd": "vg",
+    "in2": "po²",
     "piece": "pièce"
   },
   "settings": {
@@ -94,7 +97,16 @@
         "unitLabel": "Unité de mesure",
         "unitRequired": "L'unité de mesure est obligatoire pour les types en pourcentage.",
         "activeLabel": "Actif",
-        "nameRequired": "Le nom est obligatoire."
+        "nameRequired": "Le nom est obligatoire.",
+        "defaultsSection": "Valeurs de stock par défaut (facultatif)",
+        "defaultStockQty": "Quantité en stock initiale",
+        "defaultStockQtyHelp": "La quantité de ce matériau que vous avez actuellement en stock",
+        "lowStockThreshold": "Seuil d'alerte stock faible",
+        "lowStockThresholdHelp": "Recevez une notification quand le stock tombe en dessous de ce seuil",
+        "defaultCostPrice": "Prix de revient par défaut",
+        "defaultCostPriceHelp": "Le coût d'une unité de ce matériau",
+        "purchaseQty": "Quantité par achat",
+        "purchaseQtyHelp": "La quantité reçue par achat (ex. par rouleau, par rame)"
       },
       "deleteBlocked": {
         "title": "Impossible de supprimer le type de matériau",

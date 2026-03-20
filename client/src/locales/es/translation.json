@@ -51,15 +51,18 @@
   },
   "usageTypes": {
     "wholeItem": "Artículo completo",
-    "percentage": "Porcentaje"
+    "percentage": "Porcentaje",
+    "bulk": "A granel"
   },
   "units": {
     "mm": "mm",
+    "mm2": "mm²",
     "cm": "cm",
+    "cm2": "cm²",
     "m": "m",
+    "m2": "m²",
     "in": "pulg",
-    "ft": "pie",
-    "yd": "yarda",
+    "in2": "pulg²",
     "piece": "pieza"
   },
   "settings": {
@@ -94,7 +97,16 @@
         "unitLabel": "Unidad de medida",
         "unitRequired": "La unidad de medida es obligatoria para los tipos de porcentaje.",
         "activeLabel": "Activo",
-        "nameRequired": "El nombre es obligatorio."
+        "nameRequired": "El nombre es obligatorio.",
+        "defaultsSection": "Valores de stock predeterminados (opcional)",
+        "defaultStockQty": "Cantidad inicial en stock",
+        "defaultStockQtyHelp": "Cuánto de este material tienes actualmente en stock",
+        "lowStockThreshold": "Umbral de alerta de stock bajo",
+        "lowStockThresholdHelp": "Recibe una notificación cuando el stock baje de esta cantidad",
+        "defaultCostPrice": "Precio de coste predeterminado",
+        "defaultCostPriceHelp": "El coste de una unidad de este material",
+        "purchaseQty": "Cantidad por compra",
+        "purchaseQtyHelp": "Cuánto recibes por compra (p. ej. por rollo, por resma)"
       },
       "deleteBlocked": {
         "title": "No se puede eliminar el tipo de material",
