@@ -300,6 +300,41 @@ export default function ProductDetailPage() {
                 )}
             </Grid>
 
+            {/* Record Info */}
+            <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
+                    Record Info
+                </Typography>
+                <Grid container spacing={2}>
+                    {product.createdAt && (
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Created
+                            </Typography>
+                            {product.createdBy?.name && (
+                                <Typography variant="body1" fontWeight={600}>{product.createdBy.name}</Typography>
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                                {new Date(product.createdAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
+                            </Typography>
+                        </Grid>
+                    )}
+                    {product.updatedAt && (
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                                Last Updated
+                            </Typography>
+                            {product.updatedBy?.name && (
+                                <Typography variant="body1" fontWeight={600}>{product.updatedBy.name}</Typography>
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                                {new Date(product.updatedAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
+                            </Typography>
+                        </Grid>
+                    )}
+                </Grid>
+            </Paper>
+
             <ProductFormDialog open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={product} />
 
             <Snackbar
