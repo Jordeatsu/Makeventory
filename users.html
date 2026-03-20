@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>User Details | UKITF2F Check-In</title>
+
+        <!-- Material-UI & Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+        <!-- Local Stylesheets -->
+        <link rel="stylesheet" href="/styles.css" />
+        <link rel="stylesheet" href="/settingsNavBar.css" />
+
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Roboto", sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                line-height: 1.6;
+                color: #333;
+            }
+
+            /* Material-UI Sidebar Styles */
+            .mui-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 240px;
+                height: 100vh;
+                background: white;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .mui-sidebar-header {
+                padding: 20px;
+                border-bottom: 1px solid #e8eaff;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .mui-logo {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 18px;
+                font-weight: 500;
+            }
+
+            .mui-logo i {
+                font-size: 24px;
+            }
+
+            .mui-nav-section {
+                flex: 1;
+                padding: 20px 0;
+                overflow-y: auto;
+            }
+
+            .mui-nav-items {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                padding: 0 16px;
+            }
+
+            .mui-nav-group {
+                margin-bottom: 8px;
+            }
+
+            .mui-nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                text-decoration: none;
+                color: #333;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+            }
+
+            .mui-nav-item:hover {
+                background-color: rgba(102, 126, 234, 0.1);
+                transform: translateX(4px);
+                color: #667eea;
+            }
+
+            .mui-nav-item.mui-nav-active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .mui-nav-toggle {
+                cursor: pointer;
+                justify-content: space-between;
+            }
+
+            .mui-nav-toggle:hover {
+                background-color: rgba(102, 126, 234, 0.05);
+            }
+
+            .mui-nav-children {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                padding-left: 16px;
+            }
+
+            .mui-nav-children.mui-nav-expanded {
+                max-height: 500px;
+                padding-top: 8px;
+            }
+
+            .mui-nav-child {
+                margin-bottom: 4px;
+                font-size: 13px;
+                opacity: 0.9;
+            }
+
+            .mui-nav-icon {
+                font-size: 20px !important;
+            }
+
+            .mui-nav-text {
+                flex: 1;
+            }
+
+            .mui-nav-expand {
+                font-size: 18px !important;
+                transition: transform 0.2s ease;
+            }
+
+            .mui-sidebar-footer {
+                padding: 16px;
+                border-top: 1px solid #e8eaff;
+            }
+
+            :root {
+                --primary-color: #667eea;
+                --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                --secondary-color: #f8f9ff;
+                --background-light: #ffffff;
+                --border-color: #e8eaff;
+                --text-primary: #333333;
+                --text-secondary: #6b7280;
+                --success-color: #10b981;
+                --error-color: #ef4444;
+                --warning-color: #f59e0b;
+                --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .mui-content {
+                margin-left: 240px;
+                padding: 20px;
+                min-height: 100vh;
+                background: transparent;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Page Layout */
+            .user-details-container {
+                background: white;
+                border-radius: 16px;
+                padding: 32px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                max-width: 1200px;
+                width: 100%;
+                margin: 0 auto;
+                animation: fadeInUp 0.6s ease-out;
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .header-section {
+                text-align: center;
+                margin-bottom: 40px;
+                color: var(--text-primary);
+            }
+
+            .page-title {
+                color: var(--text-primary);
+                font-size: 2.5rem;
+                font-weight: 300;
+                background: var(--primary-gradient);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+            }
+
+            .page-title i {
+                font-size: 2.5rem;
+                color: var(--primary-color);
+            }
+
+            .page-subtitle {
+                color: var(--text-secondary);
+                font-size: 1.1rem;
+                font-weight: 300;
+                opacity: 0.9;
+            }
+
+            /* User Details Card */
+            .user-details-card {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                margin-bottom: 24px;
+            }
+
+            .card-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 32px;
+                display: flex;
+                align-items: center;
+                gap: 24px;
+            }
+
+            .user-avatar {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+                font-weight: 700;
+                border: 3px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .user-header-info {
+                flex: 1;
+            }
+
+            .user-name {
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .user-role {
+                font-size: 1.1rem;
+                opacity: 0.9;
+                margin-bottom: 4px;
+            }
+
+            .user-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 12px;
+                border-radius: 20px;
+                background: rgba(255, 255, 255, 0.2);
+                font-size: 0.9rem;
+                font-weight: 500;
+            }
+
+            .status-active {
+                background: rgba(76, 175, 80, 0.3);
+            }
+
+            .status-inactive {
+                background: rgba(244, 67, 54, 0.3);
+            }
+
+            .card-body {
+                padding: 32px;
+            }
+
+            /* Action Sections */
+            .actions-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 24px;
+                margin-bottom: 32px;
+            }
+
+            .action-card {
+                background: #f8f9ff;
+                border: 1px solid #e8eaff;
+                border-radius: 12px;
+                padding: 24px;
+                transition: all 0.3s ease;
+            }
+
+            .action-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+            }
+
+            .action-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            .action-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+            }
+
+            .action-title {
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: #333;
+            }
+
+            .action-description {
+                color: #666;
+                font-size: 0.95rem;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            /* Buttons */
+            .action-button {
+                width: 100%;
+                padding: 12px 20px;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+            }
+
+            .btn-warning {
+                background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+                color: white;
+            }
+
+            .btn-warning:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(255, 152, 0, 0.3);
+            }
+
+            .btn-danger {
+                background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+                color: white;
+            }
+
+            .btn-danger:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(244, 67, 54, 0.3);
+            }
+
+            .btn-success {
+                background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+                color: white;
+            }
+
+            .btn-success:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+            }
+
+            /* User Information Grid */
+            .user-info-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-bottom: 32px;
+            }
+
+            .info-item {
+                background: #f8f9ff;
+                border: 1px solid #e8eaff;
+                border-radius: 8px;
+                padding: 20px;
+            }
+
+            .info-label {
+                color: #666;
+                font-size: 0.85rem;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+            }
+
+            .info-value {
+                color: #333;
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+
+            /* Back Button */
+            .back-btn {
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                cursor: pointer;
+                box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+            }
+
+            .back-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            /* Modal Styles */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+            }
+
+            .modal-content {
+                background-color: white;
+                margin: 5% auto;
+                padding: 0;
+                border-radius: 16px;
+                width: 90%;
+                max-width: 500px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                overflow: hidden;
+            }
+
+            .modal-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 24px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .modal-title {
+                font-size: 1.3rem;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .modal-body {
+                padding: 24px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .form-input {
+                width: 100%;
+                padding: 12px 16px;
+                border: 2px solid #e8eaff;
+                border-radius: 8px;
+                font-size: 1rem;
+                transition: border-color 0.3s ease;
+            }
+
+            .form-input:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .modal-actions {
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+                padding: 0 24px 24px;
+            }
+
+            .btn-secondary {
+                background: #f5f5f5;
+                color: #666;
+                border: 1px solid #ddd;
+            }
+
+            .btn-secondary:hover {
+                background: #eeeeee;
+            }
+
+            /* Activity Log */
+            .activity-log {
+                background: #f8f9ff;
+                border: 1px solid #e8eaff;
+                border-radius: 12px;
+                padding: 24px;
+                margin-top: 24px;
+            }
+
+            .activity-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .activity-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 16px;
+                padding: 16px 0;
+                border-bottom: 1px solid #e8eaff;
+            }
+
+            .activity-item:last-child {
+                border-bottom: none;
+            }
+
+            .activity-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                flex-shrink: 0;
+            }
+
+            .activity-content {
+                flex: 1;
+            }
+
+            .activity-text {
+                color: #333;
+                font-weight: 500;
+                margin-bottom: 4px;
+            }
+
+            .activity-time {
+                color: #666;
+                font-size: 0.85rem;
+            }
+
+            .login-details {
+                color: #888;
+                font-size: 0.9rem;
+                font-weight: normal;
+            }
+
+            .login-user-agent {
+                color: #999;
+                font-size: 0.75rem;
+                margin-top: 2px;
+                font-style: italic;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .mui-content {
+                    margin-left: 0;
+                    padding: 16px;
+                }
+
+                .mui-sidebar {
+                    transform: translateX(-100%);
+                    transition: transform 0.3s ease;
+                }
+
+                .page-title {
+                    font-size: 2rem;
+                }
+
+                .actions-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .user-info-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .card-header {
+                    flex-direction: column;
+                    text-align: center;
+                }
+            }
+
+            #navbar-container {
+                display: none;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner-circle"></div>
+            <div>Loading User Record...</div>
+        </div>
+
+        <script src="/fetch/fetchSettingsNavigationBarMUI.js"></script>
+        <div id="navbar-container">
+            <!-- Auto Populate -->
+        </div>
+
+        <!-- Main Content -->
+        <div class="mui-content" id="mainContent">
+            <div class="user-details-container">
+                <div class="header-section">
+                    <h1 class="page-title">
+                        <i class="material-icons">person</i>
+                        User Details
+                    </h1>
+                    <p class="page-subtitle">Manage user account and permissions</p>
+                </div>
+
+                <div class="user-details-card">
+                    <div class="card-header">
+                        <div class="user-avatar" id="userAvatar">
+                            <!-- User initials will be inserted here -->
+                        </div>
+                        <div class="user-header-info">
+                            <h2 id="userName" class="user-name">Loading...</h2>
+                            <p id="userRole" class="user-role">Loading role...</p>
+                            <span id="userStatus" class="user-status">
+                                <i class="material-icons">loading</i>
+                                Loading status...
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- User Information Grid -->
+                        <div class="user-info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Username</div>
+                                <div class="info-value" id="userUsername">Loading...</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">First Name</div>
+                                <div class="info-value" id="userFirstName">Loading...</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Last Name</div>
+                                <div class="info-value" id="userLastName">Loading...</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Account Status</div>
+                                <div class="info-value" id="userAccountStatus">Loading...</div>
+                            </div>
+                        </div>
+
+                        <!-- Action Cards Grid -->
+                        <div class="actions-grid">
+                            <!-- Change Password -->
+                            <div class="action-card">
+                                <div class="action-header">
+                                    <div class="action-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white">
+                                        <i class="material-icons">lock_reset</i>
+                                    </div>
+                                    <div class="action-title">Change Password</div>
+                                </div>
+                                <div class="action-description">Reset the user's password. The user will be required to log in with the new password.</div>
+                                <button class="action-button btn-primary" id="changePasswordBtn">
+                                    <i class="material-icons">lock_reset</i>
+                                    Change Password
+                                </button>
+                            </div>
+
+                            <!-- Edit User Details -->
+                            <div class="action-card">
+                                <div class="action-header">
+                                    <div class="action-icon" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white">
+                                        <i class="material-icons">edit</i>
+                                    </div>
+                                    <div class="action-title">Edit User Details</div>
+                                </div>
+                                <div class="action-description">Update the user's name, username, and role assignments.</div>
+                                <button class="action-button btn-warning" id="editUserBtn">
+                                    <i class="material-icons">edit</i>
+                                    Edit Details
+                                </button>
+                            </div>
+
+                            <!-- Toggle User Status -->
+                            <div class="action-card">
+                                <div class="action-header">
+                                    <div class="action-icon" id="statusActionIcon" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white">
+                                        <i class="material-icons" id="statusActionIconContent">toggle_on</i>
+                                    </div>
+                                    <div class="action-title" id="statusActionTitle">Activate User</div>
+                                </div>
+                                <div class="action-description" id="statusActionDescription">Activate this user account to allow login access.</div>
+                                <button class="action-button btn-success" id="toggleStatusBtn">
+                                    <i class="material-icons" id="statusBtnIcon">check_circle</i>
+                                    <span id="statusBtnText">Activate User</span>
+                                </button>
+                            </div>
+
+                            <!-- Delete User -->
+                            <div class="action-card">
+                                <div class="action-header">
+                                    <div class="action-icon" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); color: white">
+                                        <i class="material-icons">delete_forever</i>
+                                    </div>
+                                    <div class="action-title">Delete User</div>
+                                </div>
+                                <div class="action-description">Permanently remove this user account. This action cannot be undone.</div>
+                                <button class="action-button btn-danger" id="deleteUserBtn">
+                                    <i class="material-icons">delete_forever</i>
+                                    Delete User
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Activity Log -->
+                        <div class="activity-log">
+                            <div class="activity-header">
+                                <i class="material-icons" style="color: #667eea">history</i>
+                                <h3 style="margin: 0; color: #333">Recent Activity</h3>
+                            </div>
+                            <div id="activityLog">
+                                <!-- Login History will be dynamically inserted here -->
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="material-icons">person_add</i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-text">Account created</div>
+                                        <div class="activity-time" id="accountCreatedTime">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div id="changePasswordModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <i class="material-icons">lock_reset</i>
+                    <h3 class="modal-title">Change Password</h3>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="form-group">
+                            <label class="form-label" for="newPassword">New Password</label>
+                            <input type="password" class="form-input" id="newPassword" placeholder="Enter new password" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">Confirm Password</label>
+                            <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password" required />
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="action-button btn-secondary" id="cancelPasswordBtn">Cancel</button>
+                    <button type="submit" form="changePasswordForm" class="action-button btn-primary">
+                        <i class="material-icons">save</i>
+                        Update Password
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div id="editUserModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <i class="material-icons">edit</i>
+                    <h3 class="modal-title">Edit User Details</h3>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <div class="form-group">
+                            <label class="form-label" for="editFirstName">First Name</label>
+                            <input type="text" class="form-input" id="editFirstName" placeholder="Enter first name" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editLastName">Last Name</label>
+                            <input type="text" class="form-input" id="editLastName" placeholder="Enter last name" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editUsername">Username</label>
+                            <input type="text" class="form-input" id="editUsername" placeholder="Enter username" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editRole">Role</label>
+                            <select class="form-input" id="editRole" required>
+                                <option value="">Select a role...</option>
+                                <!-- Roles will be populated dynamically -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="action-button btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" form="editUserForm" class="action-button btn-warning">
+                        <i class="material-icons">save</i>
+                        Update User
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteConfirmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <i class="material-icons">delete_forever</i>
+                    <h3 class="modal-title">Delete User</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to permanently delete this user account?</p>
+                    <p><strong>This action cannot be undone.</strong></p>
+                    <p>User: <span id="deleteUserName" style="font-weight: bold; color: #f44336"></span></p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="action-button btn-secondary" id="cancelDeleteBtn">Cancel</button>
+                    <button type="button" class="action-button btn-danger" id="confirmDeleteBtn">
+                        <i class="material-icons">delete_forever</i>
+                        Delete User
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Change Confirmation Modal -->
+        <div id="statusConfirmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <i class="material-icons" id="statusModalIcon">toggle_on</i>
+                    <h3 class="modal-title" id="statusModalTitle">Change User Status</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="statusModalMessage">Are you sure you want to change this user's status?</p>
+                    <p>User: <span id="statusUserName" style="font-weight: bold"></span></p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="action-button btn-secondary" id="cancelStatusBtn">Cancel</button>
+                    <button type="button" class="action-button btn-primary" id="confirmStatusBtn">
+                        <i class="material-icons" id="confirmStatusIcon">toggle_on</i>
+                        <span id="confirmStatusText">Activate User</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button id="backButton" class="back-btn">
+            <i class="material-icons">arrow_back</i>
+        </button>
+
+        <script src="/javascript/windowback.js"></script>
+        <script src="/javascript/displayUserData.js"></script>
+    </body>
+</html>

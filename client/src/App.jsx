@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { GlobalSettingsProvider } from './context/GlobalSettingsContext';
+import { BrandingProvider } from './context/BrandingContext';
 import LoginPage from './pages/LoginPage';
 import Layout from './components/Layout';
 import SettingsLayout from './components/SettingsLayout';
@@ -17,6 +18,7 @@ import CustomerSettingsPage from './pages/settings/CustomerSettingsPage';
 import YearInReviewSettingsPage from './pages/settings/YearInReviewSettingsPage';
 import LanguageRegionPage from './pages/settings/LanguageRegionPage';
 import DashboardPage from './pages/DashboardPage';
+import MaterialsPage from './pages/MaterialsPage';
 
 // ── Protected route wrapper ───────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -70,6 +72,7 @@ function AppRoutes() {
                         <Layout>
                             <Routes>
                                 <Route index element={<DashboardPage />} />
+                                <Route path="materials" element={<MaterialsPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="*" element={<NotFoundPage />} />
                             </Routes>
@@ -84,9 +87,11 @@ function AppRoutes() {
 export default function App() {
     return (
         <GlobalSettingsProvider>
-            <AuthProvider>
-                <AppRoutes />
-            </AuthProvider>
+            <BrandingProvider>
+                <AuthProvider>
+                    <AppRoutes />
+                </AuthProvider>
+            </BrandingProvider>
         </GlobalSettingsProvider>
     );
 }

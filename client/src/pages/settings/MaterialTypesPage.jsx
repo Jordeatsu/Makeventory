@@ -56,7 +56,7 @@ export default function MaterialTypesPage() {
     };
 
     return (
-        <Box sx={{ maxWidth: 860 }}>
+        <Box sx={{ maxWidth: 860, mx: 'auto' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <CategoryIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
@@ -72,6 +72,21 @@ export default function MaterialTypesPage() {
             </Box>
 
             {fetchError && <Alert severity="error" sx={{ mb: 2 }}>{fetchError}</Alert>}
+
+            {!loading && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 3 }}>
+                    {[
+                        { label: t('common.total'),    value: types.length,                                     color: 'text.primary'   },
+                        { label: t('common.active'),   value: types.filter((mt) => mt.isActive).length,         color: 'success.main'   },
+                        { label: t('common.inactive'), value: types.filter((mt) => !mt.isActive).length,        color: 'text.secondary' },
+                    ].map(({ label, value, color }) => (
+                        <Paper key={label} variant="outlined" sx={{ p: 2.5, borderRadius: 2, textAlign: 'center' }}>
+                            <Typography variant="h4" fontWeight={700} color={color}>{value}</Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Typography>
+                        </Paper>
+                    ))}
+                </Box>
+            )}
 
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                 <Table size="small">

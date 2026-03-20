@@ -4,3 +4,4 @@
 **/install/dist/**
 **/client/dist/**
 **/server/dist/**
+.vscode/**

@@ -18,6 +18,8 @@ import LanguageIcon from '@mui/icons-material/Language';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import AppUpdateBanner from './AppUpdateBanner';
+import AppFooter from './AppFooter';
 
 const DRAWER_WIDTH = 240;
 
@@ -162,9 +164,13 @@ export default function SettingsLayout({ children }) {
                     bgcolor: 'background.default',
                     minHeight: '100vh',
                     pt: { xs: 8, md: 0 },
+                    display: 'flex',
+                    flexDirection: 'column',
                 }}
             >
-                <Box sx={{ p: { xs: 2, md: 3 } }}>{children}</Box>
+                <AppUpdateBanner />
+                <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>{children}</Box>
+                <AppFooter />
             </Box>
         </Box>
     );

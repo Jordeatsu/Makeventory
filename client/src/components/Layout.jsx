@@ -7,8 +7,11 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useAuth } from "../context/AuthContext";
+import { useBranding } from "../context/BrandingContext";
 import { useModules } from "../hooks/useModules.jsx";
 import { useTranslation } from 'react-i18next';
+import AppUpdateBanner from './AppUpdateBanner';
+import AppFooter from './AppFooter';
 
 const DRAWER_WIDTH = 240;
 
@@ -19,6 +22,7 @@ export default function Layout({ children }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
+    const { businessName, logo } = useBranding();
     const { navItems, loading: modulesLoading } = useModules();
     const { t } = useTranslation();
 
@@ -29,17 +33,18 @@ export default function Layout({ children }) {
 
     const drawerContent = (
         <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-            {/* Brand */}
-            <Box sx={{ px: 3, py: 2.5, display: "flex", alignItems: "center", gap: 1 }}>
-                <ColorLensIcon sx={{ color: "secondary.main", fontSize: 28 }} />
-                <Box>
-                    <Typography variant="h6" sx={{ lineHeight: 1, color: "primary.dark" }}>
-                        {t('app.name')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        {t('app.tagline')}
-                    </Typography>
-                </Box>
+            {/* Brand — click navigates to dashboard */}
+            <Box
+                onClick={() => navigate('/')}
+                sx={{ px: 3, py: 2.5, display: "flex", alignItems: "center", gap: 1.5, cursor: 'pointer', '&:hover': { opacity: 0.85 } }}
+            >
+                {logo
+                    ? <Box component="img" src={logo} alt={businessName} sx={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 1 }} />
+                    : <ColorLensIcon sx={{ color: "secondary.main", fontSize: 28 }} />
+                }
+                <Typography variant="h6" sx={{ lineHeight: 1.2, color: "primary.dark", fontWeight: 600 }}>
+                    {businessName}
+                </Typography>
             </Box>
             <Divider />
             <List sx={{ pt: 1, flex: 1 }}>
@@ -127,9 +132,12 @@ export default function Layout({ children }) {
                                 <MenuIcon />
                             </IconButton>
                         </Tooltip>
-                        <ColorLensIcon sx={{ mr: 1, color: "secondary.light" }} />
+                        {logo
+                            ? <Box component="img" src={logo} alt={businessName} sx={{ mr: 1, height: 28, objectFit: 'contain' }} />
+                            : <ColorLensIcon sx={{ mr: 1, color: "secondary.light" }} />
+                        }
                         <Typography variant="h6" noWrap>
-                            {t('app.name')}
+                            {businessName}
                         </Typography>
                     </Toolbar>
                 </AppBar>
@@ -176,9 +184,13 @@ export default function Layout({ children }) {
                     bgcolor: "background.default",
                     minHeight: "100vh",
                     pt: { xs: 8, md: 0 },
+                    display: "flex",
+                    flexDirection: "column",
                 }}
             >
-                <Box sx={{ p: { xs: 2, md: 3 } }}>{children}</Box>
+                <AppUpdateBanner />
+                <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>{children}</Box>
+                <AppFooter />
             </Box>
         </Box>
     );

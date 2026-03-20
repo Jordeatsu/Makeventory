@@ -59,7 +59,7 @@ export default function ModuleSelectionPage() {
     };
 
     return (
-        <Box sx={{ maxWidth: 600 }}>
+        <Box sx={{ maxWidth: 600, mx: 'auto' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <ExtensionIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
@@ -81,6 +81,21 @@ export default function ModuleSelectionPage() {
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: 2 }}>{t('settings.moduleSelection.saved')}</Alert>}
+
+            {!loading && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 3 }}>
+                    {[
+                        { label: t('common.total'),    value: modules.length,                                  color: 'text.primary'   },
+                        { label: t('common.active'),   value: modules.filter((m) => draft[m._id]).length,      color: 'success.main'   },
+                        { label: t('common.inactive'), value: modules.filter((m) => !draft[m._id]).length,     color: 'text.secondary' },
+                    ].map(({ label, value, color }) => (
+                        <Paper key={label} variant="outlined" sx={{ p: 2.5, borderRadius: 2, textAlign: 'center' }}>
+                            <Typography variant="h4" fontWeight={700} color={color}>{value}</Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Typography>
+                        </Paper>
+                    ))}
+                </Box>
+            )}
 
             <Paper variant="outlined" sx={{ borderRadius: 2 }}>
                 {loading

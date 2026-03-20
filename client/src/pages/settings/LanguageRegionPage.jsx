@@ -39,7 +39,7 @@ export default function LanguageRegionPage() {
     };
 
     return (
-        <Box sx={{ maxWidth: 640 }}>
+        <Box sx={{ maxWidth: 640, mx: 'auto' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <LanguageIcon sx={{ color: 'text.secondary', fontSize: 28 }} />

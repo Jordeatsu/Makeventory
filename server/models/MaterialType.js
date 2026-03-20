@@ -13,7 +13,7 @@ const materialTypeSchema = new mongoose.Schema(
 
         unitOfMeasure: {
             type: String,
-            enum: ["mm", "cm", "m", "in", "ft", "yd", "piece"],
+            enum: ["mm", "mm2", "cm", "cm2", "m", "m2", "in", "in2", "piece"],
             trim: true,
             required: true,
             default: "piece",
