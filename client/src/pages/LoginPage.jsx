@@ -5,11 +5,13 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import InventoryIcon from "@mui/icons-material/Inventory2";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from 'react-i18next';
 import api from "../api";
 
 export default function LoginPage() {
     const { login, user } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const [branding, setBranding] = useState({ businessName: "Makeventory", logo: null });
     const [username, setUsername] = useState("");
@@ -74,15 +76,15 @@ export default function LoginPage() {
                             {branding.businessName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 0.5 }}>
-                            Sign in to continue
+                            {t('auth.signInToContinue')}
                         </Typography>
                     </Box>
 
                     {/* Form */}
                     <Box component="form" onSubmit={handleSubmit} noValidate>
-                        <TextField label="Username or Email" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth required size="small" autoFocus autoComplete="username" disabled={submitting} sx={{ mb: 2 }} />
+                        <TextField label={t('auth.usernameOrEmail')} value={username} onChange={(e) => setUsername(e.target.value)} fullWidth required size="small" autoFocus autoComplete="username" disabled={submitting} sx={{ mb: 2 }} />
                         <TextField
-                            label="Password"
+                            label={t('auth.password')}
                             type={showPass ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -110,7 +112,7 @@ export default function LoginPage() {
                         )}
 
                         <Button type="submit" variant="contained" fullWidth size="large" disabled={submitting}>
-                            {submitting ? <CircularProgress size={22} color="inherit" /> : "Sign In"}
+                            {submitting ? <CircularProgress size={22} color="inherit" /> : t('auth.signIn')}
                         </Button>
                     </Box>
                 </CardContent>

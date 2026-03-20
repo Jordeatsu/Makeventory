@@ -5,14 +5,16 @@ import {
 } from '@mui/material';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import SaveIcon from '@mui/icons-material/Save';
+import { useTranslation } from 'react-i18next';
 
 export default function ModuleSelectionPage() {
     const [modules, setModules]   = useState([]);
-    const [draft, setDraft]       = useState({});   // { [id]: isActive }
+    const [draft, setDraft]       = useState({});
     const [loading, setLoading]   = useState(true);
     const [saving, setSaving]     = useState(false);
     const [error, setError]       = useState(null);
     const [success, setSuccess]   = useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         fetch('/api/modules/all', { credentials: 'include' })
@@ -61,7 +63,7 @@ export default function ModuleSelectionPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <ExtensionIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>Module Selection</Typography>
+                    <Typography variant="h5" fontWeight={600}>{t('settings.moduleSelection.title')}</Typography>
                 </Box>
                 <Button
                     variant="contained"
@@ -69,16 +71,16 @@ export default function ModuleSelectionPage() {
                     onClick={handleSave}
                     disabled={!isDirty || saving}
                 >
-                    Save changes
+                    {t('common.saveChanges')}
                 </Button>
             </Box>
 
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Enable or disable modules to control which sections appear in the main navigation.
+                {t('settings.moduleSelection.description')}
             </Typography>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: 2 }}>Changes saved.</Alert>}
+            {success && <Alert severity="success" sx={{ mb: 2 }}>{t('settings.moduleSelection.saved')}</Alert>}
 
             <Paper variant="outlined" sx={{ borderRadius: 2 }}>
                 {loading

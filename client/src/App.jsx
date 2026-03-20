@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { GlobalSettingsProvider } from './context/GlobalSettingsContext';
 import LoginPage from './pages/LoginPage';
 import Layout from './components/Layout';
 import SettingsLayout from './components/SettingsLayout';
@@ -14,6 +15,8 @@ import ProductSettingsPage from './pages/settings/ProductSettingsPage';
 import OrderSettingsPage from './pages/settings/OrderSettingsPage';
 import CustomerSettingsPage from './pages/settings/CustomerSettingsPage';
 import YearInReviewSettingsPage from './pages/settings/YearInReviewSettingsPage';
+import LanguageRegionPage from './pages/settings/LanguageRegionPage';
+import DashboardPage from './pages/DashboardPage';
 
 // ── Protected route wrapper ───────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -51,6 +54,7 @@ function AppRoutes() {
                                 <Route path="orders" element={<OrderSettingsPage />} />
                                 <Route path="customers" element={<CustomerSettingsPage />} />
                                 <Route path="year-in-review" element={<YearInReviewSettingsPage />} />
+                                <Route path="language-region" element={<LanguageRegionPage />} />
                                 <Route path="*" element={<NotFoundPage />} />
                             </Routes>
                         </SettingsLayout>
@@ -65,6 +69,7 @@ function AppRoutes() {
                     <ProtectedRoute>
                         <Layout>
                             <Routes>
+                                <Route index element={<DashboardPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="*" element={<NotFoundPage />} />
                             </Routes>
@@ -78,8 +83,10 @@ function AppRoutes() {
 
 export default function App() {
     return (
-        <AuthProvider>
-            <AppRoutes />
-        </AuthProvider>
+        <GlobalSettingsProvider>
+            <AuthProvider>
+                <AppRoutes />
+            </AuthProvider>
+        </GlobalSettingsProvider>
     );
 }

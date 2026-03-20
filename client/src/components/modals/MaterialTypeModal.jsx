@@ -4,6 +4,7 @@ import {
     DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem,
     Select, Switch, TextField,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const USAGE_TYPES = ['Whole Item', 'Percentage'];
 const UNITS       = ['mm', 'cm', 'm', 'in', 'ft', 'yd', 'piece'];
@@ -11,6 +12,7 @@ const EMPTY_FORM  = { name: '', description: '', usageType: 'Whole Item', unitOf
 
 export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
     const isEdit = Boolean(initial);
+    const { t } = useTranslation();
 
     const [form, setForm]     = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
@@ -37,11 +39,11 @@ export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
 
     const handleSubmit = async () => {
         if (!form.name.trim()) {
-            setError('Name is required.');
+            setError(t('settings.materialTypes.modal.nameRequired'));
             return;
         }
         if (form.usageType === 'Percentage' && !form.unitOfMeasure) {
-            setError('Unit of measure is required for Percentage types.');
+            setError(t('settings.materialTypes.modal.unitRequired'));
             return;
         }
 
@@ -73,7 +75,7 @@ export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
 
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-            <DialogTitle>{isEdit ? 'Edit material type' : 'New material type'}</DialogTitle>
+            <DialogTitle>{isEdit ? t('settings.materialTypes.modal.editTitle') : t('settings.materialTypes.modal.createTitle')}</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '12px !important' }}>
                 {error && <Alert severity="error">{error}</Alert>}
 
@@ -93,10 +95,10 @@ export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
                     minRows={2}
                 />
                 <FormControl fullWidth required>
-                    <InputLabel>Usage type</InputLabel>
-                    <Select value={form.usageType} label="Usage type" onChange={set('usageType')}>
+                    <InputLabel>{t('settings.materialTypes.modal.usageTypeLabel')}</InputLabel>
+                    <Select value={form.usageType} label={t('settings.materialTypes.modal.usageTypeLabel')} onChange={set('usageType')}>
                         {USAGE_TYPES.map((u) => (
-                            <MenuItem key={u} value={u}>{u}</MenuItem>
+                            <MenuItem key={u} value={u}>{t(`usageTypes.${u === 'Whole Item' ? 'wholeItem' : 'percentage'}`)}</MenuItem>
                         ))}
                     </Select>
                 </FormControl>
@@ -104,10 +106,10 @@ export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
                 {/* Unit of measure — only shown and required for Percentage */}
                 {form.usageType === 'Percentage' && (
                     <FormControl fullWidth required error={!form.unitOfMeasure}>
-                        <InputLabel>Unit of measure *</InputLabel>
-                        <Select value={form.unitOfMeasure} label="Unit of measure *" onChange={set('unitOfMeasure')}>
+                        <InputLabel>{t('settings.materialTypes.modal.unitLabel')} *</InputLabel>
+                        <Select value={form.unitOfMeasure} label={`${t('settings.materialTypes.modal.unitLabel')} *`} onChange={set('unitOfMeasure')}>
                             {UNITS.filter((u) => u !== 'piece').map((u) => (
-                                <MenuItem key={u} value={u}>{u}</MenuItem>
+                                <MenuItem key={u} value={u}>{t(`units.${u}`, u)}</MenuItem>
                             ))}
                         </Select>
                     </FormControl>
@@ -120,18 +122,18 @@ export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
                             onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
                         />
                     }
-                    label="Active"
+                    label={t('settings.materialTypes.modal.activeLabel')}
                 />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={onClose} disabled={saving}>Cancel</Button>
+                <Button onClick={onClose} disabled={saving}>{t('common.cancel')}</Button>
                 <Button
                     variant="contained"
                     onClick={handleSubmit}
                     disabled={saving}
                     startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
                 >
-                    {isEdit ? 'Save changes' : 'Create'}
+                    {isEdit ? t('common.saveChanges') : t('common.create')}
                 </Button>
             </DialogActions>
         </Dialog>

@@ -8,6 +8,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useAuth } from "../context/AuthContext";
 import { useModules } from "../hooks/useModules.jsx";
+import { useTranslation } from 'react-i18next';
 
 const DRAWER_WIDTH = 240;
 
@@ -19,6 +20,7 @@ export default function Layout({ children }) {
     const location = useLocation();
     const { user, logout } = useAuth();
     const { navItems, loading: modulesLoading } = useModules();
+    const { t } = useTranslation();
 
     const handleLogout = async () => {
         await logout();
@@ -32,10 +34,10 @@ export default function Layout({ children }) {
                 <ColorLensIcon sx={{ color: "secondary.main", fontSize: 28 }} />
                 <Box>
                     <Typography variant="h6" sx={{ lineHeight: 1, color: "primary.dark" }}>
-                        Makeventory
+                        {t('app.name')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                        Inventory Manager
+                        {t('app.tagline')}
                     </Typography>
                 </Box>
             </Box>
@@ -84,8 +86,8 @@ export default function Layout({ children }) {
                     >
                         <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><AccountCircleIcon /></ListItemIcon>
                         <ListItemText
-                            primary={user ? `${user.firstName}` : "Profile"}
-                            secondary="My profile"
+                            primary={user ? `${user.firstName}` : t('profile.title')}
+                            secondary={t('nav.myProfile')}
                             primaryTypographyProps={{ variant: "body2", fontWeight: 500 }}
                             secondaryTypographyProps={{ variant: "caption" }}
                         />
@@ -98,7 +100,7 @@ export default function Layout({ children }) {
                         sx={{ borderRadius: 2, color: "text.secondary", "&.Mui-selected": { bgcolor: "primary.main", color: "primary.contrastText", "& .MuiListItemIcon-root": { color: "primary.contrastText" } } }}
                     >
                         <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><SettingsIcon /></ListItemIcon>
-                        <ListItemText primary="Settings" primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
+                        <ListItemText primary={t('nav.settings')} primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
                     </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding sx={{ px: 1.5 }}>
@@ -107,7 +109,7 @@ export default function Layout({ children }) {
                         sx={{ borderRadius: 2, color: "text.secondary" }}
                     >
                         <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><LogoutIcon /></ListItemIcon>
-                        <ListItemText primary="Sign out" primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
+                        <ListItemText primary={t('nav.signOut')} primaryTypographyProps={{ variant: "body2", fontWeight: 500 }} />
                     </ListItemButton>
                 </ListItem>
             </List>
@@ -120,14 +122,14 @@ export default function Layout({ children }) {
             {isMobile && (
                 <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: "primary.dark" }}>
                     <Toolbar>
-                        <Tooltip title="Open menu">
+                        <Tooltip title={t('nav.openMenu')}>
                             <IconButton color="inherit" edge="start" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 2 }}>
                                 <MenuIcon />
                             </IconButton>
                         </Tooltip>
                         <ColorLensIcon sx={{ mr: 1, color: "secondary.light" }} />
                         <Typography variant="h6" noWrap>
-                            CraftStock
+                            {t('app.name')}
                         </Typography>
                     </Toolbar>
                 </AppBar>

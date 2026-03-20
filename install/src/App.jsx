@@ -18,10 +18,13 @@ import DependenciesStep from "./components/DependenciesStep";
 import AccountStep from "./components/AccountStep";
 import BusinessStep from "./components/BusinessStep";
 import ModuleStep from "./components/ModuleStep";
+import LocaleStep from "./components/LocaleStep";
+import LanguageIcon from "@mui/icons-material/Language";
 
 const DRAWER_WIDTH = 270;
 
 const STEPS = [
+    { id: "locale", label: "Language & Currency", Icon: LanguageIcon },
     { id: "dependencies", label: "Install Dependencies", Icon: DownloadDoneIcon },
     { id: "database", label: "Database Setup", Icon: StorageIcon },
     { id: "account", label: "User Account", Icon: PersonAddIcon },
@@ -31,7 +34,8 @@ const STEPS = [
 
 // status: 'complete' | 'active' | 'pending' | 'error'
 const INITIAL_STATUS = {
-    dependencies: "active",
+    locale: "active",
+    dependencies: "pending",
     database: "pending",
     account: "pending",
     business: "pending",
@@ -47,8 +51,9 @@ function StepIcon({ status }) {
 
 export default function App() {
     const [stepStatus, setStepStatus] = useState(INITIAL_STATUS);
-    const [currentStep, setCurrentStep] = useState("dependencies");
+    const [currentStep, setCurrentStep] = useState("locale");
 
+    const [savedLocale, setSavedLocale] = useState({ language: 'en', currency: 'GBP' });
     const [savedDbName, setSavedDbName] = useState("");
     const [savedAccount, setSavedAccount] = useState(null);
     const [savedBusiness, setSavedBusiness] = useState(null);
@@ -153,9 +158,16 @@ export default function App() {
                         bgcolor: "background.default",
                     }}
                 >
+                    {currentStep === "locale" && (
+                        <LocaleStep
+                            savedLocale={savedLocale}
+                            onComplete={(locale) => { setSavedLocale(locale); markComplete("locale"); }}
+                        />
+                    )}
+
                     {currentStep === "dependencies" && <DependenciesStep alreadyComplete={stepStatus.dependencies === "complete"} onComplete={() => markComplete("dependencies")} />}
 
-                    {currentStep === "database" && <DatabaseStep savedDbName={savedDbName} onDbNameSaved={(name) => setSavedDbName(name)} onComplete={() => markComplete("database")} onError={() => markError("database")} />}
+                    {currentStep === "database" && <DatabaseStep savedDbName={savedDbName} savedLocale={savedLocale} onDbNameSaved={(name) => setSavedDbName(name)} onComplete={() => markComplete("database")} onError={() => markError("database")} />}
 
                     {currentStep === "account" && <AccountStep savedData={savedAccount} onSave={(data) => setSavedAccount(data)} onComplete={() => markComplete("account")} />}
                     {currentStep === "business" && <BusinessStep savedData={savedBusiness} onSave={(data) => setSavedBusiness(data)} onComplete={() => markComplete("business")} />}

@@ -5,6 +5,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import PeopleIcon from '@mui/icons-material/People';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ExtensionIcon from '@mui/icons-material/Extension';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 // Maps module names (as stored in the DB) to a route path and icon
@@ -19,6 +20,7 @@ const MODULE_CONFIG = {
 export function useModules() {
     const [navItems, setNavItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         api.get('/modules')
@@ -28,13 +30,15 @@ export function useModules() {
                         path: `/${mod.name.toLowerCase().replace(/\s+/g, '-')}`,
                         icon: <ExtensionIcon />,
                     };
-                    return { label: mod.name, ...config };
+                    // Use translation key matching the DB module name; fall back to DB name
+                    const label = t(`modules.${mod.name}`, mod.name);
+                    return { label, ...config };
                 });
                 setNavItems(items);
             })
             .catch(() => setNavItems([]))
             .finally(() => setLoading(false));
-    }, []);
+    }, [t]);
 
     return { navItems, loading };
 }

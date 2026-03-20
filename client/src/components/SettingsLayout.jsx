@@ -14,19 +14,23 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import LanguageIcon from '@mui/icons-material/Language';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const DRAWER_WIDTH = 240;
 
-const SETTINGS_NAV = [
-    { label: 'Module Selection',         path: '/settings/modules',       icon: <ExtensionIcon /> },
-    { label: 'Material Types',           path: '/settings/material-types', icon: <CategoryIcon /> },
-    { label: 'Material Settings',        path: '/settings/materials',     icon: <TuneIcon /> },
-    { label: 'Product Settings',         path: '/settings/products',      icon: <ShoppingBagIcon /> },
-    { label: 'Order Settings',           path: '/settings/orders',        icon: <ReceiptLongIcon /> },
-    { label: 'Customer Settings',        path: '/settings/customers',     icon: <PeopleIcon /> },
-    { label: 'Year In Review Settings',  path: '/settings/year-in-review', icon: <AssessmentIcon /> },
+// Nav item config — labels are added inside the component using t()
+const SETTINGS_NAV_CONFIG = [
+    { key: 'moduleSelection',       path: '/settings/modules',         icon: <ExtensionIcon /> },
+    { key: 'materialTypes',         path: '/settings/material-types',  icon: <CategoryIcon /> },
+    { key: 'materialSettings',      path: '/settings/materials',       icon: <TuneIcon /> },
+    { key: 'productSettings',       path: '/settings/products',        icon: <ShoppingBagIcon /> },
+    { key: 'orderSettings',         path: '/settings/orders',          icon: <ReceiptLongIcon /> },
+    { key: 'customerSettings',      path: '/settings/customers',       icon: <PeopleIcon /> },
+    { key: 'yearInReviewSettings',  path: '/settings/year-in-review',  icon: <AssessmentIcon /> },
+    { key: 'languageRegion',        path: '/settings/language-region', icon: <LanguageIcon /> },
 ];
 
 export default function SettingsLayout({ children }) {
@@ -36,6 +40,12 @@ export default function SettingsLayout({ children }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { logout } = useAuth();
+    const { t } = useTranslation();
+
+    const SETTINGS_NAV = SETTINGS_NAV_CONFIG.map((item) => ({
+        ...item,
+        label: t(`settings.nav.${item.key}`),
+    }));
 
     const handleLogout = async () => {
         await logout();
@@ -46,14 +56,14 @@ export default function SettingsLayout({ children }) {
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
             <Box sx={{ px: 2, py: 2.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Tooltip title="Back to app">
+                <Tooltip title={t('nav.backToApp')}>
                     <IconButton size="small" onClick={() => navigate('/')} sx={{ mr: 0.5 }}>
                         <ArrowBackIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>
                 <SettingsIcon sx={{ color: 'text.secondary', fontSize: 22 }} />
                 <Typography variant="h6" sx={{ lineHeight: 1, color: 'primary.dark' }}>
-                    Settings
+                    {t('settings.title')}
                 </Typography>
             </Box>
             <Divider />
@@ -92,7 +102,7 @@ export default function SettingsLayout({ children }) {
                 <ListItem disablePadding sx={{ px: 1.5 }}>
                     <ListItemButton onClick={handleLogout} sx={{ borderRadius: 2, color: 'text.secondary' }}>
                         <ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><LogoutIcon /></ListItemIcon>
-                        <ListItemText primary="Sign out" primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }} />
+                        <ListItemText primary={t('nav.signOut')} primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }} />
                     </ListItemButton>
                 </ListItem>
             </List>
@@ -104,13 +114,13 @@ export default function SettingsLayout({ children }) {
             {isMobile && (
                 <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'primary.dark' }}>
                     <Toolbar>
-                        <Tooltip title="Open menu">
+                        <Tooltip title={t('nav.openMenu')}>
                             <IconButton color="inherit" edge="start" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 2 }}>
                                 <MenuIcon />
                             </IconButton>
                         </Tooltip>
                         <SettingsIcon sx={{ mr: 1 }} />
-                        <Typography variant="h6" noWrap>Settings</Typography>
+                        <Typography variant="h6" noWrap>{t('settings.title')}</Typography>
                     </Toolbar>
                 </AppBar>
             )}

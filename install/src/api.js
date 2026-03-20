@@ -10,7 +10,7 @@ export const checkDockerContainer = () => api.post("/database/check-docker-conta
 export const createDockerContainer = () => api.post("/database/create-docker-container");
 export const startDockerContainer = () => api.post("/database/start-docker-container");
 export const ensureMongoRunning = () => api.post("/database/ensure-running");
-export const createDatabase = (dbName) => api.post("/database/create", { dbName });
+export const createDatabase = (dbName, locale) => api.post("/database/create", { dbName, ...locale });
 export const createAccount = (data) => api.post("/account/create", data);
 export const updateAccount = (data) => api.put("/account/update", data);
 export const createBusiness = (data) => api.post("/business/create", data);

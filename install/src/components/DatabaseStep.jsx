@@ -36,7 +36,7 @@ function LogLine({ status, message }) {
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
-export default function DatabaseStep({ onComplete, onError, savedDbName, onDbNameSaved }) {
+export default function DatabaseStep({ onComplete, onError, savedDbName, onDbNameSaved, savedLocale }) {
     const [log, setLog] = useState([]);
     const [phase, setPhase] = useState(savedDbName ? "locked" : "running");
     const [dbName, setDbName] = useState(savedDbName || "");
@@ -173,7 +173,7 @@ export default function DatabaseStep({ onComplete, onError, savedDbName, onDbNam
 
         setCreating(true);
         try {
-            await api.createDatabase(dbName);
+            await api.createDatabase(dbName, savedLocale);
             addLine(`Database "${dbName}" configured.`, S.SUCCESS);
             addLine("server/.env written with connection URI.", S.SUCCESS);
             onDbNameSaved?.(dbName);

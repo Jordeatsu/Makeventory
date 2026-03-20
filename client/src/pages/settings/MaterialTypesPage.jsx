@@ -10,6 +10,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MaterialTypeModal from '../../components/modals/MaterialTypeModal';
 import DeleteBlockedModal from '../../components/modals/DeleteBlockedModal';
+import { useTranslation } from 'react-i18next';
+
+const USAGE_KEY = { 'Whole Item': 'wholeItem', 'Percentage': 'percentage' };
 
 export default function MaterialTypesPage() {
     const [types, setTypes]           = useState([]);
@@ -17,10 +20,11 @@ export default function MaterialTypesPage() {
     const [fetchError, setFetchError] = useState(null);
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [editing, setEditing]     = useState(null);   // null = create, obj = edit
+    const [editing, setEditing]     = useState(null);
 
     const [blockedOpen, setBlockedOpen]           = useState(false);
     const [blockedMaterials, setBlockedMaterials] = useState([]);
+    const { t } = useTranslation();
 
     const load = useCallback(() => {
         setLoading(true);
@@ -56,14 +60,14 @@ export default function MaterialTypesPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <CategoryIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>Material Types</Typography>
+                    <Typography variant="h5" fontWeight={600}>{t('settings.materialTypes.title')}</Typography>
                 </Box>
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={() => { setEditing(null); setModalOpen(true); }}
                 >
-                    New material type
+                    {t('settings.materialTypes.newButton')}
                 </Button>
             </Box>
 
@@ -73,11 +77,11 @@ export default function MaterialTypesPage() {
                 <Table size="small">
                     <TableHead>
                         <TableRow sx={{ '& th': { fontWeight: 600, bgcolor: 'background.default' } }}>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Usage type</TableCell>
-                            <TableCell>Unit</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell align="right">Actions</TableCell>
+                            <TableCell>{t('common.name')}</TableCell>
+                            <TableCell>{t('settings.materialTypes.table.usageType')}</TableCell>
+                            <TableCell>{t('settings.materialTypes.table.unit')}</TableCell>
+                            <TableCell>{t('common.status')}</TableCell>
+                            <TableCell align="right">{t('common.actions')}</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -90,35 +94,35 @@ export default function MaterialTypesPage() {
                         ) : types.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                                    <Typography variant="body2" color="text.secondary">No material types yet.</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('settings.materialTypes.noData')}</Typography>
                                 </TableCell>
                             </TableRow>
-                        ) : types.map((t) => (
-                            <TableRow key={t._id} hover>
+                        ) : types.map((mt) => (
+                            <TableRow key={mt._id} hover>
                                 <TableCell>
-                                    <Typography variant="body2" fontWeight={500}>{t.name}</Typography>
-                                    {t.description && (
-                                        <Typography variant="caption" color="text.secondary">{t.description}</Typography>
+                                    <Typography variant="body2" fontWeight={500}>{mt.name}</Typography>
+                                    {mt.description && (
+                                        <Typography variant="caption" color="text.secondary">{mt.description}</Typography>
                                     )}
                                 </TableCell>
-                                <TableCell><Typography variant="body2">{t.usageType}</Typography></TableCell>
-                                <TableCell><Typography variant="body2">{t.unitOfMeasure || '—'}</Typography></TableCell>
+                                <TableCell><Typography variant="body2">{USAGE_KEY[mt.usageType] ? t(`usageTypes.${USAGE_KEY[mt.usageType]}`) : mt.usageType}</Typography></TableCell>
+                                <TableCell><Typography variant="body2">{mt.unitOfMeasure ? t(`units.${mt.unitOfMeasure}`, mt.unitOfMeasure) : '—'}</Typography></TableCell>
                                 <TableCell>
                                     <Chip
-                                        label={t.isActive ? 'Active' : 'Inactive'}
-                                        color={t.isActive ? 'success' : 'default'}
+                                        label={mt.isActive ? t('common.active') : t('common.inactive')}
+                                        color={mt.isActive ? 'success' : 'default'}
                                         size="small"
                                         variant="outlined"
                                     />
                                 </TableCell>
                                 <TableCell align="right">
-                                    <Tooltip title="Edit">
-                                        <IconButton size="small" onClick={() => { setEditing(t); setModalOpen(true); }}>
+                                    <Tooltip title={t('common.edit')}>
+                                        <IconButton size="small" onClick={() => { setEditing(mt); setModalOpen(true); }}>
                                             <EditIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
-                                    <Tooltip title="Delete">
-                                        <IconButton size="small" color="error" onClick={() => handleDelete(t._id)}>
+                                    <Tooltip title={t('common.delete')}>
+                                        <IconButton size="small" color="error" onClick={() => handleDelete(mt._id)}>
                                             <DeleteIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>

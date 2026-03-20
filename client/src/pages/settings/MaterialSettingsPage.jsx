@@ -6,6 +6,7 @@ import {
 import TuneIcon from '@mui/icons-material/Tune';
 import EditIcon from '@mui/icons-material/Edit';
 import MaterialSettingsModal from '../../components/modals/MaterialSettingsModal';
+import { useTranslation } from 'react-i18next';
 
 const CURRENCY_SYMBOLS = { GBP: '£', USD: '$', EUR: '€', AUD: '$', CAD: '$', NZD: '$' };
 
@@ -32,6 +33,7 @@ export default function MaterialSettingsPage() {
     const [loading, setLoading]   = useState(true);
     const [error, setError]       = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         fetch('/api/settings/materials', { credentials: 'include' })
@@ -54,12 +56,12 @@ export default function MaterialSettingsPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <TuneIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>Material Settings</Typography>
+                    <Typography variant="h5" fontWeight={600}>{t('settings.materialSettings.title')}</Typography>
                 </Box>
                 {settings && (
-                    <Tooltip title="Edit settings">
+                    <Tooltip title={t('settings.materialSettings.editTitle')}>
                         <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setModalOpen(true)}>
-                            Edit
+                            {t('common.edit')}
                         </Button>
                     </Tooltip>
                 )}
@@ -70,27 +72,27 @@ export default function MaterialSettingsPage() {
             {settings && (
                 <Paper variant="outlined" sx={{ borderRadius: 2 }}>
                     <SettingRow
-                        label="Default low stock threshold"
-                        description="Pre-filled when creating a new material"
+                        label={t('settings.materialSettings.defaultLowStock')}
+                        description={t('settings.materialSettings.defaultLowStockDesc')}
                         value={settings.defaultLowStockThreshold}
                     />
                     <Divider />
                     <SettingRow
-                        label="Currency"
-                        description="Symbol shown next to material costs"
+                        label={t('settings.materialSettings.currency')}
+                        description={t('settings.materialSettings.currencyDesc')}
                         value={`${CURRENCY_SYMBOLS[settings.currency] ?? ''} ${settings.currency}`}
                     />
                     <Divider />
                     <SettingRow
-                        label="Auto-deduct stock on order completion"
-                        description="Reduces material quantities when an order is marked complete"
-                        value={settings.autoDeductOnOrderComplete ? 'On' : 'Off'}
+                        label={t('settings.materialSettings.autoDeduct')}
+                        description={t('settings.materialSettings.autoDeductDesc')}
+                        value={settings.autoDeductOnOrderComplete ? t('common.on') : t('common.off')}
                     />
                     <Divider />
                     <SettingRow
-                        label="Track fractional quantities"
-                        description="Track bulk materials to 2 decimal places instead of whole numbers"
-                        value={settings.trackFractionalQuantities ? 'On' : 'Off'}
+                        label={t('settings.materialSettings.trackFractional')}
+                        description={t('settings.materialSettings.trackFractionalDesc')}
+                        value={settings.trackFractionalQuantities ? t('common.on') : t('common.off')}
                     />
                 </Paper>
             )}

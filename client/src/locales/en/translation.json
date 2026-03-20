@@ -1,0 +1,198 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "close": "Close",
+    "ok": "OK",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status",
+    "name": "Name",
+    "description": "Description",
+    "actions": "Actions",
+    "loading": "Loading...",
+    "saveChanges": "Save changes",
+    "signOut": "Sign out",
+    "goBack": "Go back",
+    "on": "On",
+    "off": "Off",
+    "noDataYet": "No data yet.",
+    "serverError": "Server error. Please try again."
+  },
+  "app": {
+    "name": "Makeventory",
+    "tagline": "Inventory Manager"
+  },
+  "auth": {
+    "usernameOrEmail": "Username or Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "signInToContinue": "Sign in to continue",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "nav": {
+    "settings": "Settings",
+    "myProfile": "My profile",
+    "signOut": "Sign out",
+    "backToApp": "Back to app",
+    "openMenu": "Open menu"
+  },
+  "modules": {
+    "Inventory": "Inventory",
+    "Products": "Products",
+    "Orders": "Orders",
+    "Customers": "Customers",
+    "Year Review": "Year Review"
+  },
+  "usageTypes": {
+    "wholeItem": "Whole Item",
+    "percentage": "Percentage"
+  },
+  "units": {
+    "mm": "mm",
+    "cm": "cm",
+    "m": "m",
+    "in": "in",
+    "ft": "ft",
+    "yd": "yd",
+    "piece": "piece"
+  },
+  "settings": {
+    "title": "Settings",
+    "nav": {
+      "moduleSelection": "Module Selection",
+      "materialTypes": "Material Types",
+      "materialSettings": "Material Settings",
+      "productSettings": "Product Settings",
+      "orderSettings": "Order Settings",
+      "customerSettings": "Customer Settings",
+      "yearInReviewSettings": "Year In Review Settings",
+      "languageRegion": "Language & Region"
+    },
+    "moduleSelection": {
+      "title": "Module Selection",
+      "description": "Enable or disable modules to control which sections appear in the main navigation.",
+      "saved": "Changes saved."
+    },
+    "materialTypes": {
+      "title": "Material Types",
+      "newButton": "New material type",
+      "noData": "No material types yet.",
+      "table": {
+        "usageType": "Usage type",
+        "unit": "Unit"
+      },
+      "modal": {
+        "createTitle": "New material type",
+        "editTitle": "Edit material type",
+        "usageTypeLabel": "Usage type",
+        "unitLabel": "Unit of measure",
+        "unitRequired": "Unit of measure is required for Percentage types.",
+        "activeLabel": "Active",
+        "nameRequired": "Name is required."
+      },
+      "deleteBlocked": {
+        "title": "Cannot delete material type",
+        "usedByOne": "This material type is used by the following material and cannot be deleted:",
+        "usedByMany": "This material type is used by the following materials and cannot be deleted:"
+      }
+    },
+    "materialSettings": {
+      "title": "Material Settings",
+      "editTitle": "Edit material settings",
+      "defaultLowStock": "Default low stock threshold",
+      "defaultLowStockDesc": "Pre-filled when creating a new material",
+      "currency": "Currency",
+      "currencyDesc": "Symbol shown next to material costs",
+      "autoDeduct": "Auto-deduct stock on order completion",
+      "autoDeductDesc": "Reduces material quantities when an order is marked complete",
+      "trackFractional": "Track fractional quantities",
+      "trackFractionalDesc": "Track bulk materials to 2 decimal places instead of whole numbers",
+      "invalidThreshold": "Default low stock threshold must be 0 or more."
+    },
+    "productSettings": {
+      "title": "Product Settings",
+      "description": "Configure default settings for products, including pricing rules and display preferences."
+    },
+    "orderSettings": {
+      "title": "Order Settings",
+      "description": "Configure order statuses, default values, and order management preferences."
+    },
+    "customerSettings": {
+      "title": "Customer Settings",
+      "description": "Configure customer record fields, default values, and customer management preferences."
+    },
+    "yearInReview": {
+      "title": "Year In Review Settings",
+      "description": "Configure what metrics and date ranges appear in the Year In Review report."
+    },
+    "languageRegion": {
+      "title": "Language & Region",
+      "description": "Change the language and currency used throughout the application.",
+      "language": "Language",
+      "currency": "Currency",
+      "saved": "Language and currency updated."
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "username": "Username",
+    "email": "Email",
+    "role": "Role",
+    "userId": "User ID",
+    "noId": "No user ID provided.",
+    "loadFailed": "Failed to load profile."
+  },
+  "notFound": {
+    "title": "404",
+    "subtitle": "Page not found",
+    "message": "The page you're looking for doesn't exist or has been moved."
+  },
+  "locale": {
+    "title": "Language & Currency",
+    "subtitle": "Choose your preferred language and currency. These can be changed later in Settings.",
+    "language": "Language",
+    "currency": "Currency",
+    "continue": "Continue"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your business",
+    "loadError": "Failed to load dashboard data.",
+    "welcome": "Welcome back, {{name}}",
+    "quickAccess": "Quick access",
+    "noModules": "No modules are enabled yet. Go to Settings to enable them.",
+    "goToSettings": "Go to Settings",
+    "totalOrders": "Total Orders",
+    "activeOrders": "{{count}} active",
+    "totalRevenue": "Total Revenue",
+    "allTime": "All time",
+    "netProfit": "Net Profit",
+    "margin": "{{value}}% margin",
+    "materialsInStock": "Materials in Stock",
+    "lowStockCount": "{{count}} low stock",
+    "ordersByStatus": "Orders by Status",
+    "noOrderData": "No order data yet.",
+    "stockOverview": "Stock Overview",
+    "viewAll": "View All",
+    "totalStockValue": "Total Stock Value (at cost)",
+    "allStocked": "\u2713 All materials are adequately stocked",
+    "lowStockWarning": "{{count}} material low on stock",
+    "lowStockWarningPlural": "{{count}} materials low on stock",
+    "recentOrders": "Recent Orders",
+    "noOrders": "No orders yet.",
+    "colDate": "Date",
+    "colCustomer": "Customer",
+    "colStatus": "Status",
+    "colTotalCharged": "Total Charged",
+    "colProfit": "Profit",
+    "totalChargedTooltip": "Amount charged to customer"
+  }
+}

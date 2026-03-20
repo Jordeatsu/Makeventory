@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
-const materialTypeSchema = new mongoose.Schema(
+const globalSettingsSchema = new mongoose.Schema(
     {
         language: {
             type: String,
-            enum: ['en', 'es', 'fr', 'de', 'zh', 'jp'],
+            enum: ['en', 'fr', 'es'],
             required: true,
             default: 'en',
         },
@@ -18,6 +18,6 @@ const materialTypeSchema = new mongoose.Schema(
     { timestamps: true },
 );
 
-const GlobalSettings = mongoose.model("GlobalSettings", materialTypeSchema);
+const GlobalSettings = mongoose.model("GlobalSettings", globalSettingsSchema);
 
 export default GlobalSettings;

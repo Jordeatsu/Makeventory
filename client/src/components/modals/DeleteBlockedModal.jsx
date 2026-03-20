@@ -3,14 +3,18 @@ import {
     Button, Dialog, DialogActions, DialogContent, DialogTitle,
     List, ListItem, Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 export default function DeleteBlockedModal({ open, materials, onClose }) {
+    const { t } = useTranslation();
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>Cannot delete material type</DialogTitle>
+            <DialogTitle>{t('settings.materialTypes.deleteBlocked.title')}</DialogTitle>
             <DialogContent>
                 <Typography variant="body2" sx={{ mb: 1.5 }}>
-                    This material type is used by the following material{materials.length !== 1 ? 's' : ''} and cannot be deleted:
+                    {materials.length === 1
+                        ? t('settings.materialTypes.deleteBlocked.usedByOne')
+                        : t('settings.materialTypes.deleteBlocked.usedByMany')}
                 </Typography>
                 <List dense disablePadding sx={{ pl: 1 }}>
                     {materials.map((name) => (
@@ -24,7 +28,7 @@ export default function DeleteBlockedModal({ open, materials, onClose }) {
                 </List>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button variant="contained" onClick={onClose}>OK</Button>
+                <Button variant="contained" onClick={onClose}>{t('common.ok')}</Button>
             </DialogActions>
         </Dialog>
     );

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Box, Typography, Avatar, Divider, Paper, CircularProgress, Alert } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { useTranslation } from 'react-i18next';
 
 export default function ProfilePage() {
     const [searchParams] = useSearchParams();
     const id = searchParams.get('id');
+    const { t } = useTranslation();
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -13,7 +15,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (!id) {
-            setError('No user ID provided.');
+            setError(t('profile.noId'));
             return;
         }
         setLoading(true);
@@ -21,7 +23,7 @@ export default function ProfilePage() {
         fetch(`/api/users/${id}`, { credentials: 'include' })
             .then((r) => r.ok ? r.json() : r.json().then((b) => Promise.reject(b.error)))
             .then(({ user }) => setProfile(user))
-            .catch((msg) => setError(msg || 'Failed to load profile.'))
+            .catch((msg) => setError(msg || t('profile.loadFailed')))
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -34,12 +36,12 @@ export default function ProfilePage() {
     }
 
     const fields = [
-        { label: 'First name', value: profile?.firstName },
-        { label: 'Last name',  value: profile?.lastName },
-        { label: 'Username',   value: profile?.username },
-        { label: 'Email',      value: profile?.email },
-        { label: 'Role',       value: profile?.role },
-        { label: 'User ID',    value: profile?._id },
+        { label: t('profile.firstName'), value: profile?.firstName },
+        { label: t('profile.lastName'),  value: profile?.lastName },
+        { label: t('profile.username'),  value: profile?.username },
+        { label: t('profile.email'),     value: profile?.email },
+        { label: t('profile.role'),      value: profile?.role },
+        { label: t('profile.userId'),    value: profile?._id },
     ];
 
     return (

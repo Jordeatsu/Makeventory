@@ -4,6 +4,7 @@ import {
     DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem,
     Select, Switch, TextField, Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const CURRENCIES = [
     { code: 'GBP', label: '£ GBP — British Pound' },
@@ -18,6 +19,7 @@ export default function MaterialSettingsModal({ open, current, onClose, onSaved 
     const [form, setForm]     = useState(null);
     const [saving, setSaving] = useState(false);
     const [error, setError]   = useState(null);
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (open && current) {
@@ -37,7 +39,7 @@ export default function MaterialSettingsModal({ open, current, onClose, onSaved 
     const handleSubmit = async () => {
         const threshold = Number(form.defaultLowStockThreshold);
         if (!Number.isFinite(threshold) || threshold < 0) {
-            setError('Default low stock threshold must be 0 or more.');
+            setError(t('settings.materialSettings.invalidThreshold'));
             return;
         }
         setSaving(true);
@@ -64,23 +66,23 @@ export default function MaterialSettingsModal({ open, current, onClose, onSaved 
 
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-            <DialogTitle>Edit material settings</DialogTitle>
+            <DialogTitle>{t('settings.materialSettings.editTitle')}</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '12px !important' }}>
                 {error && <Alert severity="error">{error}</Alert>}
 
                 <TextField
-                    label="Default low stock threshold"
+                    label={t('settings.materialSettings.defaultLowStock')}
                     type="number"
                     value={form.defaultLowStockThreshold}
                     onChange={setField('defaultLowStockThreshold')}
                     inputProps={{ min: 0 }}
-                    helperText="Pre-filled when creating a new material"
+                    helperText={t('settings.materialSettings.defaultLowStockDesc')}
                     fullWidth
                 />
 
                 <FormControl fullWidth>
-                    <InputLabel>Currency</InputLabel>
-                    <Select value={form.currency} label="Currency" onChange={setField('currency')}>
+                    <InputLabel>{t('settings.materialSettings.currency')}</InputLabel>
+                    <Select value={form.currency} label={t('settings.materialSettings.currency')} onChange={setField('currency')}>
                         {CURRENCIES.map((c) => (
                             <MenuItem key={c.code} value={c.code}>{c.label}</MenuItem>
                         ))}
@@ -91,9 +93,9 @@ export default function MaterialSettingsModal({ open, current, onClose, onSaved 
                     control={<Switch checked={form.autoDeductOnOrderComplete} onChange={setToggle('autoDeductOnOrderComplete')} />}
                     label={
                         <>
-                            <Typography variant="body2" fontWeight={500}>Auto-deduct stock on order completion</Typography>
+                            <Typography variant="body2" fontWeight={500}>{t('settings.materialSettings.autoDeduct')}</Typography>
                             <Typography variant="caption" color="text.secondary">
-                                Automatically reduces material quantities when an order is marked complete
+                                {t('settings.materialSettings.autoDeductDesc')}
                             </Typography>
                         </>
                     }
@@ -104,9 +106,9 @@ export default function MaterialSettingsModal({ open, current, onClose, onSaved 
                     control={<Switch checked={form.trackFractionalQuantities} onChange={setToggle('trackFractionalQuantities')} />}
                     label={
                         <>
-                            <Typography variant="body2" fontWeight={500}>Track fractional quantities</Typography>
+                            <Typography variant="body2" fontWeight={500}>{t('settings.materialSettings.trackFractional')}</Typography>
                             <Typography variant="caption" color="text.secondary">
-                                For bulk materials (thread, fabric, etc.), track stock to 2 decimal places instead of whole numbers
+                                {t('settings.materialSettings.trackFractionalDesc')}
                             </Typography>
                         </>
                     }
@@ -114,14 +116,14 @@ export default function MaterialSettingsModal({ open, current, onClose, onSaved 
                 />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={onClose} disabled={saving}>Cancel</Button>
+                <Button onClick={onClose} disabled={saving}>{t('common.cancel')}</Button>
                 <Button
                     variant="contained"
                     onClick={handleSubmit}
                     disabled={saving}
                     startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
                 >
-                    Save changes
+                    {t('common.saveChanges')}
                 </Button>
             </DialogActions>
         </Dialog>
