@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-    Alert, Box, Button, Chip, CircularProgress,
-    Grid, IconButton, Paper, Stack, Tooltip, Typography,
+    Alert, Box, Button, Chip, CircularProgress, Divider,
+    Grid, IconButton, LinearProgress, Paper, Stack, Tooltip, Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -123,59 +123,53 @@ export default function MaterialDetailPage() {
                 </Button>
             </Stack>
 
-            {isLow && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                    {t("materials.detail.lowStockAlert", "This material is low on stock.")} {m.quantity} {unitLabel} {t("materials.detail.remaining", "remaining")} ({t("materials.detail.threshold", "threshold")}: {m.lowStockThreshold} {unitLabel})
-                </Alert>
-            )}
-
-            {/* Stock card */}
-            <Grid container spacing={3} mb={3}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Paper variant="outlined" sx={{ p: 2, textAlign: "center" }}>
-                        <Typography variant="caption" color="text.secondary" display="block">
+                {/* Metric bar — single card with 4 stats and stock level indicator */}
+            <Paper variant="outlined" sx={{ mb: 3, overflow: "hidden" }}>
+                {isLow && (
+                    <Alert severity="warning" sx={{ borderRadius: 0 }}>
+                        {t("materials.detail.lowStockAlert", "This material is low on stock.")}{" "}
+                        {m.quantity} {unitLabel} {t("materials.detail.remaining", "remaining")} ({t("materials.detail.threshold", "threshold")}: {m.lowStockThreshold} {unitLabel})
+                    </Alert>
+                )}
+                <Stack direction={{ xs: "column", sm: "row" }} divider={<Divider orientation="vertical" flexItem />}>
+                    <Box sx={{ p: 3, flex: 1, textAlign: "center" }}>
+                        <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={1}>
                             {t("materials.detail.inStock", "In Stock")}
                         </Typography>
-                        <Typography variant="h4" fontWeight={700} color={isLow ? "error.main" : "primary.main"}>
+                        <Typography variant="h3" fontWeight={700} color={isLow ? "error.main" : "primary.main"} lineHeight={1}>
                             {m.quantity}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">{unitLabel}</Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Paper variant="outlined" sx={{ p: 2, textAlign: "center" }}>
-                        <Typography variant="caption" color="text.secondary" display="block">
+                        <Typography variant="caption" color="text.secondary" display="block" mb={1}>{unitLabel}</Typography>
+                        <LinearProgress
+                            variant="determinate"
+                            value={Math.min(100, (m.quantity / Math.max(m.lowStockThreshold * 4, 1)) * 100)}
+                            color={isLow ? "error" : "primary"}
+                            sx={{ height: 6, borderRadius: 3 }}
+                        />
+                    </Box>
+                    <Box sx={{ p: 3, flex: 1, textAlign: "center" }}>
+                        <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={1}>
                             {t("materials.detail.lowStockThreshold", "Low Stock Threshold")}
                         </Typography>
-                        <Typography variant="h4" fontWeight={700}>
-                            {m.lowStockThreshold}
-                        </Typography>
+                        <Typography variant="h3" fontWeight={700} lineHeight={1}>{m.lowStockThreshold}</Typography>
                         <Typography variant="caption" color="text.secondary">{unitLabel}</Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Paper variant="outlined" sx={{ p: 2, textAlign: "center" }}>
-                        <Typography variant="caption" color="text.secondary" display="block">
+                    </Box>
+                    <Box sx={{ p: 3, flex: 1, textAlign: "center" }}>
+                        <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={1}>
                             {hasPackQty
                                 ? t("materials.detail.costPerPurchase", "Cost per Purchase")
                                 : t("materials.detail.costPerItem", "Cost per Item")}
                         </Typography>
-                        <Typography variant="h4" fontWeight={700}>
-                            {fmt(m.costPerUnit)}
-                        </Typography>
+                        <Typography variant="h3" fontWeight={700} lineHeight={1}>{fmt(m.costPerUnit)}</Typography>
                         {hasPackQty && (
-                            <Typography variant="caption" color="text.secondary">
-                                {m.unitsPerPack} {unitLabel} / purchase
-                            </Typography>
+                            <Typography variant="caption" color="text.secondary">{m.unitsPerPack} {unitLabel} / purchase</Typography>
                         )}
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <Paper variant="outlined" sx={{ p: 2, textAlign: "center" }}>
-                        <Typography variant="caption" color="text.secondary" display="block">
+                    </Box>
+                    <Box sx={{ p: 3, flex: 1, textAlign: "center" }}>
+                        <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={1}>
                             {t("materials.detail.costPerUnit", "Cost per") + " " + unitLabel}
                         </Typography>
-                        <Typography variant="h4" fontWeight={700}>
+                        <Typography variant="h3" fontWeight={700} lineHeight={1}>
                             {costPerUnit < 0.001
                                 ? fmt(costPerUnit).replace(/0+$/, "").replace(/\.$/, "")
                                 : fmt(costPerUnit)}
@@ -183,24 +177,37 @@ export default function MaterialDetailPage() {
                         <Typography variant="caption" color="text.secondary">
                             {t("materials.detail.effectiveCost", "effective unit cost")}
                         </Typography>
+                    </Box>
+                </Stack>
+            </Paper>
+
+            {/* Details — two‑column split: attributes left, supplier/notes right */}
+            <Grid container spacing={3} mb={3}>
+                <Grid item xs={12} md={6}>
+                    <Paper variant="outlined" sx={{ p: 3, height: "100%" }}>
+                        <Typography variant="overline" color="primary.main" display="block" mb={1.5}>
+                            {t("materials.detail.details", "Details")}
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <DetailRow label={t("materials.col.name", "Name")} value={m.name} />
+                            <DetailRow label={t("materials.col.type", "Type")} value={m.type} />
+                            <DetailRow label={t("materials.form.colour", "Colour / Shade")} value={m.color} />
+                            <DetailRow label={t("materials.form.sku", "SKU / Reference")} value={m.sku} />
+                        </Grid>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <Paper variant="outlined" sx={{ p: 3, height: "100%" }}>
+                        <Typography variant="overline" color="primary.main" display="block" mb={1.5}>
+                            Supplier &amp; Notes
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <DetailRow label={t("materials.form.supplier", "Supplier")} value={m.supplier} />
+                            <DetailRow label={t("materials.form.description", "Description / Notes")} value={m.description} />
+                        </Grid>
                     </Paper>
                 </Grid>
             </Grid>
-
-            {/* Details */}
-            <Paper variant="outlined" sx={{ p: 3 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={2}>
-                    {t("materials.detail.details", "Details")}
-                </Typography>
-                <Grid container spacing={2}>
-                    <DetailRow label={t("materials.col.name", "Name")} value={m.name} />
-                    <DetailRow label={t("materials.col.type", "Type")} value={m.type} />
-                    <DetailRow label={t("materials.form.colour", "Colour / Shade")} value={m.color} />
-                    <DetailRow label={t("materials.form.sku", "SKU / Reference")} value={m.sku} />
-                    <DetailRow label={t("materials.form.supplier", "Supplier")} value={m.supplier} />
-                    <DetailRow label={t("materials.form.description", "Description / Notes")} value={m.description} />
-                </Grid>
-            </Paper>
 
             {/* Record Info */}
             <RecordInfo

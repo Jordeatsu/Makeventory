@@ -15,7 +15,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import OrderFormDialog from "../components/modals/OrderFormDialog";
-import { STATUS_COLOURS } from "../colours";
+import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDateLong } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
 import ToastSnackbar from "../components/common/ToastSnackbar";
@@ -87,33 +87,53 @@ export default function OrderDetailPage() {
 
     return (
         <Box>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" gap={1} mb={3}>
-                <Tooltip title="Back to Orders">
-                    <IconButton onClick={() => navigate("/orders")}><ArrowBackIcon /></IconButton>
-                </Tooltip>
-                <Box flex={1}>
-                    <Stack direction="row" alignItems="center" gap={1.5} flexWrap="wrap">
-                        <Typography variant="h4">{order.orderNumber || "Order"}</Typography>
-                        <Chip label={order.status} size="small" sx={{ bgcolor: STATUS_COLOURS[order.status] || "#ccc", color: "#fff", fontWeight: 600 }} />
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">Placed {fmtDate(order.orderDate)}</Typography>
-                </Box>
-                {locked ? (
-                    <Stack direction="row" alignItems="center" gap={1}>
-                        <Chip icon={<LockIcon />} label="Locked" size="small" variant="outlined" color="default" />
-                        <Tooltip title="Resets the 45-day lock window so the order can be edited again">
-                            <Button variant="outlined" size="small" startIcon={<LockOpenIcon />} onClick={handleUnlock}>
-                                Unlock
-                            </Button>
+            {/* Header — status-tinted banner */}
+            <Paper
+                variant="outlined"
+                sx={{
+                    mb: 3,
+                    overflow: "hidden",
+                    borderColor: "divider",
+                }}
+            >
+                <Box
+                    sx={{
+                        px: 3, py: 2,
+                        bgcolor: `${STATUS_COLOURS[order.status] || "#ccc"}22`,
+                        borderBottom: 1,
+                        borderColor: "divider",
+                    }}
+                >
+                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} gap={1} flexWrap="wrap">
+                        <Tooltip title="Back to Orders">
+                            <IconButton size="small" onClick={() => navigate("/orders")}><ArrowBackIcon /></IconButton>
                         </Tooltip>
+                        <Stack direction="row" alignItems="center" gap={1.5} flex={1} flexWrap="wrap">
+                            <Typography variant="h4">{order.orderNumber || "Order"}</Typography>
+                            <Chip
+                                label={order.status}
+                                size="small"
+                                sx={{ bgcolor: STATUS_COLOURS[order.status] || "#ccc", color: "#fff", fontWeight: 700 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">Placed {fmtDate(order.orderDate)}</Typography>
+                        </Stack>
+                        {locked ? (
+                            <Stack direction="row" alignItems="center" gap={1}>
+                                <Chip icon={<LockIcon />} label="Locked" size="small" variant="outlined" color="default" />
+                                <Tooltip title="Resets the 45-day lock window so the order can be edited again">
+                                    <Button variant="outlined" size="small" startIcon={<LockOpenIcon />} onClick={handleUnlock}>
+                                        Unlock
+                                    </Button>
+                                </Tooltip>
+                            </Stack>
+                        ) : (
+                            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
+                                Edit Order
+                            </Button>
+                        )}
                     </Stack>
-                ) : (
-                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
-                        Edit Order
-                    </Button>
-                )}
-            </Stack>
+                </Box>
+            </Paper>
 
             <Grid container spacing={3}>
                 {/* Customer card */}
@@ -193,7 +213,7 @@ export default function OrderDetailPage() {
                                             <TableCell>{p.category || "—"}</TableCell>
                                             <TableCell align="right">{p.quantity}</TableCell>
                                             <TableCell align="right">
-                                                {p.basePrice != null ? `${sym}${(p.basePrice * p.quantity).toFixed(2)}` : "—"}
+                                                {p.basePrice != null ? fmt(p.basePrice * p.quantity) : "—"}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -246,55 +266,52 @@ export default function OrderDetailPage() {
                     </Paper>
                 </Grid>
 
-                {/* Financial breakdown */}
+                {/* Financial breakdown — invoice ledger style */}
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>Financial Breakdown</Typography>
-                        <Grid container>
-                            <DetailRow label="Item Price" value={fmt(order.totalCharged)} />
-                            {order.buyerTax > 0 && <DetailRow label="+ Buyer Tax" value={`+${fmt(order.buyerTax)}`} valueColor="success.main" />}
-                            {order.discount > 0 && (
-                                <DetailRow
-                                    label={order.discountType === "percent" ? `Discount (${order.discount}%)` : "Discount"}
-                                    value={`–${fmt(discountAmt)}`}
-                                    valueColor="error.main"
-                                />
-                            )}
-                            <DetailRow label="Shipping Cost" value={fmt(order.shippingCost)} />
-                            <DetailRow label="– Hosting Fees" value={`–${fmt(order.hostingCost)}`} valueColor="error.main" />
-                            {order.marketingCost > 0 && <DetailRow label="– Marketing Costs" value={`–${fmt(order.marketingCost)}`} valueColor="error.main" />}
-                            <DetailRow label="– Material Cost" value={`–${fmt(order.totalMaterialCost)}`} valueColor="error.main" />
-                            {order.refund > 0 && <DetailRow label="– Refund" value={`–${fmt(order.refund)}`} valueColor="error.main" />}
-                        </Grid>
-                        <Divider sx={{ my: 1.5 }} />
-                        <Grid container mb={1}>
-                            <Grid item xs={6}><Typography variant="subtitle1" fontWeight={700}>Gross Revenue</Typography></Grid>
-                            <Grid item xs={6} textAlign="right"><Typography variant="subtitle1" fontWeight={700}>{fmt(totalPaid)}</Typography></Grid>
-                        </Grid>
-                        <Grid container mb={1}>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle1" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>
-                                    Net Revenue
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={6} textAlign="right">
-                                <Typography variant="subtitle1" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>
+                    <Paper sx={{ p: 0, overflow: "hidden" }}>
+                        <Box sx={{ px: 3, py: 2, bgcolor: "background.default", borderBottom: 1, borderColor: "divider" }}>
+                            <Typography variant="h6">Financial Breakdown</Typography>
+                        </Box>
+                        <Box sx={{ px: 3, py: 2 }}>
+                            {[
+                                { label: "Item Price",   value: fmt(order.totalCharged) },
+                                order.buyerTax > 0   && { label: "+ Buyer Tax",     value: `+${fmt(order.buyerTax)}`,     color: "success.main" },
+                                order.discount > 0   && { label: order.discountType === "percent" ? `Discount (${order.discount}%)` : "Discount", value: `–${fmt(discountAmt)}`, color: "error.main" },
+                                { label: "Shipping Cost",   value: fmt(order.shippingCost) },
+                                { label: "– Hosting Fees",  value: `–${fmt(order.hostingCost)}`,     color: "error.main" },
+                                order.marketingCost > 0 && { label: "– Marketing Costs", value: `–${fmt(order.marketingCost)}`, color: "error.main" },
+                                { label: "– Material Cost", value: `–${fmt(order.totalMaterialCost)}`, color: "error.main" },
+                                order.refund > 0 && { label: "– Refund", value: `–${fmt(order.refund)}`, color: "error.main" },
+                            ].filter(Boolean).map((row, i) => (
+                                <Stack key={i} direction="row" justifyContent="space-between" alignItems="center" py={0.75}>
+                                    <Typography variant="body2" color="text.secondary">{row.label}</Typography>
+                                    <Typography variant="body2" fontWeight={500} color={row.color || "text.primary"}>{row.value}</Typography>
+                                </Stack>
+                            ))}
+                        </Box>
+                        <Divider />
+                        <Box sx={{ px: 3, py: 1.5 }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" py={0.5}>
+                                <Typography variant="body2" fontWeight={700}>Gross Revenue</Typography>
+                                <Typography variant="body2" fontWeight={700}>{fmt(totalPaid)}</Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" py={0.5}>
+                                <Typography variant="body2" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>Net Revenue</Typography>
+                                <Typography variant="body2" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>
                                     {fmt((order.profit || 0) + (order.shippingCost || 0))}
                                 </Typography>
-                            </Grid>
-                        </Grid>
-                        <Grid container>
-                            <Grid item xs={6}>
+                            </Stack>
+                        </Box>
+                        <Box sx={{ px: 3, py: 2, bgcolor: order.profit >= 0 ? "#C1D7AE22" : "#FFCAB122", borderTop: 2, borderColor: order.profit >= 0 ? "success.main" : "error.main" }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center">
                                 <Typography variant="subtitle1" fontWeight={700} color={order.profit >= 0 ? "success.main" : "error.main"}>
                                     Net Profit
                                 </Typography>
-                            </Grid>
-                            <Grid item xs={6} textAlign="right">
-                                <Typography variant="subtitle1" fontWeight={700} color={order.profit >= 0 ? "success.main" : "error.main"}>
+                                <Typography variant="h5" fontWeight={700} color={order.profit >= 0 ? "success.main" : "error.main"}>
                                     {fmt(order.profit)}
                                 </Typography>
-                            </Grid>
-                        </Grid>
+                            </Stack>
+                        </Box>
                     </Paper>
                 </Grid>
             </Grid>

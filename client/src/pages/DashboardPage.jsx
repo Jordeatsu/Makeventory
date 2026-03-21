@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import api from "../api";
-import { STATUS_COLOURS, SEMANTIC, BRAND } from "../colours";
+import { STATUS_COLOURS, SEMANTIC, BRAND } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import StatCard from "../components/common/StatCard";
 

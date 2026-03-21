@@ -123,10 +123,16 @@ const SEED_MODULES = [
         displayOrder: 2,
     },
     {
+        name: "Customers",
+        description: "Manage your customer database, including contact details, preferences, and order history.",
+        isActive: false,
+        displayOrder: 3,
+    },
+    {
         name: "Year Review",
         description: "Generate annual summaries and trend reports across your inventory, orders, and sales data.",
         isActive: false,
-        displayOrder: 3,
+        displayOrder: 4,
     },
 ];
 

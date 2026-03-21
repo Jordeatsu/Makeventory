@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
-    DialogContent, DialogContentText, DialogTitle, IconButton,
+    DialogContent, DialogTitle, IconButton,
     InputAdornment, Paper, Stack,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     TextField, Tooltip, Typography,
@@ -209,15 +209,15 @@ export default function CustomersPage() {
             />
 
             {/* Delete confirmation */}
-            <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-                <DialogTitle>Delete Customer?</DialogTitle>
+            <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>Delete Customer</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? Their order history will be preserved.
-                    </DialogContentText>
+                    <Typography>
+                        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? Their order history will be preserved. This cannot be undone.
+                    </Typography>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
                     <Button color="error" variant="contained" onClick={handleDelete}>Delete</Button>
                 </DialogActions>
             </Dialog>

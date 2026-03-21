@@ -14,12 +14,11 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import ProductFormDialog from "../components/modals/ProductFormDialog";
-import { STATUS_COLOURS } from "../colours";
+import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
-import StatCard from "../components/common/StatCard";
 import { InfoRow } from "../components/common/DetailRow";
 
 export default function ProductDetailPage() {
@@ -102,32 +101,37 @@ export default function ProductDetailPage() {
 
             <Grid container spacing={3}>
 
-                {/* Stats */}
-                <Grid item xs={6} sm={3}>
-                    <StatCard label="Total Orders" value={totalOrders} />
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <StatCard label="Gross Revenue" value={fmt(totalRevenue)} sub="inc. shipping" />
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <StatCard
-                        label="Total Profit"
-                        value={fmt(totalProfit)}
-                        color={totalProfit >= 0 ? "success.main" : "error.main"}
-                        sub={totalRevenue > 0 ? `${fmtPct(profitMargin)} margin` : undefined}
-                    />
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <StatCard
-                        label="Avg Profit / Order"
-                        value={fmt(avgProfit)}
-                        color={avgProfit >= 0 ? "success.main" : "error.main"}
-                    />
+                {/* KPI strip — single card with 4 metrics separated by dividers */}
+                <Grid item xs={12}>
+                    <Paper sx={{ overflow: "hidden" }}>
+                        <Stack direction={{ xs: "column", sm: "row" }} divider={<Divider orientation="vertical" flexItem />}>
+                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Total Orders</Typography>
+                                <Typography variant="h4" fontWeight={700} color="primary.main">{totalOrders}</Typography>
+                            </Box>
+                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Gross Revenue</Typography>
+                                <Typography variant="h4" fontWeight={700}>{fmt(totalRevenue)}</Typography>
+                                <Typography variant="caption" color="text.secondary">inc. shipping</Typography>
+                            </Box>
+                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Total Profit</Typography>
+                                <Typography variant="h4" fontWeight={700} color={totalProfit >= 0 ? "success.main" : "error.main"}>{fmt(totalProfit)}</Typography>
+                                {totalRevenue > 0 && (
+                                    <Typography variant="caption" color="text.secondary">{fmtPct(profitMargin)} margin</Typography>
+                                )}
+                            </Box>
+                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Avg Profit / Order</Typography>
+                                <Typography variant="h4" fontWeight={700} color={avgProfit >= 0 ? "success.main" : "error.main"}>{fmt(avgProfit)}</Typography>
+                            </Box>
+                        </Stack>
+                    </Paper>
                 </Grid>
 
                 {/* Product info */}
                 <Grid item xs={12} md={5}>
-                    <Paper sx={{ p: 3, height: "100%" }}>
+                    <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "primary.light" }}>
                         <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                             <BuildIcon color="primary" fontSize="small" />
                             <Typography variant="h6">Product Info</Typography>
@@ -144,7 +148,7 @@ export default function ProductDetailPage() {
 
                 {/* Materials recipe */}
                 <Grid item xs={12} md={7}>
-                    <Paper sx={{ p: 3, height: "100%" }}>
+                    <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "secondary.light" }}>
                         <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                             <BuildIcon color="primary" fontSize="small" />
                             <Typography variant="h6">Materials Recipe</Typography>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Link, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { APP_VERSION } from '../version';
 
 const BMC_USERNAME = 'Jordeatsu';
 
@@ -25,7 +26,10 @@ export default function AppFooter() {
             }}
         >
             <Typography variant="caption" color="text.secondary">
-                {t('footer.copyright', { year })}
+                {t('footer.copyright', { year })}{' '}
+                <Typography component="span" variant="caption" color="text.disabled">
+                    v{APP_VERSION}
+                </Typography>
             </Typography>
             <Link
                 href={`https://www.buymeacoffee.com/${BMC_USERNAME}`}
