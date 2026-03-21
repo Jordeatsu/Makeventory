@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
-    DialogTitle, IconButton, InputAdornment, MenuItem, Paper, Snackbar, Stack,
+    DialogTitle, IconButton, InputAdornment, MenuItem, Paper, Stack,
     Tab, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination,
     TableRow, Tabs, TextField, Tooltip, Typography,
 } from "@mui/material";
-import MuiAlert from "@mui/material/Alert";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -16,8 +15,10 @@ import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import OrderFormDialog from "../components/modals/OrderFormDialog";
 import { STATUS_COLOURS } from "../colours";
+import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
+import { useToast } from "../hooks/useToast";
+import ToastSnackbar from "../components/common/ToastSnackbar";
 
-const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
 const ALL_STATUSES = ["", "Pending", "In Progress", "Completed", "Shipped", "Cancelled"];
 const LOCK_MS = 45 * 24 * 60 * 60 * 1000;
 
@@ -26,9 +27,8 @@ const isLocked = (o) => o.locked || (o.updatedAt && Date.now() - new Date(o.upda
 export default function OrdersPage() {
     const navigate = useNavigate();
     const { settings } = useGlobalSettings();
-    const sym = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
-    const fmt = (n) => (typeof n === "number" ? `${sym}${n.toFixed(2)}` : "—");
-    const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-GB") : "—");
+    const fmt = useCurrencyFormatter(settings);
+    const { toast, showToast, closeToast } = useToast();
 
     const [orders, setOrders]       = useState([]);
     const [loading, setLoading]     = useState(true);
@@ -41,9 +41,6 @@ export default function OrdersPage() {
     const [page, setPage]           = useState(0);
     const [tab, setTab]             = useState(1);
     const ROWS = 10;
-
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -298,16 +295,7 @@ export default function OrdersPage() {
                 </DialogActions>
             </Dialog>
 
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3500}
-                onClose={() => setToast((t) => ({ ...t, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <MuiAlert variant="filled" severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))}>
-                    {toast.message}
-                </MuiAlert>
-            </Snackbar>
+            <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>
     );
 }

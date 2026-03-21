@@ -3,14 +3,9 @@ import { Router } from 'express';
 import Material from '../models/Material.js';
 import MaterialType from '../models/MaterialType.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { isValidId, escapeRegex } from '../lib/helpers.js';
+import { isValidId, escapeRegex, userLabel } from '../lib/helpers.js';
 
 const router = Router();
-
-function userLabel(u) {
-    if (!u) return null;
-    return { _id: u._id, name: `${u.firstName} ${u.lastName}`.trim() };
-}
 
 function materialToClient(doc) {
     const m = doc.toObject ? doc.toObject() : doc;

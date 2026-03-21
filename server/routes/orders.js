@@ -3,14 +3,9 @@ import { Router } from 'express';
 import Order from '../models/Order.js';
 import Customer from '../models/Customer.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { isValidId, escapeRegex } from '../lib/helpers.js';
+import { isValidId, escapeRegex, userLabel } from '../lib/helpers.js';
 
 const router = Router();
-
-function userLabel(u) {
-    if (!u) return null;
-    return { _id: u._id, name: `${u.firstName} ${u.lastName}`.trim() };
-}
 
 async function upsertCustomer(c) {
     if (!c?.name && !c?.email) return;

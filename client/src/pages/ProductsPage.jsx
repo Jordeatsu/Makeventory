@@ -11,19 +11,18 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SearchIcon from "@mui/icons-material/Search";
-import Snackbar from "@mui/material/Snackbar";
-import MuiAlert from "@mui/material/Alert";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import ProductFormDialog from "../components/modals/ProductFormDialog";
-
-const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
+import { useCurrencyFormatter } from "../utils/formatting";
+import { useToast } from "../hooks/useToast";
+import ToastSnackbar from "../components/common/ToastSnackbar";
 
 export default function ProductsPage() {
     const navigate = useNavigate();
     const { settings } = useGlobalSettings();
-    const sym = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
-    const fmt = (n) => `${sym}${Number(n || 0).toFixed(2)}`;
+    const fmt = useCurrencyFormatter(settings);
+    const { toast, showToast, closeToast } = useToast();
 
     const [products, setProducts] = useState([]);
     const [loading, setLoading]   = useState(true);
@@ -33,9 +32,6 @@ export default function ProductsPage() {
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing]       = useState(null);
-
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -257,16 +253,7 @@ export default function ProductsPage() {
                 initial={editing}
             />
 
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3500}
-                onClose={() => setToast((t) => ({ ...t, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <MuiAlert variant="filled" severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))}>
-                    {toast.message}
-                </MuiAlert>
-            </Snackbar>
+            <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>
     );
 }
