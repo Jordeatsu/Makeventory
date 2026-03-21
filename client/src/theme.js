@@ -1,92 +1,115 @@
 import { createTheme } from "@mui/material";
 
-const palette = {
+// ─── Brand Palette ────────────────────────────────────────────────────────────
+// Edit these values to retheme the entire app in one place.
+// These are also available as named exports (BRAND, STATUS_COLOURS, SEMANTIC)
+// so pages can import specific tokens directly alongside the MUI theme.
+export const BRAND = {
     darkest: "#565264", // deep purple-slate  — nav / dark accents
-    dark: "#706677", // muted purple       — primary main
-    mid: "#A6808C", // mauve rose         — primary light / secondary main
-    light: "#CCB7AE", // warm blush         — secondary light / table headers
-    pale: "#D6CFCB", // soft warm grey     — page background
-    white: "#FFFFFF", // white              — paper / cards
+    dark:    "#706677", // muted purple       — primary main
+    mid:     "#A6808C", // mauve rose         — primary light / secondary main
+    light:   "#CCB7AE", // warm blush         — secondary light / table headers
+    pale:    "#D6CFCB", // soft warm grey     — page background
+    white:   "#FFFFFF", // white              — paper / cards
+};
+
+// ─── Status Colours ───────────────────────────────────────────────────────────
+// Used on order-status chips and dashboard charts.
+export const STATUS_COLOURS = {
+    Pending:       "#FFCAB1",
+    "In Progress": "#ECDCB0",
+    Completed:     "#C1D7AE",
+    Shipped:       "#8CC084",
+    Cancelled:     "#968E85",
+};
+
+// ─── Semantic Colours ─────────────────────────────────────────────────────────
+// Feedback colours for toast messages, alerts, etc.
+export const SEMANTIC = {
+    success: "#4CAF50",
+    warning: "#FF9800",
+    error:   "#F44336",
+    info:    "#2196F3",
 };
 
 const theme = createTheme({
     palette: {
         mode: "light",
         primary: {
-            main: palette.dark,
-            light: palette.mid,
-            dark: palette.darkest,
-            contrastText: palette.white,
+            main: BRAND.dark,
+            light: BRAND.mid,
+            dark: BRAND.darkest,
+            contrastText: BRAND.white,
         },
         secondary: {
-            main: palette.mid,
-            light: palette.light,
-            dark: palette.dark,
-            contrastText: palette.white,
+            main: BRAND.mid,
+            light: BRAND.light,
+            dark: BRAND.dark,
+            contrastText: BRAND.white,
         },
         error: {
             main: "#FFCAB1",
-            contrastText: palette.darkest,
+            contrastText: BRAND.darkest,
         },
         warning: {
             main: "#ECDCB0",
-            contrastText: palette.darkest,
+            contrastText: BRAND.darkest,
         },
         success: {
             main: "#C1D7AE",
-            contrastText: palette.darkest,
+            contrastText: BRAND.darkest,
         },
         info: {
-            main: palette.mid,
-            contrastText: palette.white,
+            main: BRAND.mid,
+            contrastText: BRAND.white,
         },
         background: {
-            default: palette.pale,
-            paper: palette.white,
+            default: BRAND.pale,
+            paper: BRAND.white,
         },
         text: {
-            primary: palette.darkest,
-            secondary: palette.dark,
-            disabled: palette.light,
+            primary: BRAND.darkest,
+            secondary: BRAND.dark,
+            disabled: BRAND.light,
         },
-        divider: palette.light,
+        divider: BRAND.light,
     },
     typography: {
         fontFamily: '"Inter", "Roboto", sans-serif',
-        h5: { fontWeight: 700, color: palette.darkest },
-        h6: { fontWeight: 600, color: palette.darkest },
+        h5: { fontWeight: 700, color: BRAND.darkest },
+        h6: { fontWeight: 600, color: BRAND.darkest },
     },
     shape: { borderRadius: 10 },
     components: {
         MuiPaper: {
             styleOverrides: {
                 root: { backgroundImage: "none" },
-                outlined: { borderColor: palette.light },
+                outlined: { borderColor: BRAND.light },
             },
         },
         MuiDivider: {
             styleOverrides: {
-                root: { borderColor: palette.light },
+                root: { borderColor: BRAND.light },
             },
         },
         MuiButton: {
             styleOverrides: {
                 containedPrimary: {
-                    backgroundColor: palette.dark,
-                    "&:hover": { backgroundColor: palette.darkest },
+                    backgroundColor: BRAND.dark,
+                    "&:hover": { backgroundColor: BRAND.darkest },
                 },
             },
         },
         MuiChip: {
             styleOverrides: {
-                outlinedPrimary: { borderColor: palette.dark, color: palette.dark },
+                outlinedPrimary: { borderColor: BRAND.dark, color: BRAND.dark },
             },
         },
         MuiLinearProgress: {
             styleOverrides: {
                 colorPrimary: {
-                    backgroundColor: `${palette.light}55`,
-                    "& .MuiLinearProgress-bar": { backgroundColor: palette.dark },
+                    backgroundColor: `${BRAND.light}55`,
+                    "& .MuiLinearProgress-bar": { backgroundColor: BRAND.dark },
                 },
                 colorSuccess: {
                     backgroundColor: `#C1D7AE55`,
@@ -100,10 +123,10 @@ const theme = createTheme({
         },
         MuiAlert: {
             styleOverrides: {
-                standardSuccess: { backgroundColor: "#C1D7AE44", color: palette.darkest },
-                standardError: { backgroundColor: "#FFCAB144", color: palette.darkest },
-                standardWarning: { backgroundColor: "#ECDCB044", color: palette.darkest },
-                standardInfo: { backgroundColor: `${palette.mid}33`, color: palette.darkest },
+                standardSuccess: { backgroundColor: "#C1D7AE44", color: BRAND.darkest },
+                standardError: { backgroundColor: "#FFCAB144", color: BRAND.darkest },
+                standardWarning: { backgroundColor: "#ECDCB044", color: BRAND.darkest },
+                standardInfo: { backgroundColor: `${BRAND.mid}33`, color: BRAND.darkest },
             },
         },
     },

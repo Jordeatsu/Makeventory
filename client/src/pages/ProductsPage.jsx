@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Alert, Box, Button, Chip, CircularProgress, IconButton, InputAdornment,
+    Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
+    DialogContent, DialogTitle, IconButton, InputAdornment,
     Paper, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Tabs, TextField, Tooltip, Typography,
 } from "@mui/material";
@@ -32,6 +33,7 @@ export default function ProductsPage() {
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing]       = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -71,10 +73,11 @@ export default function ProductsPage() {
         setDialogOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this product? It will be unlinked from any existing orders.")) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
         try {
-            await api.delete(`/products/${id}`);
+            await api.delete(`/products/${deleteTarget._id}`);
+            setDeleteTarget(null);
             showToast("Product deleted.", "info");
             load();
         } catch {
@@ -158,7 +161,7 @@ export default function ProductsPage() {
                             </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
-                            <IconButton size="small" color="error" onClick={() => handleDelete(p._id)}>
+                            <IconButton size="small" color="error" onClick={() => setDeleteTarget(p)}>
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
@@ -252,6 +255,20 @@ export default function ProductsPage() {
                 onSave={handleSave}
                 initial={editing}
             />
+
+            {/* Delete confirm */}
+            <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>Delete Product</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? It will be unlinked from any existing orders. This cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
+                    <Button variant="contained" color="error" onClick={handleDelete}>Delete</Button>
+                </DialogActions>
+            </Dialog>
 
             <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>

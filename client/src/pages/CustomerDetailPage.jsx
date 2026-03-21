@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
-    DialogContent, DialogContentText, DialogTitle, Divider,
+    DialogContent, DialogTitle, Divider,
     IconButton, Paper, Stack, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from "@mui/material";
@@ -12,7 +12,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
-import { STATUS_COLOURS } from "../colours";
+import { STATUS_COLOURS } from "../theme";
 import CustomerFormDialog from "../components/modals/CustomerFormDialog";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -206,15 +206,15 @@ export default function CustomerDetailPage() {
             />
 
             {/* Delete confirmation */}
-            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
-                <DialogTitle>Delete Customer?</DialogTitle>
+            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Delete Customer</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete <strong>{customerName}</strong>? Their order history will be preserved.
-                    </DialogContentText>
+                    <Typography>
+                        Are you sure you want to delete <strong>{customerName}</strong>? Their order history will be preserved. This cannot be undone.
+                    </Typography>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setDeleteOpen(false)} color="inherit">Cancel</Button>
                     <Button color="error" variant="contained" onClick={handleDelete}>Delete</Button>
                 </DialogActions>
             </Dialog>

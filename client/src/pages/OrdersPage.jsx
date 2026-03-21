@@ -14,7 +14,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import OrderFormDialog from "../components/modals/OrderFormDialog";
-import { STATUS_COLOURS } from "../colours";
+import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
 import ToastSnackbar from "../components/common/ToastSnackbar";
