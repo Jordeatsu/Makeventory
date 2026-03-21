@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress,
-    Grid, IconButton, Paper, Snackbar, Stack, Tooltip, Typography,
+    Grid, IconButton, Paper, Stack, Tooltip, Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -11,42 +11,30 @@ import { useTranslation } from "react-i18next";
 import api from "../api";
 import MaterialFormDialog from "../components/modals/MaterialFormDialog";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
+import { useCurrencyFormatter } from "../utils/formatting";
+import { useToast } from "../hooks/useToast";
+import ToastSnackbar from "../components/common/ToastSnackbar";
+import RecordInfo from "../components/common/RecordInfo";
+import { DetailRow } from "../components/common/DetailRow";
 
-const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
 const UNIT_LABELS = {
     mm: "mm", mm2: "mm²", cm: "cm", cm2: "cm²",
     m: "m",   m2: "m²",  in: "in", in2: "in²", piece: "pcs",
 };
-
-function DetailRow({ label, value, mono = false }) {
-    if (value === null || value === undefined || value === "") return null;
-    return (
-        <Grid item xs={12} sm={6}>
-            <Typography variant="caption" color="text.secondary" display="block">
-                {label}
-            </Typography>
-            <Typography variant="body1" fontFamily={mono ? "monospace" : undefined} fontWeight={500}>
-                {value}
-            </Typography>
-        </Grid>
-    );
-}
 
 export default function MaterialDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { settings } = useGlobalSettings();
-    const currencySymbol = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
-    const fmt = (n) => `${currencySymbol}${Number(n).toFixed(2)}`;
+    const fmt = useCurrencyFormatter(settings);
+    const { toast, showToast, closeToast } = useToast();
 
     const [material, setMaterial]         = useState(null);
     const [materialTypes, setMaterialTypes] = useState([]);
     const [loading, setLoading]           = useState(true);
     const [error, setError]               = useState("");
     const [editOpen, setEditOpen]         = useState(false);
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -215,39 +203,12 @@ export default function MaterialDetailPage() {
             </Paper>
 
             {/* Record Info */}
-            <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
-                    {t("materials.detail.systemInfo", "Record Info")}
-                </Typography>
-                <Grid container spacing={2}>
-                    {m.createdAt && (
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                {t("materials.detail.created", "Created")}
-                            </Typography>
-                            {m.createdBy?.name && (
-                                <Typography variant="body1" fontWeight={600}>{m.createdBy.name}</Typography>
-                            )}
-                            <Typography variant="body2" color="text.secondary">
-                                {new Date(m.createdAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
-                            </Typography>
-                        </Grid>
-                    )}
-                    {m.updatedAt && (
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                {t("materials.detail.updated", "Last Updated")}
-                            </Typography>
-                            {m.updatedBy?.name && (
-                                <Typography variant="body1" fontWeight={600}>{m.updatedBy.name}</Typography>
-                            )}
-                            <Typography variant="body2" color="text.secondary">
-                                {new Date(m.updatedAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
-                            </Typography>
-                        </Grid>
-                    )}
-                </Grid>
-            </Paper>
+            <RecordInfo
+                createdAt={m.createdAt}
+                updatedAt={m.updatedAt}
+                createdBy={m.createdBy}
+                updatedBy={m.updatedBy}
+            />
 
             {/* Edit dialog */}
             <MaterialFormDialog
@@ -258,21 +219,7 @@ export default function MaterialDetailPage() {
                 materialTypes={materialTypes}
             />
 
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3000}
-                onClose={() => setToast((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={() => setToast((p) => ({ ...p, open: false }))}
-                    severity={toast.severity}
-                    variant="filled"
-                    sx={{ width: "100%" }}
-                >
-                    {toast.message}
-                </Alert>
-            </Snackbar>
+            <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>
     );
 }

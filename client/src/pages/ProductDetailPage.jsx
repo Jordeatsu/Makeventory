@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress, Divider, Grid, IconButton,
-    Paper, Snackbar, Stack, Table, TableBody, TableCell, TableHead, TableRow,
+    Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow,
     Tooltip, Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -15,47 +15,25 @@ import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import ProductFormDialog from "../components/modals/ProductFormDialog";
 import { STATUS_COLOURS } from "../colours";
-
-const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
-
-function StatCard({ label, value, sub, color }) {
-    return (
-        <Paper sx={{ p: 2.5, height: "100%" }}>
-            <Typography variant="caption" color="text.secondary">{label}</Typography>
-            <Typography variant="h5" fontWeight={700} color={color}>{value}</Typography>
-            {sub && <Typography variant="caption" color="text.secondary">{sub}</Typography>}
-        </Paper>
-    );
-}
-
-function InfoRow({ label, value }) {
-    return (
-        <Grid container sx={{ py: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
-            <Grid item xs={5}>
-                <Typography variant="body2" color="text.secondary">{label}</Typography>
-            </Grid>
-            <Grid item xs={7}>
-                <Typography variant="body2" fontWeight={500}>{value || "—"}</Typography>
-            </Grid>
-        </Grid>
-    );
-}
+import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
+import { useToast } from "../hooks/useToast";
+import ToastSnackbar from "../components/common/ToastSnackbar";
+import RecordInfo from "../components/common/RecordInfo";
+import StatCard from "../components/common/StatCard";
+import { InfoRow } from "../components/common/DetailRow";
 
 export default function ProductDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { settings } = useGlobalSettings();
-    const sym = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
-    const fmt = (n) => `${sym}${Number(n || 0).toFixed(2)}`;
+    const fmt = useCurrencyFormatter(settings);
     const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;
-    const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-GB") : "—");
+    const { toast, showToast, closeToast } = useToast();
 
     const [stats, setStats]     = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError]     = useState("");
     const [editOpen, setEditOpen] = useState(false);
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -190,8 +168,8 @@ export default function ProductDetailPage() {
                                                 {m.materialType && <Chip label={m.materialType} size="small" variant="outlined" />}
                                             </TableCell>
                                             <TableCell align="right">{m.quantityUsed} {m.unit}</TableCell>
-                                            <TableCell align="right">{sym}{(m.costPerUnit || 0).toFixed(2)}</TableCell>
-                                            <TableCell align="right">{sym}{(m.lineCost || 0).toFixed(2)}</TableCell>
+                                            <TableCell align="right">{fmt(m.costPerUnit || 0)}</TableCell>
+                                            <TableCell align="right">{fmt(m.lineCost || 0)}</TableCell>
                                         </TableRow>
                                     ))}
                                     <TableRow>
@@ -301,57 +279,16 @@ export default function ProductDetailPage() {
             </Grid>
 
             {/* Record Info */}
-            <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
-                    Record Info
-                </Typography>
-                <Grid container spacing={2}>
-                    {product.createdAt && (
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Created
-                            </Typography>
-                            {product.createdBy?.name && (
-                                <Typography variant="body1" fontWeight={600}>{product.createdBy.name}</Typography>
-                            )}
-                            <Typography variant="body2" color="text.secondary">
-                                {new Date(product.createdAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
-                            </Typography>
-                        </Grid>
-                    )}
-                    {product.updatedAt && (
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Last Updated
-                            </Typography>
-                            {product.updatedBy?.name && (
-                                <Typography variant="body1" fontWeight={600}>{product.updatedBy.name}</Typography>
-                            )}
-                            <Typography variant="body2" color="text.secondary">
-                                {new Date(product.updatedAt).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
-                            </Typography>
-                        </Grid>
-                    )}
-                </Grid>
-            </Paper>
+            <RecordInfo
+                createdAt={product.createdAt}
+                updatedAt={product.updatedAt}
+                createdBy={product.createdBy}
+                updatedBy={product.updatedBy}
+            />
 
             <ProductFormDialog open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={product} />
 
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3000}
-                onClose={() => setToast((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={() => setToast((p) => ({ ...p, open: false }))}
-                    severity={toast.severity}
-                    variant="filled"
-                    sx={{ width: "100%" }}
-                >
-                    {toast.message}
-                </Alert>
-            </Snackbar>
+            <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>
     );
 }

@@ -32,6 +32,12 @@ export function cookieOpts() {
     };
 }
 
+/** Converts a populated user document to a minimal label object { _id, name }. */
+export function userLabel(u) {
+    if (!u) return null;
+    return { _id: u._id, name: `${u.firstName} ${u.lastName}`.trim() };
+}
+
 /** Returns true if `id` is a valid 24-character hex MongoDB ObjectId. */
 export function isValidId(id) {
     return /^[a-f\d]{24}$/i.test(id);

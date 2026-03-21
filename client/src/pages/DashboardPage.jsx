@@ -13,43 +13,11 @@ import { useAuth } from "../context/AuthContext";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import api from "../api";
 import { STATUS_COLOURS, SEMANTIC, BRAND } from "../colours";
+import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
+import StatCard from "../components/common/StatCard";
 
 // Types whose cost is expressed per-pack rather than per-unit
 const BULK_TYPES = ["Bulk Pack", "Multipack"];
-
-/**
- * Compact KPI card used in the top stats row.
- *
- * @param {Object}      props
- * @param {JSX.Element} props.icon  - MUI SvgIcon element
- * @param {string}      props.label - Metric name
- * @param {string}      props.value - Formatted metric value
- * @param {string}      [props.sub] - Optional sub-label beneath the value
- * @param {string}      [props.color="primary.main"] - MUI colour token for value and icon tint
- * @returns {JSX.Element}
- */
-function StatCard({ icon, label, value, sub, color = "primary.main" }) {
-    return (
-        <Paper sx={{ p: 3, height: "100%" }}>
-            <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-                <Box>
-                    <Typography variant="body2" color="text.secondary" mb={0.5}>
-                        {label}
-                    </Typography>
-                    <Typography variant="h4" fontWeight={700} color={color}>
-                        {value}
-                    </Typography>
-                    {sub && (
-                        <Typography variant="caption" color="text.secondary">
-                            {sub}
-                        </Typography>
-                    )}
-                </Box>
-                <Box sx={{ p: 1.5, bgcolor: `${color}18`, borderRadius: 2, color }}>{icon}</Box>
-            </Stack>
-        </Paper>
-    );
-}
 
 /**
  * @component
@@ -60,16 +28,11 @@ export default function DashboardPage() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const { settings } = useGlobalSettings();
+    const fmt = useCurrencyFormatter(settings);
     const [materials, setMaterials] = useState([]);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
-    // Currency symbol derived from GlobalSettings
-    const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
-    const currencySymbol = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
-    const fmt = (n) => `${currencySymbol}${Number(n || 0).toFixed(2)}`;
-    const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : "—");
 
     useEffect(() => {
         // Each call resolves to [] if the endpoint doesn't exist yet, so the

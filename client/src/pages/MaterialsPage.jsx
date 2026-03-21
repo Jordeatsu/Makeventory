@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button, TextField, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert, Snackbar, Stack } from "@mui/material";
+import { Box, Typography, Button, TextField, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert, Stack } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -11,14 +11,16 @@ import { useTranslation } from "react-i18next";
 import api from "../api";
 import MaterialFormDialog from "../components/modals/MaterialFormDialog";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
+import { useCurrencyFormatter } from "../utils/formatting";
+import { useToast } from "../hooks/useToast";
+import ToastSnackbar from "../components/common/ToastSnackbar";
 
 export default function MaterialsPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { settings } = useGlobalSettings();
-    const currency = settings?.currency ?? "GBP";
-    const currencySymbol = currency === "GBP" ? "£" : currency === "EUR" ? "€" : currency === "USD" ? "$" : currency;
-    const fmt = (n) => `${currencySymbol}${Number(n).toFixed(2)}`;
+    const fmt = useCurrencyFormatter(settings);
+    const { toast, showToast, closeToast } = useToast();
 
     const [materials, setMaterials] = useState([]);
     const [materialTypes, setMaterialTypes] = useState([]);
@@ -31,8 +33,6 @@ export default function MaterialsPage() {
     const [saving, setSaving] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [lowStockMaterials, setLowStockMaterials] = useState([]);
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     // Load material types for filter dropdown
     useEffect(() => {
@@ -395,21 +395,7 @@ export default function MaterialsPage() {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3000}
-                onClose={() => setToast((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={() => setToast((p) => ({ ...p, open: false }))}
-                    severity={toast.severity}
-                    variant="filled"
-                    sx={{ width: "100%" }}
-                >
-                    {toast.message}
-                </Alert>
-            </Snackbar>
+            <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>
     );
 }

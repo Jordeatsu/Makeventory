@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
     DialogContent, DialogContentText, DialogTitle, Divider,
-    IconButton, Paper, Snackbar, Stack, Table, TableBody, TableCell,
+    IconButton, Paper, Stack, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -14,8 +14,9 @@ import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { STATUS_COLOURS } from "../colours";
 import CustomerFormDialog from "../components/modals/CustomerFormDialog";
-
-const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
+import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
+import { useToast } from "../hooks/useToast";
+import ToastSnackbar from "../components/common/ToastSnackbar";
 
 function StatBox({ label, value, color }) {
     return (
@@ -30,9 +31,8 @@ export default function CustomerDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { settings } = useGlobalSettings();
-    const sym = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
-    const fmt = (n) => `${sym}${Number(n || 0).toFixed(2)}`;
-    const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-GB") : "—");
+    const fmt = useCurrencyFormatter(settings);
+    const { toast, showToast, closeToast } = useToast();
 
     const [customer, setCustomer] = useState(null);
     const [orders, setOrders]   = useState([]);
@@ -40,8 +40,6 @@ export default function CustomerDetailPage() {
     const [error, setError]     = useState("");
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
-    const showToast = (message, severity = "success") => setToast({ open: true, message, severity });
 
     const loadCustomer = async () => {
         setLoading(true);
@@ -221,21 +219,7 @@ export default function CustomerDetailPage() {
                 </DialogActions>
             </Dialog>
 
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3000}
-                onClose={() => setToast((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={() => setToast((p) => ({ ...p, open: false }))}
-                    severity={toast.severity}
-                    variant="filled"
-                    sx={{ width: "100%" }}
-                >
-                    {toast.message}
-                </Alert>
-            </Snackbar>
+            <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>
     );
 }

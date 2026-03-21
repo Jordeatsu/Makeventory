@@ -3,14 +3,9 @@ import { Router } from 'express';
 import Product from '../models/Product.js';
 import Order   from '../models/Order.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { isValidId, escapeRegex } from '../lib/helpers.js';
+import { isValidId, escapeRegex, userLabel } from '../lib/helpers.js';
 
 const router = Router();
-
-function userLabel(u) {
-    if (!u) return null;
-    return { _id: u._id, name: `${u.firstName} ${u.lastName}`.trim() };
-}
 
 function productToClient(doc) {
     const p = doc.toObject ? doc.toObject() : doc;
