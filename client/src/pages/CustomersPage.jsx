@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
     DialogContent, DialogTitle, IconButton,
-    InputAdornment, Paper, Stack,
+    InputAdornment, Paper, Stack, Tab, Tabs,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     TextField, Tooltip, Typography,
 } from "@mui/material";
@@ -31,6 +31,7 @@ export default function CustomersPage() {
     const [error, setError]         = useState("");
     const [search, setSearch]       = useState("");
 
+    const [tab, setTab]               = useState(1);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing]       = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -80,6 +81,93 @@ export default function CustomersPage() {
         }
     };
 
+    const groupedByLetter = useMemo(() => {
+        const groups = {};
+        customers.forEach((c) => {
+            const firstChar = c.name?.charAt(0).toUpperCase() || '#';
+            const letter = /[A-Z]/.test(firstChar) ? firstChar : '#';
+            if (!groups[letter]) groups[letter] = { letter, customers: [] };
+            groups[letter].customers.push(c);
+        });
+        return Object.values(groups).sort((a, b) =>
+            a.letter === '#' ? 1 : b.letter === '#' ? -1 : a.letter.localeCompare(b.letter)
+        );
+    }, [customers]);
+
+    const tableHead = (
+        <TableHead>
+            <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
+                <TableCell>Customer</TableCell>
+                <TableCell>Location</TableCell>
+                <TableCell align="center">Orders</TableCell>
+                <TableCell align="right">Total Spent</TableCell>
+                <TableCell align="right">Total Profit</TableCell>
+                <TableCell>First Order</TableCell>
+                <TableCell>Last Order</TableCell>
+                <TableCell align="right">Actions</TableCell>
+            </TableRow>
+        </TableHead>
+    );
+
+    const renderRow = (c) => (
+        <TableRow
+            key={c._id}
+            hover
+            sx={{ cursor: "pointer" }}
+            onClick={() => navigate(`/customers/${c._id}`)}
+        >
+            <TableCell>
+                <Typography variant="body2" fontWeight={600}>{c.name}</Typography>
+                {c.email && <Typography variant="caption" color="text.secondary" display="block">{c.email}</Typography>}
+            </TableCell>
+            <TableCell>
+                <Typography variant="body2">
+                    {[c.city, c.state, c.postcode, c.country].filter(Boolean).join(", ") || "—"}
+                </Typography>
+            </TableCell>
+            <TableCell align="center">
+                <Chip
+                    label={c.orderCount}
+                    size="small"
+                    color={c.orderCount > 1 ? "success" : "default"}
+                    variant={c.orderCount > 1 ? "filled" : "outlined"}
+                />
+                {c.orderCount > 1 && (
+                    <Typography variant="caption" color="success.main" display="block">returning</Typography>
+                )}
+            </TableCell>
+            <TableCell align="right">
+                <Typography variant="body2" fontWeight={500}>{fmt(c.totalSpent)}</Typography>
+            </TableCell>
+            <TableCell align="right">
+                <Typography variant="body2" fontWeight={500} color={c.totalProfit >= 0 ? "success.main" : "error.main"}>
+                    {fmt(c.totalProfit)}
+                </Typography>
+            </TableCell>
+            <TableCell><Typography variant="body2">{fmtDate(c.firstOrder)}</Typography></TableCell>
+            <TableCell><Typography variant="body2">{fmtDate(c.lastOrder)}</Typography></TableCell>
+            <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Tooltip title="View">
+                        <IconButton size="small" onClick={() => navigate(`/customers/${c._id}`)}>
+                            <ArrowForwardIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => { setEditing(c); setDialogOpen(true); }}>
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                        <IconButton size="small" color="error" onClick={() => setDeleteTarget(c)}>
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </Stack>
+            </TableCell>
+        </TableRow>
+    );
+
     return (
         <Box>
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} mb={3} gap={2}>
@@ -113,6 +201,13 @@ export default function CustomersPage() {
                 />
             </Stack>
 
+            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+                <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+                    <Tab label="All Customers" />
+                    <Tab label="By Letter" />
+                </Tabs>
+            </Box>
+
             {loading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>
             ) : customers.length === 0 ? (
@@ -122,83 +217,27 @@ export default function CustomersPage() {
                         {search ? "No customers match your search." : "No customers yet — add your first customer."}
                     </Typography>
                 </Paper>
-            ) : (
+            ) : tab === 0 ? (
+                /* ── Tab 0: All Customers ── */
                 <TableContainer component={Paper}>
                     <Table size="small">
-                        <TableHead>
-                            <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
-                                <TableCell>Customer</TableCell>
-                                <TableCell>Location</TableCell>
-                                <TableCell align="center">Orders</TableCell>
-                                <TableCell align="right">Total Spent</TableCell>
-                                <TableCell align="right">Total Profit</TableCell>
-                                <TableCell>First Order</TableCell>
-                                <TableCell>Last Order</TableCell>
-                                <TableCell align="right">Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {customers.map((c) => (
-                                <TableRow
-                                    key={c._id}
-                                    hover
-                                    sx={{ cursor: "pointer" }}
-                                    onClick={() => navigate(`/customers/${c._id}`)}
-                                >
-                                    <TableCell>
-                                        <Typography variant="body2" fontWeight={600}>{c.name}</Typography>
-                                        {c.email && <Typography variant="caption" color="text.secondary" display="block">{c.email}</Typography>}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {[c.city, c.state, c.postcode, c.country].filter(Boolean).join(", ") || "—"}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Chip
-                                            label={c.orderCount}
-                                            size="small"
-                                            color={c.orderCount > 1 ? "success" : "default"}
-                                            variant={c.orderCount > 1 ? "filled" : "outlined"}
-                                        />
-                                        {c.orderCount > 1 && (
-                                            <Typography variant="caption" color="success.main" display="block">returning</Typography>
-                                        )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <Typography variant="body2" fontWeight={500}>{fmt(c.totalSpent)}</Typography>
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <Typography variant="body2" fontWeight={500} color={c.totalProfit >= 0 ? "success.main" : "error.main"}>
-                                            {fmt(c.totalProfit)}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell><Typography variant="body2">{fmtDate(c.firstOrder)}</Typography></TableCell>
-                                    <TableCell><Typography variant="body2">{fmtDate(c.lastOrder)}</Typography></TableCell>
-                                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                                            <Tooltip title="View">
-                                                <IconButton size="small" onClick={() => navigate(`/customers/${c._id}`)}>
-                                                    <ArrowForwardIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Edit">
-                                                <IconButton size="small" onClick={() => { setEditing(c); setDialogOpen(true); }}>
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete">
-                                                <IconButton size="small" color="error" onClick={() => setDeleteTarget(c)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Stack>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
+                        {tableHead}
+                        <TableBody>{customers.map(renderRow)}</TableBody>
                     </Table>
                 </TableContainer>
+            ) : (
+                /* ── Tab 1: By Letter ── */
+                groupedByLetter.map(({ letter, customers: grpCustomers }) => (
+                    <Box key={letter} sx={{ mb: 4 }}>
+                        <Typography variant="h6" fontWeight={700} sx={{ mb: 1.5 }}>{letter}</Typography>
+                        <TableContainer component={Paper}>
+                            <Table size="small">
+                                {tableHead}
+                                <TableBody>{grpCustomers.map(renderRow)}</TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Box>
+                ))
             )}
 
             <CustomerFormDialog

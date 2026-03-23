@@ -8,6 +8,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import api from "../../api";
 import { useGlobalSettings } from "../../context/GlobalSettingsContext";
+import CountrySelect from "../common/CountrySelect";
 
 const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
 
@@ -315,7 +316,10 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
                         <TextField label="Postcode" fullWidth size="small" value={customer.postcode} onChange={setC("postcode")} />
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                        <TextField label="Country" fullWidth size="small" value={customer.country} onChange={setC("country")} />
+                        <CountrySelect
+                            value={customer.country}
+                            onChange={(v) => setCustomer((c) => ({ ...c, country: v }))}
+                        />
                     </Grid>
                 </Grid>
 

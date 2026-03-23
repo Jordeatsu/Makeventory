@@ -8,13 +8,25 @@ import { isValidId, escapeRegex, userLabel } from '../lib/helpers.js';
 const router = Router();
 
 async function upsertCustomer(c) {
-    if (!c?.name && !c?.email) return;
-    const filter = c.email
-        ? { email: c.email }
-        : { email: { $in: [null, ''] }, name: c.name };
+    if (!c?.name?.trim() && !c?.email?.trim()) return;
+
+    // Build a case-insensitive match: prioritise email, fall back to name
+    let filter;
+    if (c.email?.trim()) {
+        // Match any existing customer with this email (case-insensitive)
+        filter = { email: { $regex: `^${c.email.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } };
+    } else {
+        // No email — match by exact name (case-insensitive) where email is also blank,
+        // so two "John Smith" entries without emails merge into one.
+        filter = {
+            name:  { $regex: `^${c.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+            email: { $in: [null, ''] },
+        };
+    }
+
     const fields = {};
     const keys = ['name', 'email', 'phone', 'addressLine1', 'addressLine2', 'city', 'state', 'postcode', 'country'];
-    keys.forEach(k => { if (c[k]) fields[k] = c[k]; });
+    keys.forEach(k => { if (c[k]?.toString().trim()) fields[k] = c[k].toString().trim(); });
     await Customer.findOneAndUpdate(filter, { $set: fields }, { upsert: true, new: true, setDefaultsOnInsert: true });
 }
 

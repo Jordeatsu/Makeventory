@@ -3,6 +3,7 @@ import {
     Button, Dialog, DialogActions, DialogContent, DialogTitle,
     Grid, TextField,
 } from "@mui/material";
+import CountrySelect from "../common/CountrySelect";
 
 const EMPTY = {
     name: "", email: "", phone: "",
@@ -71,8 +72,10 @@ export default function CustomerFormDialog({ open, onClose, onSave, initial }) {
                                 value={form.postcode} onChange={set("postcode")} />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField label="Country" fullWidth size="small"
-                                value={form.country} onChange={set("country")} />
+                            <CountrySelect
+                                value={form.country}
+                                onChange={(v) => setForm((f) => ({ ...f, country: v }))}
+                            />
                         </Grid>
                     </Grid>
                 </DialogContent>
