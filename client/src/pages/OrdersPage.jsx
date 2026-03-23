@@ -13,7 +13,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import SearchIcon from "@mui/icons-material/Search";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
-import OrderFormDialog from "../components/modals/OrderFormDialog";
+import OrderFormModal from "../components/modals/OrderFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -279,7 +279,7 @@ export default function OrdersPage() {
                 )
             )}
 
-            <OrderFormDialog open={formOpen} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={handleSave} initial={editing} />
+            <OrderFormModal open={formOpen} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={handleSave} initial={editing} />
 
             {/* Delete confirmation */}
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>

@@ -14,7 +14,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SearchIcon from "@mui/icons-material/Search";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
-import ProductFormDialog from "../components/modals/ProductFormDialog";
+import ProductFormModal from "../components/modals/ProductFormModal";
 import { useCurrencyFormatter } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
 import ToastSnackbar from "../components/common/ToastSnackbar";
@@ -249,7 +249,7 @@ export default function ProductsPage() {
                 )
             )}
 
-            <ProductFormDialog
+            <ProductFormModal
                 open={dialogOpen}
                 onClose={() => { setDialogOpen(false); setEditing(null); }}
                 onSave={handleSave}

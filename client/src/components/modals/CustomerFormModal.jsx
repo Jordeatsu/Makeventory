@@ -4,6 +4,7 @@ import {
     Grid, TextField,
 } from "@mui/material";
 import CountrySelect from "../common/CountrySelect";
+import { useCustomerSettings } from "../../hooks/useCustomerSettings";
 
 const EMPTY = {
     name: "", email: "", phone: "",
@@ -11,7 +12,8 @@ const EMPTY = {
     city: "", state: "", postcode: "", country: "",
 };
 
-export default function CustomerFormDialog({ open, onClose, onSave, initial }) {
+export default function CustomerFormModal({ open, onClose, onSave, initial }) {
+    const { fields } = useCustomerSettings();
     const [form, setForm] = useState(EMPTY);
     const [saving, setSaving] = useState(false);
 
@@ -43,40 +45,56 @@ export default function CustomerFormDialog({ open, onClose, onSave, initial }) {
                                 value={form.name} onChange={set("name")}
                             />
                         </Grid>
+                        {fields.email && (
                         <Grid item xs={12} sm={6}>
                             <TextField label="Email" fullWidth size="small" type="email"
                                 value={form.email} onChange={set("email")} />
                         </Grid>
+                        )}
+                        {fields.phone && (
                         <Grid item xs={12} sm={6}>
                             <TextField label="Phone" fullWidth size="small"
                                 value={form.phone} onChange={set("phone")} />
                         </Grid>
+                        )}
+                        {fields.addressLine1 && (
                         <Grid item xs={12}>
                             <TextField label="Address Line 1" fullWidth size="small"
                                 value={form.addressLine1} onChange={set("addressLine1")} />
                         </Grid>
+                        )}
+                        {fields.addressLine2 && (
                         <Grid item xs={12}>
                             <TextField label="Address Line 2" fullWidth size="small"
                                 value={form.addressLine2} onChange={set("addressLine2")} />
                         </Grid>
+                        )}
+                        {fields.city && (
                         <Grid item xs={12} sm={6}>
                             <TextField label="City" fullWidth size="small"
                                 value={form.city} onChange={set("city")} />
                         </Grid>
+                        )}
+                        {fields.state && (
                         <Grid item xs={12} sm={6}>
                             <TextField label="State / County" fullWidth size="small"
                                 value={form.state} onChange={set("state")} />
                         </Grid>
+                        )}
+                        {fields.postcode && (
                         <Grid item xs={12} sm={6}>
                             <TextField label="Postcode" fullWidth size="small"
                                 value={form.postcode} onChange={set("postcode")} />
                         </Grid>
+                        )}
+                        {fields.country && (
                         <Grid item xs={12} sm={6}>
                             <CountrySelect
                                 value={form.country}
                                 onChange={(v) => setForm((f) => ({ ...f, country: v }))}
                             />
                         </Grid>
+                        )}
                     </Grid>
                 </DialogContent>
                 <DialogActions>

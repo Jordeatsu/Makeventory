@@ -253,6 +253,43 @@ app.post("/api/database/create", async (req, res) => {
             const settingsCol = client.db(dbName).collection("globalsettings");
             await settingsCol.deleteMany({});
             await settingsCol.insertOne({ language, currency, createdAt: new Date(), updatedAt: new Date() });
+
+            // Seed material settings singleton
+            const materialSettingsCol = client.db(dbName).collection("materialsettings");
+            await materialSettingsCol.deleteMany({});
+            await materialSettingsCol.insertOne({
+                defaultLowStockThreshold: 5,
+                currency,
+                autoDeductOnOrderComplete: false,
+                trackFractionalQuantities: false,
+                createdAt: new Date(), updatedAt: new Date(),
+            });
+
+            // Seed customer settings singleton
+            const customerSettingsCol = client.db(dbName).collection("customersettings");
+            await customerSettingsCol.deleteMany({});
+            await customerSettingsCol.insertOne({
+                fields: {
+                    email: true, phone: true, addressLine1: true, addressLine2: false,
+                    city: true, state: true, postcode: true, country: true,
+                },
+                createdAt: new Date(), updatedAt: new Date(),
+            });
+
+            // Seed order settings singleton (placeholder — no fields yet)
+            const orderSettingsCol = client.db(dbName).collection("ordersettings");
+            await orderSettingsCol.deleteMany({});
+            await orderSettingsCol.insertOne({ createdAt: new Date(), updatedAt: new Date() });
+
+            // Seed product settings singleton (placeholder — no fields yet)
+            const productSettingsCol = client.db(dbName).collection("productsettings");
+            await productSettingsCol.deleteMany({});
+            await productSettingsCol.insertOne({ createdAt: new Date(), updatedAt: new Date() });
+
+            // Seed year-in-review settings singleton (placeholder — no fields yet)
+            const yearInReviewSettingsCol = client.db(dbName).collection("yearinreviewsettings");
+            await yearInReviewSettingsCol.deleteMany({});
+            await yearInReviewSettingsCol.insertOne({ createdAt: new Date(), updatedAt: new Date() });
         } finally {
             await client.close();
         }

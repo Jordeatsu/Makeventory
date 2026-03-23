@@ -13,7 +13,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
-import ProductFormDialog from "../components/modals/ProductFormDialog";
+import ProductFormModal from "../components/modals/ProductFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -290,7 +290,7 @@ export default function ProductDetailPage() {
                 updatedBy={product.updatedBy}
             />
 
-            <ProductFormDialog open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={product} />
+            <ProductFormModal open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={product} />
 
             <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>

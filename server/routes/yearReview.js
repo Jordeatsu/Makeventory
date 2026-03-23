@@ -103,15 +103,13 @@ router.get('/year-review/stats/:year', requireAuth, async (req, res) => {
 
             // ── Top countries ─────────────────────────────────────────────────
             Order.aggregate([
-                {
-                    $match: {
-                        orderDate:        { $gte: start, $lt: end },
-                        'customer.country': { $nin: [null, ''] },
-                    },
-                },
+                { $match: { orderDate: { $gte: start, $lt: end }, customer: { $ne: null } } },
+                { $lookup: { from: 'customers', localField: 'customer', foreignField: '_id', as: '_c' } },
+                { $set: { _c: { $arrayElemAt: ['$_c', 0] } } },
+                { $match: { '_c.country': { $nin: [null, ''] } } },
                 {
                     $group: {
-                        _id:     '$customer.country',
+                        _id:     '$_c.country',
                         orders:  { $sum: 1 },
                         revenue: { $sum: '$totalCharged' },
                     },
@@ -168,8 +166,8 @@ router.get('/year-review/stats/:year', requireAuth, async (req, res) => {
 
             // ── Top products ──────────────────────────────────────────────────
             Order.aggregate([
-                { $match: { orderDate: { $gte: start, $lt: end } } },
-                { $unwind: '$products' },
+                { $match: { orderDate: { $gte: start, $lt: end } } },                { $lookup: { from: 'customers', localField: 'customer', foreignField: '_id', as: '_c' } },
+                { $set: { _c: { $arrayElemAt: ['$_c', 0] } } },                { $unwind: '$products' },
                 {
                     $group: {
                         _id:        '$products.productName',
@@ -189,7 +187,7 @@ router.get('/year-review/stats/:year', requireAuth, async (req, res) => {
                         netProfit: { $sum: { $divide: ['$profit', { $size: '$products' }] } },
                         byCountry: {
                             $push: {
-                                country:    '$customer.country',
+                                country:    '$_c.country',
                                 totalQty:   '$products.quantity',
                                 orderCount: 1,
                                 netRevenue: {

@@ -13,7 +13,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { STATUS_COLOURS } from "../theme";
-import CustomerFormDialog from "../components/modals/CustomerFormDialog";
+import CustomerFormModal from "../components/modals/CustomerFormModal";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
 import ToastSnackbar from "../components/common/ToastSnackbar";
@@ -198,7 +198,7 @@ export default function CustomerDetailPage() {
                     )}
                 </>
             )}
-            <CustomerFormDialog
+            <CustomerFormModal
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSave={handleSave}

@@ -20,7 +20,7 @@ const EMPTY_FORM = {
 };
 
 
-export default function ProductFormDialog({ open, onClose, onSave, initial }) {
+export default function ProductFormModal({ open, onClose, onSave, initial }) {
     const { settings } = useGlobalSettings();
     const sym = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
 

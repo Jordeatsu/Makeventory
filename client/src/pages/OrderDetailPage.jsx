@@ -14,7 +14,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
-import OrderFormDialog from "../components/modals/OrderFormDialog";
+import OrderFormModal from "../components/modals/OrderFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDateLong } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -324,7 +324,7 @@ export default function OrderDetailPage() {
                 updatedBy={order.updatedBy}
             />
 
-            <OrderFormDialog open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={order} />
+            <OrderFormModal open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={order} />
 
             <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>

@@ -7,27 +7,33 @@ import { isValidId, escapeRegex, userLabel } from '../lib/helpers.js';
 
 const router = Router();
 
-async function upsertCustomer(c) {
-    if (!c?.name?.trim() && !c?.email?.trim()) return;
+// Find or create a Customer document and return its _id (or null).
+async function findOrCreateCustomer(c) {
+    if (!c) return null;
 
-    // Build a case-insensitive match: prioritise email, fall back to name
-    let filter;
-    if (c.email?.trim()) {
-        // Match any existing customer with this email (case-insensitive)
-        filter = { email: { $regex: `^${c.email.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } };
-    } else {
-        // No email — match by exact name (case-insensitive) where email is also blank,
-        // so two "John Smith" entries without emails merge into one.
-        filter = {
-            name:  { $regex: `^${c.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
-            email: { $in: [null, ''] },
-        };
-    }
+    // Front-end sent a plain ObjectId string
+    if (typeof c === 'string' && isValidId(c)) return c;
+
+    // Front-end sent an object that already has an _id (existing customer selected)
+    if (c._id && isValidId(String(c._id))) return c._id;
+
+    // Need at least a name or email to find/create
+    if (!c.name?.trim() && !c.email?.trim()) return null;
+
+    const filter = c.email?.trim()
+        ? { email: { $regex: `^${escapeRegex(c.email.trim())}$`, $options: 'i' } }
+        : { name:  { $regex: `^${escapeRegex(c.name.trim())}$`,  $options: 'i' } };
 
     const fields = {};
     const keys = ['name', 'email', 'phone', 'addressLine1', 'addressLine2', 'city', 'state', 'postcode', 'country'];
     keys.forEach(k => { if (c[k]?.toString().trim()) fields[k] = c[k].toString().trim(); });
-    await Customer.findOneAndUpdate(filter, { $set: fields }, { upsert: true, new: true, setDefaultsOnInsert: true });
+
+    const doc = await Customer.findOneAndUpdate(
+        filter,
+        { $set: fields },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    return doc._id;
 }
 
 function calcProfit(data) {
@@ -51,9 +57,19 @@ router.get('/orders', requireAuth, async (req, res) => {
         if (status) filter.status = status;
         if (search) {
             const re = { $regex: escapeRegex(search), $options: 'i' };
-            filter.$or = [{ 'customer.name': re }, { originOrderId: re }];
+            const matchingCustomers = await Customer.find({ $or: [{ name: re }, { email: re }] }).select('_id').lean();
+            const customerIds = matchingCustomers.map(c => c._id);
+            filter.$or = [
+                ...(customerIds.length ? [{ customer: { $in: customerIds } }] : []),
+                { originOrderId: re },
+            ];
         }
-        const docs = await Order.find(filter).sort({ orderDate: -1, createdAt: -1 }).lean();
+        const CUSTOMER_FIELDS = 'name email phone addressLine1 addressLine2 city state postcode country';
+        const docs = await Order
+            .find(filter)
+            .populate('customer', CUSTOMER_FIELDS)
+            .sort({ orderDate: -1, createdAt: -1 })
+            .lean();
         res.json({ orders: docs });
     } catch {
         res.status(500).json({ error: 'Server error.' });
@@ -65,7 +81,9 @@ router.get('/orders/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: 'Invalid ID.' });
+        const CUSTOMER_FIELDS = 'name email phone addressLine1 addressLine2 city state postcode country';
         const doc = await Order.findById(id)
+            .populate('customer', CUSTOMER_FIELDS)
             .populate('createdBy', 'firstName lastName')
             .populate('updatedBy', 'firstName lastName');
         if (!doc) return res.status(404).json({ error: 'Order not found.' });
@@ -82,14 +100,20 @@ router.post('/orders', requireAuth, async (req, res) => {
         const body = req.body ?? {};
         if (!body.status) body.status = 'Pending';
         const { profit, totalMaterialCost } = calcProfit(body);
+        // Auto-assign next order number (ORD-0000001 format)
+        const latest = await Order.findOne({ orderNumber: { $ne: null } }).sort({ createdAt: -1 }).select('orderNumber').lean();
+        const lastSeq = latest?.orderNumber ? parseInt(latest.orderNumber.replace('ORD-', ''), 10) : 0;
+        const nextNumber = `ORD-${String(lastSeq + 1).padStart(8, '0')}`;
+        const customerId = await findOrCreateCustomer(body.customer);
         const doc = await Order.create({
             ...body,
+            customer: customerId,
+            orderNumber: nextNumber,
             profit,
             totalMaterialCost,
             createdBy: req.user.sub,
             updatedBy: req.user.sub,
         });
-        await upsertCustomer(body.customer);
         res.status(201).json({ order: doc });
     } catch (e) {
         res.status(500).json({ error: 'Server error.' });
@@ -102,14 +126,16 @@ router.put('/orders/:id', requireAuth, async (req, res) => {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: 'Invalid ID.' });
         const body = req.body ?? {};
+        // Prevent overwriting the auto-assigned order number
+        delete body.orderNumber;
         const { profit, totalMaterialCost } = calcProfit(body);
+        const customerId = await findOrCreateCustomer(body.customer);
         const doc = await Order.findByIdAndUpdate(
             id,
-            { ...body, profit, totalMaterialCost, updatedBy: req.user.sub },
+            { ...body, customer: customerId, profit, totalMaterialCost, updatedBy: req.user.sub },
             { new: true, runValidators: true },
         );
         if (!doc) return res.status(404).json({ error: 'Order not found.' });
-        await upsertCustomer(body.customer);
         res.json({ order: doc });
     } catch {
         res.status(500).json({ error: 'Server error.' });

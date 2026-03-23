@@ -15,7 +15,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
-import CustomerFormDialog from "../components/modals/CustomerFormDialog";
+import CustomerFormModal from "../components/modals/CustomerFormModal";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
 import ToastSnackbar from "../components/common/ToastSnackbar";
@@ -240,7 +240,7 @@ export default function CustomersPage() {
                 ))
             )}
 
-            <CustomerFormDialog
+            <CustomerFormModal
                 open={dialogOpen}
                 onClose={() => { setDialogOpen(false); setEditing(null); }}
                 onSave={handleSave}

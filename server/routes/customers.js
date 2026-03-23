@@ -20,21 +20,13 @@ router.get('/customers', requireAuth, async (req, res) => {
         const customers = await Customer.find(filter).sort({ updatedAt: -1 }).lean();
 
         // Bulk aggregation to get order stats for all customers in one query
-        const emails = customers.map(c => c.email).filter(Boolean);
-        const noEmailNames = customers.filter(c => !c.email).map(c => c.name);
+        const customerIds = customers.map(c => c._id);
 
         const pipeline = [
-            {
-                $match: {
-                    $or: [
-                        ...(emails.length        ? [{ 'customer.email': { $in: emails } }]        : []),
-                        ...(noEmailNames.length  ? [{ 'customer.email': { $in: [null, ''] }, 'customer.name': { $in: noEmailNames } }] : []),
-                    ],
-                },
-            },
+            { $match: { customer: { $in: customerIds } } },
             {
                 $group: {
-                    _id:         { $ifNull: ['$customer.email', '$customer.name'] },
+                    _id:         '$customer',
                     orderCount:  { $sum: 1 },
                     totalSpent:  { $sum: '$totalCharged' },
                     totalProfit: { $sum: '$profit' },
@@ -44,15 +36,12 @@ router.get('/customers', requireAuth, async (req, res) => {
             },
         ];
 
-        const statsArr = emails.length || noEmailNames.length
-            ? await Order.aggregate(pipeline)
-            : [];
+        const statsArr = customerIds.length ? await Order.aggregate(pipeline) : [];
 
-        const statsMap = Object.fromEntries(statsArr.map(s => [s._id, s]));
+        const statsMap = Object.fromEntries(statsArr.map(s => [s._id.toString(), s]));
 
         const enriched = customers.map(c => {
-            const key = c.email || c.name;
-            const s = statsMap[key] ?? {};
+            const s = statsMap[c._id.toString()] ?? {};
             return {
                 ...c,
                 orderCount:  s.orderCount  ?? 0,
@@ -78,11 +67,7 @@ router.get('/customers/:id', requireAuth, async (req, res) => {
         const customer = await Customer.findById(id).lean();
         if (!customer) return res.status(404).json({ error: 'Customer not found.' });
 
-        const orderFilter = customer.email
-            ? { 'customer.email': customer.email }
-            : { 'customer.email': { $in: [null, ''] }, 'customer.name': customer.name };
-
-        const orders = await Order.find(orderFilter).sort({ orderDate: -1 }).lean();
+        const orders = await Order.find({ customer: id }).sort({ orderDate: -1 }).lean();
 
         res.json({ customer, orders });
     } catch {

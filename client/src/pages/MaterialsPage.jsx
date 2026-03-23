@@ -9,7 +9,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import TuneIcon from "@mui/icons-material/Tune";
 import { useTranslation } from "react-i18next";
 import api from "../api";
-import MaterialFormDialog from "../components/modals/MaterialFormDialog";
+import MaterialFormModal from "../components/modals/MaterialFormModal";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { useCurrencyFormatter } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -362,7 +362,7 @@ export default function MaterialsPage() {
             )}
 
             {/* Form dialog */}
-            <MaterialFormDialog
+            <MaterialFormModal
                 open={formOpen}
                 onClose={() => {
                     setFormOpen(false);

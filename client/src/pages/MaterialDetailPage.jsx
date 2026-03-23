@@ -9,7 +9,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTranslation } from "react-i18next";
 import api from "../api";
-import MaterialFormDialog from "../components/modals/MaterialFormDialog";
+import MaterialFormModal from "../components/modals/MaterialFormModal";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { useCurrencyFormatter } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -218,7 +218,7 @@ export default function MaterialDetailPage() {
             />
 
             {/* Edit dialog */}
-            <MaterialFormDialog
+            <MaterialFormModal
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSave={handleSave}

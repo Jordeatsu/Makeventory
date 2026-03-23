@@ -1,20 +1,5 @@
 import mongoose from 'mongoose';
 
-const customerSchema = new mongoose.Schema(
-    {
-        name:         { type: String, trim: true, default: '' },
-        email:        { type: String, trim: true, default: '' },
-        phone:        { type: String, trim: true, default: '' },
-        addressLine1: { type: String, trim: true, default: '' },
-        addressLine2: { type: String, trim: true, default: '' },
-        city:         { type: String, trim: true, default: '' },
-        state:        { type: String, trim: true, default: '' },
-        postcode:     { type: String, trim: true, default: '' },
-        country:      { type: String, trim: true, default: '' },
-    },
-    { _id: false },
-);
-
 const productEntrySchema = new mongoose.Schema(
     {
         productId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
@@ -45,13 +30,13 @@ const ALL_STATUSES = ['Pending', 'In Progress', 'Completed', 'Shipped', 'Cancell
 
 const orderSchema = new mongoose.Schema(
     {
-        orderNumber:        { type: String, trim: true, default: '' },
+        orderNumber:        { type: String, trim: true, default: null },
         origin:             { type: String, trim: true, default: '' },
         originOrderId:      { type: String, trim: true, default: '' },
         orderDate:          { type: Date, default: null },
         status:             { type: String, enum: ALL_STATUSES, default: 'Pending' },
         locked:             { type: Boolean, default: false },
-        customer:           { type: customerSchema, default: () => ({}) },
+        customer:           { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', default: null },
         products:           [productEntrySchema],
         materials:          [materialEntrySchema],
         productDescription: { type: String, trim: true, default: '' },
