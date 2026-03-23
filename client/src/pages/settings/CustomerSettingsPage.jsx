@@ -5,19 +5,11 @@ import {
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import SaveIcon   from '@mui/icons-material/Save';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 
-// Fields that can be toggled. "name" is mandatory and always shown.
-const FIELD_CONFIG = [
-    { key: 'email',        label: 'Email',           description: 'Customer email address' },
-    { key: 'phone',        label: 'Phone',           description: 'Customer phone number' },
-    { key: 'addressLine1', label: 'Address Line 1',  description: 'Street / first line of address' },
-    { key: 'addressLine2', label: 'Address Line 2',  description: 'Apartment, flat, suite, etc.' },
-    { key: 'city',         label: 'City',            description: 'Town or city' },
-    { key: 'state',        label: 'State / County',  description: 'State, county, or region' },
-    { key: 'postcode',     label: 'Postcode / ZIP',  description: 'Postal or ZIP code' },
-    { key: 'country',      label: 'Country',         description: 'Country dropdown' },
-];
+// Keys for togglable fields — labels/descriptions come from i18n
+const FIELD_KEYS = ['email', 'phone', 'addressLine1', 'addressLine2', 'city', 'state', 'postcode', 'country'];
 
 const DEFAULT_FIELDS = {
     email: true, phone: true, addressLine1: true, addressLine2: false,
@@ -47,6 +39,7 @@ function FieldToggleRow({ label, description, enabled, onChange, isLast }) {
 }
 
 export default function CustomerSettingsPage() {
+    const { t } = useTranslation();
     const [fields, setFields]   = useState(DEFAULT_FIELDS);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving]   = useState(false);
@@ -60,7 +53,7 @@ export default function CustomerSettingsPage() {
                     setFields({ ...DEFAULT_FIELDS, ...data.settings.fields });
                 }
             })
-            .catch(() => setError('Failed to load customer settings.'))
+            .catch(() => setError(t('settings.customerSettings.loadFailed')))
             .finally(() => setLoading(false));
     }, []);
 
@@ -77,7 +70,7 @@ export default function CustomerSettingsPage() {
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
         } catch {
-            setError('Failed to save settings. Please try again.');
+            setError(t('settings.customerSettings.saveFailed'));
         } finally {
             setSaving(false);
         }
@@ -96,7 +89,7 @@ export default function CustomerSettingsPage() {
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
                 <Stack direction="row" alignItems="center" gap={1.5}>
                     <PeopleIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>Customer Settings</Typography>
+                    <Typography variant="h5" fontWeight={600}>{t('settings.customerSettings.title')}</Typography>
                 </Stack>
                 <Tooltip title="Save changes">
                     <Button
@@ -105,17 +98,16 @@ export default function CustomerSettingsPage() {
                         onClick={handleSave}
                         disabled={saving}
                     >
-                        {saving ? 'Saving…' : 'Save'}
+                        {saving ? t('settings.customerSettings.saving') : t('common.save')}
                     </Button>
                 </Tooltip>
             </Stack>
 
             {error   && <Alert severity="error"   sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: 2 }}>Settings saved.</Alert>}
+            {success && <Alert severity="success" sx={{ mb: 2 }}>{t('settings.customerSettings.saved')}</Alert>}
 
             <Typography variant="body2" color="text.secondary" mb={2}>
-                Choose which fields appear in the customer form when creating or editing a customer.
-                <strong> Name</strong> is always required and cannot be hidden.
+                {t('settings.customerSettings.subtitle')}
             </Typography>
 
             {/* Always-on row for Name */}
@@ -123,10 +115,10 @@ export default function CustomerSettingsPage() {
                 <Box sx={{ px: 3, py: 2 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Box>
-                            <Typography variant="body2" fontWeight={500}>Name</Typography>
-                            <Typography variant="caption" color="text.secondary">Customer's full name — always required</Typography>
+                            <Typography variant="body2" fontWeight={500}>{t('settings.customerSettings.nameField')}</Typography>
+                            <Typography variant="caption" color="text.secondary">{t('settings.customerSettings.nameFieldDesc')}</Typography>
                         </Box>
-                        <Tooltip title="Name is always required">
+                        <Tooltip title={t('settings.customerSettings.nameAlwaysRequired')}>
                             <span>
                                 <Switch checked disabled size="small" color="primary" />
                             </span>
@@ -136,14 +128,14 @@ export default function CustomerSettingsPage() {
 
                 <Divider />
 
-                {FIELD_CONFIG.map(({ key, label, description }, idx) => (
+                {FIELD_KEYS.map((key, idx) => (
                     <FieldToggleRow
                         key={key}
-                        label={label}
-                        description={description}
+                        label={t(`settings.customerSettings.fields.${key}`)}
+                        description={t(`settings.customerSettings.fields.${key}Desc`)}
                         enabled={!!fields[key]}
                         onChange={handleToggle(key)}
-                        isLast={idx === FIELD_CONFIG.length - 1}
+                        isLast={idx === FIELD_KEYS.length - 1}
                     />
                 ))}
             </Paper>

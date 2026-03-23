@@ -16,6 +16,7 @@ import { STATUS_COLOURS } from "../theme";
 import CustomerFormModal from "../components/modals/CustomerFormModal";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
 function StatBox({ label, value, color }) {
@@ -30,6 +31,7 @@ function StatBox({ label, value, color }) {
 export default function CustomerDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const { toast, showToast, closeToast } = useToast();
@@ -49,7 +51,7 @@ export default function CustomerDetailPage() {
             setCustomer(data.customer ?? null);
             setOrders(data.orders ?? []);
         } catch {
-            setError("Failed to load customer.");
+            setError(t('customers.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -61,10 +63,10 @@ export default function CustomerDetailPage() {
         try {
             await api.put(`/customers/${id}`, form);
             setEditOpen(false);
-            showToast("Customer updated.");
+            showToast(t('customers.updated'));
             loadCustomer();
         } catch (e) {
-            showToast(e.response?.data?.error || "Save failed.", "error");
+            showToast(e.response?.data?.error || t('customers.saveFailed'), "error");
         }
     };
 
@@ -73,7 +75,7 @@ export default function CustomerDetailPage() {
             await api.delete(`/customers/${id}`);
             navigate("/customers");
         } catch {
-            showToast("Failed to delete customer.", "error");
+            showToast(t('customers.deleteFailed'), "error");
             setDeleteOpen(false);
         }
     };
@@ -89,15 +91,15 @@ export default function CustomerDetailPage() {
         <Box>
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
                 <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/customers")} color="inherit">
-                    All Customers
+                    {t('customers.detail.allCustomers')}
                 </Button>
                 <Stack direction="row" gap={1}>
-                    <Tooltip title="Edit customer">
+                    <Tooltip title={t('customers.detail.editCustomer')}>
                         <IconButton onClick={() => setEditOpen(true)} disabled={loading || !customer}>
                             <EditIcon />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete customer">
+                    <Tooltip title={t('customers.detail.deleteCustomer')}>
                         <IconButton color="error" onClick={() => setDeleteOpen(true)} disabled={loading || !customer}>
                             <DeleteIcon />
                         </IconButton>
@@ -130,7 +132,7 @@ export default function CustomerDetailPage() {
                             )}
                         </Box>
                         <Chip
-                            label={orders.length > 1 ? "Returning customer" : "One-time customer"}
+                            label={orders.length > 1 ? t('customers.returningCustomer') : t('customers.oneTimeCustomer')}
                             color={orders.length > 1 ? "success" : "default"}
                             variant="outlined"
                         />
@@ -138,29 +140,29 @@ export default function CustomerDetailPage() {
 
                     {/* Summary stats */}
                     <Stack direction={{ xs: "column", sm: "row" }} gap={2} mb={3}>
-                        <StatBox label="Orders" value={orders.length} />
-                        <StatBox label="Total Spent" value={fmt(totalSpent)} />
-                        <StatBox label="Avg Order Value" value={fmt(avgOrder)} />
-                        <StatBox label="Total Profit" value={fmt(totalProfit)} color={totalProfit >= 0 ? "success.main" : "error.main"} />
-                        <StatBox label="First Order" value={fmtDate(firstOrder)} />
-                        <StatBox label="Last Order" value={fmtDate(lastOrder)} />
+                        <StatBox label={t('customers.stats.orders')} value={orders.length} />
+                        <StatBox label={t('customers.stats.totalSpent')} value={fmt(totalSpent)} />
+                        <StatBox label={t('customers.stats.avgOrderValue')} value={fmt(avgOrder)} />
+                        <StatBox label={t('customers.stats.totalProfit')} value={fmt(totalProfit)} color={totalProfit >= 0 ? "success.main" : "error.main"} />
+                        <StatBox label={t('customers.stats.firstOrder')} value={fmtDate(firstOrder)} />
+                        <StatBox label={t('customers.stats.lastOrder')} value={fmtDate(lastOrder)} />
                     </Stack>
 
                     <Divider sx={{ mb: 3 }} />
 
-                    <Typography variant="h6" mb={2}>Order History</Typography>
+                    <Typography variant="h6" mb={2}>{t('customers.detail.orderHistory')}</Typography>
                     {orders.length === 0 ? (
-                        <Typography color="text.secondary">No orders found for this customer.</Typography>
+                        <Typography color="text.secondary">{t('customers.detail.noOrders')}</Typography>
                     ) : (
                         <TableContainer component={Paper}>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                        <TableCell>Date</TableCell>
-                                        <TableCell>Product</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell align="right">Charged</TableCell>
-                                        <TableCell align="right">Profit</TableCell>
+                                        <TableCell>{t('customers.detail.col.date')}</TableCell>
+                                        <TableCell>{t('customers.detail.col.product')}</TableCell>
+                                        <TableCell>{t('customers.detail.col.status')}</TableCell>
+                                        <TableCell align="right">{t('customers.detail.col.charged')}</TableCell>
+                                        <TableCell align="right">{t('customers.detail.col.profit')}</TableCell>
                                         <TableCell align="right" />
                                     </TableRow>
                                 </TableHead>
@@ -207,15 +209,15 @@ export default function CustomerDetailPage() {
 
             {/* Delete confirmation */}
             <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Delete Customer</DialogTitle>
+                <DialogTitle>{t('customers.delete.title')}</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Are you sure you want to delete <strong>{customerName}</strong>? Their order history will be preserved. This cannot be undone.
+                        {t('customers.delete.confirm', { name: customerName })}
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={() => setDeleteOpen(false)} color="inherit">Cancel</Button>
-                    <Button color="error" variant="contained" onClick={handleDelete}>Delete</Button>
+                    <Button onClick={() => setDeleteOpen(false)} color="inherit">{t('common.cancel')}</Button>
+                    <Button color="error" variant="contained" onClick={handleDelete}>{t('common.delete')}</Button>
                 </DialogActions>
             </Dialog>
 

@@ -18,10 +18,12 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import CustomerFormModal from "../components/modals/CustomerFormModal";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
 export default function CustomersPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const { toast, showToast, closeToast } = useToast();
@@ -43,7 +45,7 @@ export default function CustomersPage() {
             const { data } = await api.get("/customers", { params: search ? { search } : {} });
             setCustomers(data.customers ?? []);
         } catch {
-            setError("Failed to load customers. Is the server running?");
+            setError(t('customers.loadError'));
         } finally {
             setLoading(false);
         }
@@ -55,16 +57,16 @@ export default function CustomersPage() {
         try {
             if (editing?._id) {
                 await api.put(`/customers/${editing._id}`, form);
-                showToast("Customer updated.");
+                showToast(t('customers.updated'));
             } else {
                 await api.post("/customers", form);
-                showToast("Customer created.");
+                showToast(t('customers.created'));
             }
             setDialogOpen(false);
             setEditing(null);
             load();
         } catch (e) {
-            showToast(e.response?.data?.error || "Save failed.", "error");
+            showToast(e.response?.data?.error || t('customers.saveFailed'), "error");
         }
     };
 
@@ -72,11 +74,11 @@ export default function CustomersPage() {
         if (!deleteTarget) return;
         try {
             await api.delete(`/customers/${deleteTarget._id}`);
-            showToast("Customer deleted.", "info");
+            showToast(t('customers.deleted'), "info");
             setDeleteTarget(null);
             load();
         } catch {
-            showToast("Failed to delete customer.", "error");
+            showToast(t('customers.deleteFailed'), "error");
             setDeleteTarget(null);
         }
     };
@@ -97,14 +99,14 @@ export default function CustomersPage() {
     const tableHead = (
         <TableHead>
             <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
-                <TableCell>Customer</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell align="center">Orders</TableCell>
-                <TableCell align="right">Total Spent</TableCell>
-                <TableCell align="right">Total Profit</TableCell>
-                <TableCell>First Order</TableCell>
-                <TableCell>Last Order</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('customers.col.customer')}</TableCell>
+                <TableCell>{t('customers.col.location')}</TableCell>
+                <TableCell align="center">{t('customers.col.orders')}</TableCell>
+                <TableCell align="right">{t('customers.col.totalSpent')}</TableCell>
+                <TableCell align="right">{t('customers.col.totalProfit')}</TableCell>
+                <TableCell>{t('customers.col.firstOrder')}</TableCell>
+                <TableCell>{t('customers.col.lastOrder')}</TableCell>
+                <TableCell align="right">{t('customers.col.actions')}</TableCell>
             </TableRow>
         </TableHead>
     );
@@ -148,17 +150,17 @@ export default function CustomersPage() {
             <TableCell><Typography variant="body2">{fmtDate(c.lastOrder)}</Typography></TableCell>
             <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                 <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                    <Tooltip title="View">
+                    <Tooltip title={t('common.view')}>
                         <IconButton size="small" onClick={() => navigate(`/customers/${c._id}`)}>
                             <ArrowForwardIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Edit">
+                    <Tooltip title={t('common.edit')}>
                         <IconButton size="small" onClick={() => { setEditing(c); setDialogOpen(true); }}>
                             <EditIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title={t('common.delete')}>
                         <IconButton size="small" color="error" onClick={() => setDeleteTarget(c)}>
                             <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -172,19 +174,19 @@ export default function CustomersPage() {
         <Box>
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} mb={3} gap={2}>
                 <Box>
-                    <Typography variant="h4">Customers</Typography>
+                    <Typography variant="h4">{t('customers.title')}</Typography>
                     <Typography color="text.secondary" variant="body2">
-                        Manage customers and view their order history
+                        {t('customers.subtitle')}
                     </Typography>
                 </Box>
                 <Stack direction="row" gap={1} alignItems="center">
                     <Chip
                         icon={<PeopleIcon />}
-                        label={`${customers.length} customer${customers.length !== 1 ? "s" : ""}`}
+                        label={t('customers.count', { count: customers.length })}
                         color="primary" variant="outlined"
                     />
                     <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setDialogOpen(true); }}>
-                        New Customer
+                        {t('customers.newCustomer')}
                     </Button>
                 </Stack>
             </Stack>
@@ -193,7 +195,7 @@ export default function CustomersPage() {
 
             <Stack direction="row" gap={2} mb={3}>
                 <TextField
-                    placeholder="Search by name or email…"
+                    placeholder={t('customers.searchPlaceholder')}
                     size="small" value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     sx={{ minWidth: 280 }}
@@ -203,8 +205,8 @@ export default function CustomersPage() {
 
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
                 <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-                    <Tab label="All Customers" />
-                    <Tab label="By Letter" />
+                    <Tab label={t('customers.tabs.all')} />
+                    <Tab label={t('customers.tabs.byLetter')} />
                 </Tabs>
             </Box>
 
@@ -214,7 +216,7 @@ export default function CustomersPage() {
                 <Paper sx={{ py: 8, textAlign: "center" }}>
                     <PeopleIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
                     <Typography color="text.secondary">
-                        {search ? "No customers match your search." : "No customers yet — add your first customer."}
+                        {search ? t('customers.noResults') : t('customers.noCustomers')}
                     </Typography>
                 </Paper>
             ) : tab === 0 ? (
@@ -249,15 +251,15 @@ export default function CustomersPage() {
 
             {/* Delete confirmation */}
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>Delete Customer</DialogTitle>
+                <DialogTitle>{t('customers.delete.title')}</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? Their order history will be preserved. This cannot be undone.
+                        {t('customers.delete.confirm', { name: deleteTarget?.name })}
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
-                    <Button color="error" variant="contained" onClick={handleDelete}>Delete</Button>
+                    <Button onClick={() => setDeleteTarget(null)} color="inherit">{t('common.cancel')}</Button>
+                    <Button color="error" variant="contained" onClick={handleDelete}>{t('common.delete')}</Button>
                 </DialogActions>
             </Dialog>
 

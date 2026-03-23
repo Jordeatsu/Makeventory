@@ -17,6 +17,7 @@ import OrderFormModal from "../components/modals/OrderFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
 const ALL_STATUSES = ["", "Pending", "In Progress", "Completed", "Shipped", "Cancelled"];
@@ -26,6 +27,7 @@ const isLocked = (o) => o.locked || (o.updatedAt && Date.now() - new Date(o.upda
 
 export default function OrdersPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const { toast, showToast, closeToast } = useToast();
@@ -50,7 +52,7 @@ export default function OrdersPage() {
             setOrders(data.orders ?? []);
             setPage(0);
         } catch {
-            setError("Failed to load orders. Is the server running?");
+            setError(t('orders.loadError'));
         } finally {
             setLoading(false);
         }
@@ -62,16 +64,16 @@ export default function OrdersPage() {
         try {
             if (editing) {
                 await api.put(`/orders/${editing._id}`, form);
-                showToast("Order updated.");
+                showToast(t('orders.updated'));
             } else {
                 await api.post("/orders", form);
-                showToast("Order created.");
+                showToast(t('orders.created'));
             }
             setFormOpen(false);
             setEditing(null);
             await load();
         } catch (e) {
-            setError(e.response?.data?.message || "Save failed.");
+            setError(e.response?.data?.message || t('orders.saveFailed'));
         }
     };
 
@@ -80,10 +82,10 @@ export default function OrdersPage() {
         try {
             await api.delete(`/orders/${deleteTarget._id}`);
             setDeleteTarget(null);
-            showToast("Order deleted.", "info");
+            showToast(t('orders.deleted'), "info");
             await load();
         } catch {
-            setError("Delete failed.");
+            setError(t('orders.deleteError'));
         }
     };
 
@@ -157,17 +159,17 @@ export default function OrdersPage() {
             </TableCell>
             <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                 {isLocked(o) ? (
-                    <Tooltip title="Locked — open order details to unlock">
+                    <Tooltip title={t('orders.lockedTooltip')}>
                         <span><LockIcon fontSize="small" sx={{ color: "text.disabled", verticalAlign: "middle" }} /></span>
                     </Tooltip>
                 ) : (
                     <>
-                        <Tooltip title="Edit">
+                        <Tooltip title={t('common.edit')}>
                             <IconButton size="small" onClick={() => { setEditing(o); setFormOpen(true); }}>
                                 <EditIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete">
+                        <Tooltip title={t('common.delete')}>
                             <IconButton size="small" color="error" onClick={() => setDeleteTarget(o)}>
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -181,15 +183,15 @@ export default function OrdersPage() {
     const tableHead = (
         <TableHead>
             <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
-                <TableCell>Order</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Products</TableCell>
-                <TableCell align="right">Gross Revenue</TableCell>
-                <TableCell align="right">Net Revenue</TableCell>
-                <TableCell align="right">Profit</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('orders.col.order')}</TableCell>
+                <TableCell>{t('orders.col.date')}</TableCell>
+                <TableCell>{t('orders.col.customer')}</TableCell>
+                <TableCell>{t('orders.col.status')}</TableCell>
+                <TableCell>{t('orders.col.products')}</TableCell>
+                <TableCell align="right">{t('orders.col.grossRevenue')}</TableCell>
+                <TableCell align="right">{t('orders.col.netRevenue')}</TableCell>
+                <TableCell align="right">{t('orders.col.profit')}</TableCell>
+                <TableCell align="right">{t('orders.col.actions')}</TableCell>
             </TableRow>
         </TableHead>
     );
@@ -198,11 +200,11 @@ export default function OrdersPage() {
         <Box>
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} mb={3} gap={2}>
                 <Box>
-                    <Typography variant="h4">Orders</Typography>
-                    <Typography color="text.secondary" variant="body2">Track customer orders and profitability</Typography>
+                    <Typography variant="h4">{t('orders.title')}</Typography>
+                    <Typography color="text.secondary" variant="body2">{t('orders.subtitle')}</Typography>
                 </Box>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setFormOpen(true); }}>
-                    New Order
+                    {t('orders.newOrder')}
                 </Button>
             </Stack>
 
@@ -210,21 +212,21 @@ export default function OrdersPage() {
 
             <Stack direction={{ xs: "column", sm: "row" }} gap={2} mb={2}>
                 <TextField
-                    placeholder="Search by customer name or origin order ID…"
+                    placeholder={t('orders.searchPlaceholder')}
                     size="small" value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     sx={{ minWidth: 260 }}
                     InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
                 />
-                <TextField select size="small" label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 180 }}>
-                    {ALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s || "All statuses"}</MenuItem>)}
+                <TextField select size="small" label={t('orders.filterByStatus')} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 180 }}>
+                    {ALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s || t('orders.allStatuses')}</MenuItem>)}
                 </TextField>
             </Stack>
 
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
                 <Tabs value={tab} onChange={(_, v) => { setTab(v); setPage(0); }}>
-                    <Tab label="All Orders" />
-                    <Tab label="By Month" />
+                    <Tab label={t('orders.tabs.allOrders')} />
+                    <Tab label={t('orders.tabs.byMonth')} />
                 </Tabs>
             </Box>
 
@@ -241,7 +243,7 @@ export default function OrdersPage() {
                             ) : orders.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                                        No orders found. Create one to get started.
+                                        {t('orders.noOrdersFound')}
                                     </TableCell>
                                 </TableRow>
                             ) : pagedOrders.map(renderRow)}
@@ -265,7 +267,7 @@ export default function OrdersPage() {
                 loading ? (
                     <Box sx={{ textAlign: "center", py: 4 }}><CircularProgress size={28} /></Box>
                 ) : groupedByMonth.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>No orders found.</Typography>
+                ) : <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>{t('orders.noOrders')}</Typography>
                 ) : (
                     groupedByMonth.map(({ label, orders: monthOrders }) => (
                         <Box key={label} sx={{ mb: 4 }}>
@@ -285,15 +287,15 @@ export default function OrdersPage() {
 
             {/* Delete confirmation */}
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>Delete Order</DialogTitle>
+                <DialogTitle>{t('orders.delete.title')}</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Delete order <strong>{deleteTarget?.orderNumber}</strong> for <strong>{deleteTarget?.customer?.name}</strong>? This cannot be undone.
+                        {t('orders.delete.confirm', { orderNumber: deleteTarget?.orderNumber, customer: deleteTarget?.customer?.name })}
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
-                    <Button variant="contained" color="error" onClick={handleDelete}>Delete</Button>
+                    <Button onClick={() => setDeleteTarget(null)} color="inherit">{t('common.cancel')}</Button>
+                    <Button variant="contained" color="error" onClick={handleDelete}>{t('common.delete')}</Button>
                 </DialogActions>
             </Dialog>
 

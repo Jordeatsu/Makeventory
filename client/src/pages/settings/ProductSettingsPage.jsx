@@ -31,7 +31,7 @@ export default function ProductSettingsPage() {
                     onClick={() => setModalOpen(true)}
                     disabled={!settings}
                 >
-                    Edit
+                    {t('common.edit')}
                 </Button>
             </Stack>
 

@@ -1,13 +1,15 @@
 import React from 'react';
 import { Box, Typography, Paper, Divider } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { useTranslation } from 'react-i18next';
 
 export default function SettingsPage() {
+    const { t } = useTranslation();
     return (
         <Box sx={{ maxWidth: 600 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                 <SettingsIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                <Typography variant="h5" fontWeight={600}>Settings</Typography>
+                <Typography variant="h5" fontWeight={600}>{t('settings.title')}</Typography>
             </Box>
 
             <Paper variant="outlined" sx={{ borderRadius: 2 }}>

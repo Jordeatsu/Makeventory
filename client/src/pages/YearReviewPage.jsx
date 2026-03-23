@@ -26,6 +26,7 @@ import api                      from '../api';
 import { useGlobalSettings }    from '../context/GlobalSettingsContext';
 import { STATUS_COLOURS }       from '../theme';
 import { useCurrencyFormatter } from '../utils/formatting';
+import { useTranslation }       from 'react-i18next';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtN   = (n) => Number(n || 0).toLocaleString('en-GB', { maximumFractionDigits: 2 });
@@ -82,6 +83,7 @@ const HEAD_SX = {
 export default function YearReviewPage() {
     const { settings }        = useGlobalSettings();
     const fmt                 = useCurrencyFormatter(settings);
+    const { t }               = useTranslation();
 
     const [year, setYear]                 = useState(new Date().getFullYear());
     const [data, setData]                 = useState(null);
@@ -103,9 +105,9 @@ export default function YearReviewPage() {
 
     const handleAddOverhead = async () => {
         setOverheadError('');
-        if (!overheadForm.name.trim())                                              { setOverheadError('Name is required'); return; }
-        if (!overheadForm.cost || isNaN(Number(overheadForm.cost)) || Number(overheadForm.cost) < 0) { setOverheadError('Enter a valid cost'); return; }
-        if (!overheadForm.purchaseDate)                                             { setOverheadError('Purchase date is required'); return; }
+        if (!overheadForm.name.trim())                                              { setOverheadError(t('yearReview.overhead.nameRequired')); return; }
+        if (!overheadForm.cost || isNaN(Number(overheadForm.cost)) || Number(overheadForm.cost) < 0) { setOverheadError(t('yearReview.overhead.validCost')); return; }
+        if (!overheadForm.purchaseDate)                                             { setOverheadError(t('yearReview.overhead.dateRequired')); return; }
 
         setOverheadSaving(true);
         try {
@@ -113,7 +115,7 @@ export default function YearReviewPage() {
             setOverheadForm({ name: '', category: 'General', cost: '', purchaseDate: '', notes: '' });
             await load();
         } catch (e) {
-            setOverheadError(e?.response?.data?.message || 'Failed to save overhead purchase.');
+            setOverheadError(e?.response?.data?.message || t('yearReview.overhead.saveFailed'));
         } finally {
             setOverheadSaving(false);
         }
@@ -135,7 +137,7 @@ export default function YearReviewPage() {
             const { data: result } = await api.get(`/year-review/stats/${year}`);
             setData(result);
         } catch {
-            setError('Failed to load yearly stats.');
+            setError(t('yearReview.loadError'));
         } finally {
             setLoading(false);
         }
@@ -170,14 +172,14 @@ export default function YearReviewPage() {
                 gap={2}
             >
                 <Box>
-                    <Typography variant="h4" fontWeight={700}>Year in Review</Typography>
+                    <Typography variant="h4" fontWeight={700}>{t('yearReview.title')}</Typography>
                     <Typography color="text.secondary" variant="body2">
-                        A full breakdown of your business performance for the selected year
+                        {t('yearReview.subtitle')}
                     </Typography>
                 </Box>
 
                 <Paper elevation={1} sx={{ px: 1, py: 0.5, display: 'inline-flex', alignItems: 'center', gap: 1, borderRadius: 2 }}>
-                    <Tooltip title="Previous year">
+                    <Tooltip title={t('yearReview.previousYear')}>
                         <IconButton size="small" onClick={() => setYear((y) => y - 1)}>
                             <ChevronLeftIcon />
                         </IconButton>
@@ -185,7 +187,7 @@ export default function YearReviewPage() {
                     <Typography variant="h6" fontWeight={700} sx={{ minWidth: 52, textAlign: 'center' }}>
                         {year}
                     </Typography>
-                    <Tooltip title="Next year">
+                    <Tooltip title={t('yearReview.nextYear')}>
                         <IconButton size="small" onClick={() => setYear((y) => y + 1)} disabled={year >= new Date().getFullYear()}>
                             <ChevronRightIcon />
                         </IconButton>
@@ -204,7 +206,7 @@ export default function YearReviewPage() {
             ) : !hasData ? (
                 <Paper elevation={1} sx={{ py: 8, textAlign: 'center', borderRadius: 2 }}>
                     <ReceiptIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                    <Typography color="text.secondary">No orders found for {year}.</Typography>
+                    <Typography color="text.secondary">{t('yearReview.noData', { year })}</Typography>
                 </Paper>
             ) : (
                 <Box>
@@ -213,7 +215,7 @@ export default function YearReviewPage() {
                         <Grid item xs={12} sm={6} md>
                             <StatCard
                                 icon={<ShoppingBagIcon sx={{ fontSize: 40 }} />}
-                                label="Total Orders"
+                                label={t('yearReview.kpi.totalOrders')}
                                 value={s.totalOrders || 0}
                                 color="primary.main"
                             />
@@ -221,40 +223,40 @@ export default function YearReviewPage() {
                         <Grid item xs={12} sm={6} md>
                             <StatCard
                                 icon={<AttachMoneyIcon sx={{ fontSize: 40 }} />}
-                                label="Gross Revenue"
+                                label={t('yearReview.kpi.grossRevenue')}
                                 value={fmt(s.totalGrossRevenue)}
-                                sub={`Avg ${fmt((s.totalGrossRevenue || 0) / Math.max(s.totalOrders || 1, 1))} / order`}
+                                sub={t('yearReview.kpi.avgPerOrder', { value: fmt((s.totalGrossRevenue || 0) / Math.max(s.totalOrders || 1, 1)) })}
                                 color="info.main"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md>
                             <StatCard
                                 icon={<TrendingUpIcon sx={{ fontSize: 40 }} />}
-                                label="Net Revenue"
+                                label={t('yearReview.kpi.netRevenue')}
                                 value={fmt(s.totalRevenue)}
-                                sub={`Avg ${fmt(s.avgOrderValue)} / order`}
+                                sub={t('yearReview.kpi.avgPerOrder', { value: fmt(s.avgOrderValue) })}
                                 color="info.dark"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md>
                             <StatCard
                                 icon={<AttachMoneyIcon sx={{ fontSize: 40 }} />}
-                                label="Total Profit"
+                                label={t('yearReview.kpi.totalProfit')}
                                 value={fmt(s.totalProfit)}
-                                sub={`Avg ${fmt(s.avgProfit)} / order`}
+                                sub={t('yearReview.kpi.avgPerOrder', { value: fmt(s.avgProfit) })}
                                 color={s.totalProfit >= 0 ? 'success.main' : 'error.main'}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md>
                             <StatCard
                                 icon={<ReceiptIcon sx={{ fontSize: 40 }} />}
-                                label="Profit Margin"
+                                label={t('yearReview.kpi.profitMargin')}
                                 value={
                                     (s.totalGrossRevenue || 0) > 0
                                         ? `${((s.totalProfit / s.totalGrossRevenue) * 100).toFixed(1)}%`
                                         : '—'
                                 }
-                                sub="Profit ÷ Gross Revenue"
+                                sub={t('yearReview.kpi.profitOverRevenue')}
                                 color={s.totalProfit >= 0 ? 'success.main' : 'error.main'}
                             />
                         </Grid>
@@ -262,20 +264,20 @@ export default function YearReviewPage() {
 
                     {/* ── Cost breakdown ─────────────────────────────────── */}
                     <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                        <SectionHeader icon={<AttachMoneyIcon />} title="Cost Breakdown" />
+                        <SectionHeader icon={<AttachMoneyIcon />} title={t('yearReview.sections.costBreakdown')} />
                         <Grid container spacing={2}>
                             {[
-                                { icon: <LocalShippingIcon sx={{ fontSize: 28 }} />, value: fmt(s.totalShipping),      label: 'Shipping Paid',       color: 'text.secondary' },
-                                { icon: <ReceiptIcon      sx={{ fontSize: 28 }} />, value: fmt(s.totalBuyerTax),       label: 'Buyer Tax Collected', color: 'text.secondary' },
-                                { icon: <StorefrontIcon   sx={{ fontSize: 28 }} />, value: fmt(s.totalHostingFees),    label: 'Hosting Fees',        color: 'text.secondary' },
-                                { icon: <CampaignIcon     sx={{ fontSize: 28 }} />, value: fmt(s.totalMarketingCost),  label: 'Marketing Costs',     color: 'text.secondary' },
+                                { icon: <LocalShippingIcon sx={{ fontSize: 28 }} />, value: fmt(s.totalShipping),      label: t('yearReview.costs.shippingPaid'),       color: 'text.secondary' },
+                                { icon: <ReceiptIcon      sx={{ fontSize: 28 }} />, value: fmt(s.totalBuyerTax),       label: t('yearReview.costs.buyerTaxCollected'), color: 'text.secondary' },
+                                { icon: <StorefrontIcon   sx={{ fontSize: 28 }} />, value: fmt(s.totalHostingFees),    label: t('yearReview.costs.hostingFees'),        color: 'text.secondary' },
+                                { icon: <CampaignIcon     sx={{ fontSize: 28 }} />, value: fmt(s.totalMarketingCost),  label: t('yearReview.costs.marketingCosts'),     color: 'text.secondary' },
                                 {
                                     icon:  <MoneyOffIcon sx={{ fontSize: 28 }} />,
                                     value: fmt(s.totalRefunds),
-                                    label: 'Refunds Issued',
+                                    label: t('yearReview.costs.refundsIssued'),
                                     color: s.totalRefunds > 0 ? 'error.main' : 'text.primary',
                                 },
-                                { icon: <BuildIcon sx={{ fontSize: 28 }} />, value: fmt(s.totalMaterialCost), label: 'Material Costs', color: 'text.secondary' },
+                                { icon: <BuildIcon sx={{ fontSize: 28 }} />, value: fmt(s.totalMaterialCost), label: t('yearReview.costs.materialCosts'), color: 'text.secondary' },
                             ].map(({ icon, value, label, color }) => (
                                 <Grid item xs={12} sm={6} md={4} lg={2} key={label}>
                                     <Box sx={{ textAlign: 'center', p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
@@ -290,23 +292,22 @@ export default function YearReviewPage() {
 
                     {/* ── Monthly breakdown ──────────────────────────────── */}
                     <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                        <SectionHeader icon={<ReceiptIcon />} title="Monthly Breakdown" />
+                        <SectionHeader icon={<ReceiptIcon />} title={t('yearReview.sections.monthlyBreakdown')} />
                         {bestMonth.grossRevenue > 0 && (
                             <Typography variant="body2" color="text.secondary" mb={2}>
-                                Best month by gross revenue:{' '}
-                                <strong>{MONTHS[bestMonth.month - 1]}</strong> ({fmt(bestMonth.grossRevenue)})
+                                {t('yearReview.bestMonth', { month: MONTHS[bestMonth.month - 1], revenue: fmt(bestMonth.grossRevenue) })}
                             </Typography>
                         )}
                         <TableContainer>
                             <Table size="small" sx={HEAD_SX}>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Month</TableCell>
-                                        <TableCell align="center">Orders</TableCell>
-                                        <TableCell align="right">Gross Revenue</TableCell>
-                                        <TableCell align="right">Net Revenue</TableCell>
-                                        <TableCell align="right">Profit</TableCell>
-                                        <TableCell sx={{ minWidth: 140 }}>Revenue Share</TableCell>
+                                        <TableCell>{t('yearReview.monthly.month')}</TableCell>
+                                        <TableCell align="center">{t('yearReview.monthly.orders')}</TableCell>
+                                        <TableCell align="right">{t('yearReview.monthly.grossRevenue')}</TableCell>
+                                        <TableCell align="right">{t('yearReview.monthly.netRevenue')}</TableCell>
+                                        <TableCell align="right">{t('yearReview.monthly.profit')}</TableCell>
+                                        <TableCell sx={{ minWidth: 140 }}>{t('yearReview.monthly.revenueShare')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -319,7 +320,7 @@ export default function YearReviewPage() {
                                                 >
                                                     {MONTHS[m.month - 1]}
                                                     {m.month === bestMonth.month && m.grossRevenue > 0 && (
-                                                        <Chip label="Best" size="small" color="success" sx={{ ml: 1, height: 18, fontSize: 10 }} />
+                                                        <Chip label={t('yearReview.monthly.best')} size="small" color="success" sx={{ ml: 1, height: 18, fontSize: 10 }} />
                                                     )}
                                                 </Typography>
                                             </TableCell>
@@ -357,7 +358,7 @@ export default function YearReviewPage() {
                         {/* Order status */}
                         <Grid item xs={12} md={4}>
                             <Paper elevation={2} sx={{ p: 3, height: '100%', borderRadius: 2 }}>
-                                <SectionHeader icon={<ReceiptIcon />} title="Order Status" />
+                                <SectionHeader icon={<ReceiptIcon />} title={t('yearReview.sections.orderStatus')} />
                                 <Stack spacing={1.5}>
                                     {(data?.statusBreakdown || []).map((st) => (
                                         <Stack key={st._id} direction="row" justifyContent="space-between" alignItems="center">
@@ -376,9 +377,9 @@ export default function YearReviewPage() {
                         {/* Top countries */}
                         <Grid item xs={12} md={4}>
                             <Paper elevation={2} sx={{ p: 3, height: '100%', borderRadius: 2 }}>
-                                <SectionHeader icon={<PublicIcon />} title="Top Countries" />
+                                <SectionHeader icon={<PublicIcon />} title={t('yearReview.sections.topCountries')} />
                                 {(data?.countries || []).length === 0 ? (
-                                    <Typography variant="body2" color="text.secondary">No country data recorded.</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('yearReview.noCountryData')}</Typography>
                                 ) : (
                                     <Stack spacing={1.5}>
                                         {(data?.countries || []).map((c, i) => (
@@ -390,7 +391,7 @@ export default function YearReviewPage() {
                                                     <Typography variant="body2">{c._id}</Typography>
                                                 </Stack>
                                                 <Stack alignItems="flex-end">
-                                                    <Typography variant="body2" fontWeight={700}>{c.orders} order{c.orders !== 1 ? 's' : ''}</Typography>
+                                                    <Typography variant="body2" fontWeight={700}>{c.orders} {t('yearReview.order', { count: c.orders })}</Typography>
                                                     <Typography variant="caption" color="text.secondary">{fmt(c.revenue)}</Typography>
                                                 </Stack>
                                             </Stack>
@@ -403,16 +404,16 @@ export default function YearReviewPage() {
                         {/* Sales channels */}
                         <Grid item xs={12} md={4}>
                             <Paper elevation={2} sx={{ p: 3, height: '100%', borderRadius: 2 }}>
-                                <SectionHeader icon={<StorefrontIcon />} title="Sales Channels" />
+                                <SectionHeader icon={<StorefrontIcon />} title={t('yearReview.sections.salesChannels')} />
                                 {(data?.origins || []).length === 0 ? (
-                                    <Typography variant="body2" color="text.secondary">No channel data recorded.</Typography>
+                                    <Typography variant="body2" color="text.secondary">{t('yearReview.noChannelData')}</Typography>
                                 ) : (
                                     <Stack spacing={1.5}>
                                         {(data?.origins || []).map((o) => (
                                             <Stack key={o._id} direction="row" justifyContent="space-between" alignItems="center">
                                                 <Typography variant="body2">{o._id}</Typography>
                                                 <Stack alignItems="flex-end">
-                                                    <Typography variant="body2" fontWeight={700}>{o.count} order{o.count !== 1 ? 's' : ''}</Typography>
+                                                    <Typography variant="body2" fontWeight={700}>{o.count} {t('yearReview.order', { count: o.count })}</Typography>
                                                     <Typography variant="caption" color="text.secondary">{fmt(o.revenue)}</Typography>
                                                 </Stack>
                                             </Stack>
@@ -426,17 +427,17 @@ export default function YearReviewPage() {
                     {/* ── Top customers ──────────────────────────────────── */}
                     {(data?.topCustomers || []).length > 0 && (
                         <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                            <SectionHeader icon={<PeopleIcon />} title="Top Customers" />
+                            <SectionHeader icon={<PeopleIcon />} title={t('yearReview.sections.topCustomers')} />
                             <TableContainer>
                                 <Table size="small" sx={HEAD_SX}>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell>#</TableCell>
-                                            <TableCell>Customer</TableCell>
-                                            <TableCell align="center">Orders</TableCell>
-                                            <TableCell align="right">Gross Revenue</TableCell>
-                                            <TableCell align="right">Net Revenue</TableCell>
-                                            <TableCell align="right">Profit</TableCell>
+                                            <TableCell>{t('yearReview.topCustomers.rank')}</TableCell>
+                                            <TableCell>{t('yearReview.topCustomers.customer')}</TableCell>
+                                            <TableCell align="center">{t('yearReview.topCustomers.orders')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.topCustomers.grossRevenue')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.topCustomers.netRevenue')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.topCustomers.profit')}</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -471,18 +472,18 @@ export default function YearReviewPage() {
                     {/* ── Most purchased products ────────────────────────── */}
                     {(data?.topProducts || []).length > 0 && (
                         <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                            <SectionHeader icon={<ShoppingBagIcon />} title="Most Purchased Products" />
+                            <SectionHeader icon={<ShoppingBagIcon />} title={t('yearReview.sections.mostPurchasedProducts')} />
                             <TableContainer>
                                 <Table size="small" sx={HEAD_SX}>
                                     <TableHead>
                                         <TableRow>
                                             <TableCell sx={{ width: 36, p: 0.5 }} />
-                                            <TableCell sx={{ width: 36 }}>#</TableCell>
-                                            <TableCell>Product</TableCell>
-                                            <TableCell align="right">Units Sold</TableCell>
-                                            <TableCell align="center">Orders</TableCell>
-                                            <TableCell align="right">Net Revenue</TableCell>
-                                            <TableCell align="right">Profit</TableCell>
+                                            <TableCell sx={{ width: 36 }}>{t('yearReview.topCustomers.rank')}</TableCell>
+                                            <TableCell>{t('yearReview.topProducts.product')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.topProducts.unitsSold')}</TableCell>
+                                            <TableCell align="center">{t('yearReview.topProducts.orders')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.topProducts.netRevenue')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.topProducts.profit')}</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -532,11 +533,11 @@ export default function YearReviewPage() {
                                                                     <Table size="small" sx={{ mb: 1 }}>
                                                                         <TableHead>
                                                                             <TableRow>
-                                                                                <TableCell sx={{ pl: 8, color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>Country</TableCell>
-                                                                                <TableCell align="right"  sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>Units Sold</TableCell>
-                                                                                <TableCell align="center" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>Orders</TableCell>
-                                                                                <TableCell align="right"  sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>Net Revenue</TableCell>
-                                                                                <TableCell align="right"  sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>Profit</TableCell>
+                                                                                <TableCell sx={{ pl: 8, color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>{t('yearReview.topProducts.country')}</TableCell>
+                                                                                <TableCell align="right"  sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>{t('yearReview.topProducts.unitsSold')}</TableCell>
+                                                                                <TableCell align="center" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>{t('yearReview.topProducts.orders')}</TableCell>
+                                                                                <TableCell align="right"  sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>{t('yearReview.topProducts.netRevenue')}</TableCell>
+                                                                                <TableCell align="right"  sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 700 }}>{t('yearReview.topProducts.profit')}</TableCell>
                                                                             </TableRow>
                                                                         </TableHead>
                                                                         <TableBody>
@@ -578,18 +579,18 @@ export default function YearReviewPage() {
 
                     {/* ── Materials & overheads ──────────────────────────── */}
                     <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                        <SectionHeader icon={<BuildIcon />} title="Materials Used" />
+                        <SectionHeader icon={<BuildIcon />} title={t('yearReview.sections.materialsUsed')} />
 
                         {(data?.materials || []).length > 0 && (
                             <TableContainer sx={{ mb: 3 }}>
                                 <Table size="small" sx={HEAD_SX}>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell>Material</TableCell>
-                                            <TableCell>Type</TableCell>
-                                            <TableCell align="right">Total Quantity</TableCell>
-                                            <TableCell align="center">Times Used</TableCell>
-                                            <TableCell align="right">Total Cost</TableCell>
+                                            <TableCell>{t('yearReview.materials.material')}</TableCell>
+                                            <TableCell>{t('yearReview.materials.type')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.materials.totalQuantity')}</TableCell>
+                                            <TableCell align="center">{t('yearReview.materials.timesUsed')}</TableCell>
+                                            <TableCell align="right">{t('yearReview.materials.totalCost')}</TableCell>
                                             <TableCell sx={{ width: 40 }} />
                                         </TableRow>
                                     </TableHead>
@@ -603,7 +604,7 @@ export default function YearReviewPage() {
                                                     <Stack direction="row" alignItems="center" gap={1}>
                                                         <Typography variant="body2" fontWeight={600}>{m._id}</Typography>
                                                         {m.isOverhead && (
-                                                            <Chip label="Overhead" size="small" color="warning" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                                                            <Chip label={t('yearReview.materials.overhead')} size="small" color="warning" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
                                                         )}
                                                     </Stack>
                                                     {m.isOverhead && m.notes && (
@@ -630,7 +631,7 @@ export default function YearReviewPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     {m.isOverhead && (
-                                                        <Tooltip title="Remove overhead">
+                                                        <Tooltip title={t('yearReview.materials.removeOverhead')}>
                                                             <IconButton size="small" color="error" onClick={() => handleDeleteOverhead(m.overheadId)}>
                                                                 <DeleteIcon fontSize="small" />
                                                             </IconButton>
@@ -647,11 +648,10 @@ export default function YearReviewPage() {
                         {/* Add overhead form */}
                         <Divider sx={{ mb: 2 }} />
                         <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-                            Add Overhead Purchase
+                            {t('yearReview.sections.addOverhead')}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-                            Record a one-off business cost (e.g. printer ink, packaging tape) that isn't tracked in inventory
-                            but should count against this year's costs.
+                            {t('yearReview.overhead.description')}
                         </Typography>
 
                         {overheadError && (
@@ -662,23 +662,23 @@ export default function YearReviewPage() {
 
                         <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.5} flexWrap="wrap">
                             <TextField
-                                label="Name"
+                                label={t('yearReview.overhead.nameLabel')}
                                 size="small"
                                 value={overheadForm.name}
                                 onChange={(e) => setOverheadForm((f) => ({ ...f, name: e.target.value }))}
                                 sx={{ flex: 2, minWidth: 160 }}
-                                placeholder="e.g. Black Printer Ink"
+                                placeholder={t('yearReview.overhead.namePlaceholder')}
                             />
                             <TextField
-                                label="Category"
+                                label={t('yearReview.overhead.categoryLabel')}
                                 size="small"
                                 value={overheadForm.category}
                                 onChange={(e) => setOverheadForm((f) => ({ ...f, category: e.target.value }))}
                                 sx={{ flex: 1, minWidth: 130 }}
-                                placeholder="e.g. Office Supplies"
+                                placeholder={t('yearReview.overhead.categoryPlaceholder')}
                             />
                             <TextField
-                                label="Cost"
+                                label={t('yearReview.overhead.costLabel')}
                                 size="small"
                                 type="number"
                                 value={overheadForm.cost}
@@ -687,7 +687,7 @@ export default function YearReviewPage() {
                                 inputProps={{ min: 0, step: 0.01 }}
                             />
                             <TextField
-                                label="Purchase Date"
+                                label={t('yearReview.overhead.dateLabel')}
                                 size="small"
                                 type="date"
                                 value={overheadForm.purchaseDate}
@@ -696,7 +696,7 @@ export default function YearReviewPage() {
                                 InputLabelProps={{ shrink: true }}
                             />
                             <TextField
-                                label="Notes (optional)"
+                                label={t('yearReview.overhead.notesLabel')}
                                 size="small"
                                 value={overheadForm.notes}
                                 onChange={(e) => setOverheadForm((f) => ({ ...f, notes: e.target.value }))}
@@ -710,7 +710,7 @@ export default function YearReviewPage() {
                                 disabled={overheadSaving}
                                 sx={{ alignSelf: 'flex-start', mt: { xs: 0, sm: 0.3 } }}
                             >
-                                Add
+                                {t('yearReview.overhead.addButton')}
                             </Button>
                         </Stack>
                     </Paper>
@@ -719,7 +719,7 @@ export default function YearReviewPage() {
                     {(data?.availableYears || []).length > 1 && (
                         <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="caption" color="text.secondary">
-                                Years with orders:{' '}
+                                {t('yearReview.yearsWithOrders')}{' '}
                                 {data.availableYears.map((y) => (
                                     <Typography
                                         key={y}

@@ -17,10 +17,12 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import ProductFormModal from "../components/modals/ProductFormModal";
 import { useCurrencyFormatter } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
 export default function ProductsPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const { toast, showToast, closeToast } = useToast();
@@ -42,7 +44,7 @@ export default function ProductsPage() {
             const { data } = await api.get("/products", { params: search ? { search } : {} });
             setProducts(data.products ?? []);
         } catch {
-            setError("Failed to load products.");
+            setError(t('products.loadError'));
         } finally {
             setLoading(false);
         }
@@ -54,16 +56,16 @@ export default function ProductsPage() {
         try {
             if (editing?._id) {
                 await api.put(`/products/${editing._id}`, payload);
-                showToast("Product updated.");
+                showToast(t('products.updated'));
             } else {
                 await api.post("/products", payload);
-                showToast("Product created.");
+                showToast(t('products.created'));
             }
             setDialogOpen(false);
             setEditing(null);
             load();
         } catch (e) {
-            setError(e.response?.data?.error || "Save failed.");
+            setError(e.response?.data?.error || t('products.saveFailed'));
         }
     };
 
@@ -78,10 +80,10 @@ export default function ProductsPage() {
         try {
             await api.delete(`/products/${deleteTarget._id}`);
             setDeleteTarget(null);
-            showToast("Product deleted.", "info");
+            showToast(t('products.deleted'), "info");
             load();
         } catch {
-            setError("Failed to delete product.");
+            setError(t('products.deleteFailed'));
         }
     };
 
@@ -100,14 +102,14 @@ export default function ProductsPage() {
     const tableHead = (
         <TableHead>
             <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
-                <TableCell>Name</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell align="right">Est. Material Cost</TableCell>
-                <TableCell align="right">Base Price</TableCell>
-                <TableCell align="right">Est. Margin</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('products.col.name')}</TableCell>
+                <TableCell>{t('products.col.sku')}</TableCell>
+                <TableCell>{t('products.col.category')}</TableCell>
+                <TableCell align="right">{t('products.col.estMaterialCost')}</TableCell>
+                <TableCell align="right">{t('products.col.basePrice')}</TableCell>
+                <TableCell align="right">{t('products.col.estMargin')}</TableCell>
+                <TableCell>{t('products.col.status')}</TableCell>
+                <TableCell align="right">{t('products.col.actions')}</TableCell>
             </TableRow>
         </TableHead>
     );
@@ -124,7 +126,7 @@ export default function ProductsPage() {
                     {p.name}
                     {p.isTemplate && <Chip label="Template" size="small" color="secondary" sx={{ ml: 1 }} />}
                     {p.parentProduct && !p.isTemplate && (
-                        <Tooltip title={`Variant of: ${typeof p.parentProduct === "object" ? p.parentProduct.name : p.parentProduct}`}>
+                        <Tooltip title={t('products.variantOf', { name: typeof p.parentProduct === "object" ? p.parentProduct.name : p.parentProduct })}>
                             <Chip label="Variant" size="small" variant="outlined" color="secondary" sx={{ ml: 1 }} />
                         </Tooltip>
                     )}
@@ -141,26 +143,26 @@ export default function ProductsPage() {
                     ) : "—"}
                 </TableCell>
                 <TableCell>
-                    <Chip label={p.active ? "Active" : "Inactive"} size="small" color={p.active ? "success" : "default"} variant="outlined" />
+                    <Chip label={p.active ? t('common.active') : t('common.inactive')} size="small" color={p.active ? "success" : "default"} variant="outlined" />
                 </TableCell>
                 <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                        <Tooltip title="View details">
+                        <Tooltip title={t('common.view')}>
                             <IconButton size="small" onClick={() => navigate(`/products/${p._id}`)}>
                                 <OpenInNewIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Duplicate">
+                        <Tooltip title={t('common.duplicate')}>
                             <IconButton size="small" onClick={() => handleDuplicate(p)}>
                                 <ContentCopyIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit">
+                        <Tooltip title={t('common.edit')}>
                             <IconButton size="small" onClick={() => { setEditing(p); setDialogOpen(true); }}>
                                 <EditIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete">
+                        <Tooltip title={t('common.delete')}>
                             <IconButton size="small" color="error" onClick={() => setDeleteTarget(p)}>
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -175,13 +177,13 @@ export default function ProductsPage() {
         <Box>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
                 <Box>
-                    <Typography variant="h4">Products</Typography>
+                    <Typography variant="h4">{t('products.title')}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Manage your product catalogue and materials recipes
+                        {t('products.subtitle')}
                     </Typography>
                 </Box>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setDialogOpen(true); }}>
-                    New Product
+                    {t('products.newProduct')}
                 </Button>
             </Stack>
 
@@ -190,7 +192,7 @@ export default function ProductsPage() {
             <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} gap={2} mb={3}>
                 <TextField
                     size="small"
-                    placeholder="Search by name, SKU or category…"
+                    placeholder={t('products.searchPlaceholder')}
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); }}
                     sx={{ minWidth: 280 }}
@@ -200,8 +202,8 @@ export default function ProductsPage() {
 
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
                 <Tabs value={tab} onChange={(_, v) => { setTab(v); }}>
-                    <Tab label="All Products" />
-                    <Tab label="By Type" />
+                    <Tab label={t('products.tabs.all')} />
+                    <Tab label={t('products.tabs.byType')} />
                 </Tabs>
             </Box>
 
@@ -218,7 +220,7 @@ export default function ProductsPage() {
                                     {products.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                                                No products found. Create your first product to get started.
+                                            {t('products.noProducts')}
                                             </TableCell>
                                         </TableRow>
                                     ) : products.map(renderRow)}
@@ -234,7 +236,7 @@ export default function ProductsPage() {
                 loading ? (
                     <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>
                 ) : groupedByType.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>No products found.</Typography>
+                    <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>{t('products.noResult')}</Typography>
                 ) : (
                     groupedByType.map(({ type, items }) => (
                         <Box key={type} sx={{ mb: 4 }}>
@@ -258,15 +260,15 @@ export default function ProductsPage() {
 
             {/* Delete confirm */}
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>Delete Product</DialogTitle>
+                <DialogTitle>{t('products.delete.title')}</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? It will be unlinked from any existing orders. This cannot be undone.
+                        {t('products.delete.confirm', { name: deleteTarget?.name })}
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
-                    <Button variant="contained" color="error" onClick={handleDelete}>Delete</Button>
+                    <Button onClick={() => setDeleteTarget(null)} color="inherit">{t('common.cancel')}</Button>
+                    <Button variant="contained" color="error" onClick={handleDelete}>{t('common.delete')}</Button>
                 </DialogActions>
             </Dialog>
 

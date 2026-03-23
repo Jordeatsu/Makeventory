@@ -17,6 +17,7 @@ import ProductFormModal from "../components/modals/ProductFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
 import { InfoRow } from "../components/common/DetailRow";
@@ -24,6 +25,7 @@ import { InfoRow } from "../components/common/DetailRow";
 export default function ProductDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;
@@ -41,7 +43,7 @@ export default function ProductDetailPage() {
             const { data } = await api.get(`/products/${id}/stats`);
             setStats(data);
         } catch {
-            setError("Failed to load product.");
+            setError(t('products.detail.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -53,10 +55,10 @@ export default function ProductDetailPage() {
         try {
             await api.put(`/products/${id}`, payload);
             setEditOpen(false);
-            showToast("Product updated.");
+            showToast(t('products.detail.updated'));
             load();
         } catch (e) {
-            showToast(e.response?.data?.message || "Save failed.", "error");
+            showToast(e.response?.data?.message || t('products.detail.saveFailed'), "error");
         }
     };
 
@@ -86,15 +88,15 @@ export default function ProductDetailPage() {
                     <ArrowBackIcon />
                 </IconButton>
                 <Typography variant="h4" sx={{ flex: 1 }}>{product.name}</Typography>
-                {!product.active && <Chip label="Inactive" color="default" size="small" />}
+                {!product.active && <Chip label={t('common.inactive')} color="default" size="small" />}
                 <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
-                    Edit
+                    {t('common.edit')}
                 </Button>
             </Stack>
             <Typography variant="body2" color="text.secondary" mb={3}>
                 {product.category && <><strong>{product.category}</strong> · </>}
-                {product.sku && <>SKU: {product.sku} · </>}
-                Added {fmtDate(product.createdAt)}
+                {product.sku && <>{t('products.col.sku')}: {product.sku} · </>}
+                {t('products.detail.added', { date: fmtDate(product.createdAt) })}
             </Typography>
 
             {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
@@ -106,23 +108,23 @@ export default function ProductDetailPage() {
                     <Paper sx={{ overflow: "hidden" }}>
                         <Stack direction={{ xs: "column", sm: "row" }} divider={<Divider orientation="vertical" flexItem />}>
                             <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Total Orders</Typography>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>{t('products.detail.kpi.totalOrders')}</Typography>
                                 <Typography variant="h4" fontWeight={700} color="primary.main">{totalOrders}</Typography>
                             </Box>
                             <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Gross Revenue</Typography>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>{t('products.detail.kpi.grossRevenue')}</Typography>
                                 <Typography variant="h4" fontWeight={700}>{fmt(totalRevenue)}</Typography>
-                                <Typography variant="caption" color="text.secondary">inc. shipping</Typography>
+                                <Typography variant="caption" color="text.secondary">{t('products.detail.kpi.incShipping')}</Typography>
                             </Box>
                             <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Total Profit</Typography>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>{t('products.detail.kpi.totalProfit')}</Typography>
                                 <Typography variant="h4" fontWeight={700} color={totalProfit >= 0 ? "success.main" : "error.main"}>{fmt(totalProfit)}</Typography>
                                 {totalRevenue > 0 && (
-                                    <Typography variant="caption" color="text.secondary">{fmtPct(profitMargin)} margin</Typography>
+                                    <Typography variant="caption" color="text.secondary">{t('products.detail.kpi.margin', { value: Number(profitMargin).toFixed(1) })}</Typography>
                                 )}
                             </Box>
                             <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>Avg Profit / Order</Typography>
+                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>{t('products.detail.kpi.avgProfit')}</Typography>
                                 <Typography variant="h4" fontWeight={700} color={avgProfit >= 0 ? "success.main" : "error.main"}>{fmt(avgProfit)}</Typography>
                             </Box>
                         </Stack>
@@ -134,14 +136,14 @@ export default function ProductDetailPage() {
                     <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "primary.light" }}>
                         <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                             <BuildIcon color="primary" fontSize="small" />
-                            <Typography variant="h6">Product Info</Typography>
+                            <Typography variant="h6">{t('products.detail.productInfo')}</Typography>
                         </Stack>
-                        <InfoRow label="Description" value={product.description} />
-                        <InfoRow label="Base Price" value={fmt(product.basePrice)} />
-                        <InfoRow label="Est. Material Cost" value={fmt(product.estimatedMaterialCost)} />
-                        <InfoRow label="Est. Margin" value={estimatedMargin !== null ? `${estimatedMargin}%` : "—"} />
+                        <InfoRow label={t('products.detail.infoRow.description')} value={product.description} />
+                        <InfoRow label={t('products.detail.infoRow.basePrice')} value={fmt(product.basePrice)} />
+                        <InfoRow label={t('products.detail.infoRow.estMaterialCost')} value={fmt(product.estimatedMaterialCost)} />
+                        <InfoRow label={t('products.detail.infoRow.estMargin')} value={estimatedMargin !== null ? `${estimatedMargin}%` : "—"} />
                         {product.parentProduct && (
-                            <InfoRow label="Parent Product" value={product.parentProduct.name} />
+                            <InfoRow label={t('products.detail.infoRow.parentProduct')} value={product.parentProduct.name} />
                         )}
                     </Paper>
                 </Grid>
@@ -151,17 +153,17 @@ export default function ProductDetailPage() {
                     <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "secondary.light" }}>
                         <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                             <BuildIcon color="primary" fontSize="small" />
-                            <Typography variant="h6">Materials Recipe</Typography>
+                            <Typography variant="h6">{t('products.detail.materialsRecipe')}</Typography>
                         </Stack>
                         {allMaterials.length > 0 ? (
                             <Table size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                        <TableCell>Material</TableCell>
-                                        <TableCell>Type</TableCell>
-                                        <TableCell align="right">Qty</TableCell>
-                                        <TableCell align="right">Cost/Unit</TableCell>
-                                        <TableCell align="right">Line Cost</TableCell>
+                                        <TableCell>{t('products.detail.col.material')}</TableCell>
+                                        <TableCell>{t('products.detail.col.type')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.qty')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.costPerUnit')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.lineCost')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -178,7 +180,7 @@ export default function ProductDetailPage() {
                                     ))}
                                     <TableRow>
                                         <TableCell colSpan={4} align="right" sx={{ fontWeight: 700, borderTop: "2px solid", borderColor: "divider" }}>
-                                            Total Est. Cost
+                                            {t('products.detail.totalEstCost')}
                                         </TableCell>
                                         <TableCell align="right" sx={{ fontWeight: 700, borderTop: "2px solid", borderColor: "divider" }}>
                                             {fmt(allMaterials.reduce((s, m) => s + (m.lineCost || 0), 0))}
@@ -188,7 +190,7 @@ export default function ProductDetailPage() {
                             </Table>
                         ) : (
                             <Typography variant="body2" color="text.secondary">
-                                No materials recipe defined. Edit the product to add materials.
+                                {t('products.detail.noMaterials')}
                             </Typography>
                         )}
                     </Paper>
@@ -200,15 +202,15 @@ export default function ProductDetailPage() {
                         <Paper sx={{ p: 3 }}>
                             <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                                 <PublicIcon color="primary" fontSize="small" />
-                                <Typography variant="h6">Revenue by Country</Typography>
+                                <Typography variant="h6">{t('products.detail.revenueByCountry')}</Typography>
                             </Stack>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                        <TableCell>Country</TableCell>
-                                        <TableCell align="right">Orders</TableCell>
-                                        <TableCell align="right">Revenue</TableCell>
-                                        <TableCell align="right">Profit</TableCell>
+                                        <TableCell>{t('products.detail.col.country')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.orders')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.revenue')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.profit')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -236,16 +238,16 @@ export default function ProductDetailPage() {
                         <Paper sx={{ p: 3 }}>
                             <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                                 <ReceiptLongIcon color="primary" fontSize="small" />
-                                <Typography variant="h6">Recent Orders</Typography>
+                                <Typography variant="h6">{t('products.detail.recentOrders')}</Typography>
                             </Stack>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Customer</TableCell>
-                                        <TableCell>Date</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell align="right">Revenue</TableCell>
-                                        <TableCell align="right">Profit</TableCell>
+                                        <TableCell>{t('products.detail.col.customer')}</TableCell>
+                                        <TableCell>{t('products.detail.col.date')}</TableCell>
+                                        <TableCell>{t('products.detail.col.status')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.revenue')}</TableCell>
+                                        <TableCell align="right">{t('products.detail.col.profit')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -275,7 +277,7 @@ export default function ProductDetailPage() {
                         <Paper sx={{ p: 4, textAlign: "center" }}>
                             <TrendingUpIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
                             <Typography color="text.secondary">
-                                No orders linked to this product yet. Link orders by selecting this product when creating an order.
+                                {t('products.detail.noOrders')}
                             </Typography>
                         </Paper>
                     </Grid>

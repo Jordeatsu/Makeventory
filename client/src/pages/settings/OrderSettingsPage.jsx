@@ -31,7 +31,7 @@ export default function OrderSettingsPage() {
                     onClick={() => setModalOpen(true)}
                     disabled={!settings}
                 >
-                    Edit
+                    {t('common.edit')}
                 </Button>
             </Stack>
 

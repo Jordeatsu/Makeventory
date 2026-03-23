@@ -18,6 +18,7 @@ import OrderFormModal from "../components/modals/OrderFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDateLong } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
 import { InfoRow as DetailRow } from "../components/common/DetailRow";
@@ -27,6 +28,7 @@ const LOCK_MS = 45 * 24 * 60 * 60 * 1000;
 export default function OrderDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtDate = fmtDateLong;
@@ -44,7 +46,7 @@ export default function OrderDetailPage() {
             const { data } = await api.get(`/orders/${id}`);
             setOrder(data.order);
         } catch {
-            setError("Failed to load order.");
+            setError(t('orders.detail.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -56,10 +58,10 @@ export default function OrderDetailPage() {
         try {
             await api.put(`/orders/${id}`, form);
             setEditOpen(false);
-            showToast("Order updated.");
+            showToast(t('orders.updated'));
             await load();
         } catch (e) {
-            showToast(e.response?.data?.message || "Save failed.", "error");
+            showToast(e.response?.data?.message || t('orders.saveFailed'), "error");
         }
     };
 
@@ -67,9 +69,9 @@ export default function OrderDetailPage() {
         try {
             const { data } = await api.patch(`/orders/${id}/unlock`);
             setOrder(data.order);
-            showToast("Order unlocked.");
+            showToast(t('orders.unlocked'));
         } catch (e) {
-            showToast(e.response?.data?.message || "Unlock failed.", "error");
+            showToast(e.response?.data?.message || t('orders.unlockFailed'), "error");
         }
     };
 
@@ -105,7 +107,7 @@ export default function OrderDetailPage() {
                     }}
                 >
                     <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} gap={1} flexWrap="wrap">
-                        <Tooltip title="Back to Orders">
+                        <Tooltip title={t('orders.detail.backToOrders')}>
                             <IconButton size="small" onClick={() => navigate("/orders")}><ArrowBackIcon /></IconButton>
                         </Tooltip>
                         <Stack direction="row" alignItems="center" gap={1.5} flex={1} flexWrap="wrap">
@@ -115,20 +117,20 @@ export default function OrderDetailPage() {
                                 size="small"
                                 sx={{ bgcolor: STATUS_COLOURS[order.status] || "#ccc", color: "#fff", fontWeight: 700 }}
                             />
-                            <Typography variant="body2" color="text.secondary">Placed {fmtDate(order.orderDate)}</Typography>
+                            <Typography variant="body2" color="text.secondary">{t('orders.detail.placed', { date: fmtDate(order.orderDate) })}</Typography>
                         </Stack>
                         {locked ? (
                             <Stack direction="row" alignItems="center" gap={1}>
-                                <Chip icon={<LockIcon />} label="Locked" size="small" variant="outlined" color="default" />
-                                <Tooltip title="Resets the 45-day lock window so the order can be edited again">
+                                <Chip icon={<LockIcon />} label={t('orders.detail.locked')} size="small" variant="outlined" color="default" />
+                                <Tooltip title={t('orders.lockedResetTooltip')}>
                                     <Button variant="outlined" size="small" startIcon={<LockOpenIcon />} onClick={handleUnlock}>
-                                        Unlock
+                                        {t('orders.detail.unlock')}
                                     </Button>
                                 </Tooltip>
                             </Stack>
                         ) : (
                             <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
-                                Edit Order
+                                {t('orders.detail.editOrder')}
                             </Button>
                         )}
                     </Stack>
@@ -139,7 +141,7 @@ export default function OrderDetailPage() {
                 {/* Customer card */}
                 <Grid item xs={12} md={4}>
                     <Paper sx={{ p: 3, height: "100%" }}>
-                        <Typography variant="h6" mb={2}>Customer</Typography>
+                        <Typography variant="h6" mb={2}>{t('orders.detail.customer')}</Typography>
                         <Typography variant="subtitle1" fontWeight={700} mb={1}>{c.name}</Typography>
                         {c.email && (
                             <Stack direction="row" alignItems="center" gap={1} mb={0.5}>
@@ -171,21 +173,21 @@ export default function OrderDetailPage() {
                 {/* Order Summary */}
                 <Grid item xs={12} md={8}>
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>Order Summary</Typography>
+                        <Typography variant="h6" mb={2}>{t('orders.detail.orderSummary')}</Typography>
                         {order.productDescription && (
                             <Box sx={{ mb: 2, p: 1.5, bgcolor: "background.default", borderRadius: 1 }}>
-                                <Typography variant="body2" color="text.secondary" mb={0.5}>Product / Description</Typography>
+                                <Typography variant="body2" color="text.secondary" mb={0.5}>{t('orders.detail.productDescription')}</Typography>
                                 <Typography variant="body2">{order.productDescription}</Typography>
                             </Box>
                         )}
                         <Grid container spacing={0}>
-                            {order.origin && <DetailRow label="Origin" value={order.origin} />}
-                            {order.originOrderId && <DetailRow label="Origin Order ID" value={order.originOrderId} />}
-                            <DetailRow label="Order Date" value={fmtDate(order.orderDate)} />
-                            <DetailRow label="Status" value={order.status} />
-                            <DetailRow label="Materials Used" value={`${order.materials?.length || 0} item${order.materials?.length !== 1 ? "s" : ""}`} />
-                            {order.notes && <DetailRow label="Notes" value={order.notes} />}
-                            {order.trackingNumber && <DetailRow label="Tracking Number" value={order.trackingNumber} />}
+                            {order.origin && <DetailRow label={t('orders.detail.origin')} value={order.origin} />}
+                            {order.originOrderId && <DetailRow label={t('orders.detail.originOrderId')} value={order.originOrderId} />}
+                            <DetailRow label={t('orders.detail.orderDate')} value={fmtDate(order.orderDate)} />
+                            <DetailRow label={t('orders.detail.status')} value={order.status} />
+                            <DetailRow label={t('orders.detail.materialsUsed')} value={t('orders.detail.materialsUsedCount', { count: order.materials?.length || 0 })} />
+                            {order.notes && <DetailRow label={t('orders.detail.notes')} value={order.notes} />}
+                            {order.trackingNumber && <DetailRow label={t('orders.detail.trackingNumber')} value={order.trackingNumber} />}
                         </Grid>
                     </Paper>
                 </Grid>
@@ -194,15 +196,15 @@ export default function OrderDetailPage() {
                 {order.products?.length > 0 && (
                     <Grid item xs={12}>
                         <Paper sx={{ p: 3 }}>
-                            <Typography variant="h6" mb={2}>Products Ordered</Typography>
+                            <Typography variant="h6" mb={2}>{t('orders.detail.productsOrdered')}</Typography>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                        <TableCell>Product</TableCell>
-                                        <TableCell>SKU</TableCell>
-                                        <TableCell>Category</TableCell>
-                                        <TableCell align="right">Qty</TableCell>
-                                        <TableCell align="right">Base Price</TableCell>
+                                        <TableCell>{t('orders.detail.col.product')}</TableCell>
+                                        <TableCell>{t('orders.detail.col.sku')}</TableCell>
+                                        <TableCell>{t('orders.detail.col.category')}</TableCell>
+                                        <TableCell align="right">{t('orders.detail.col.qty')}</TableCell>
+                                        <TableCell align="right">{t('orders.detail.col.basePrice')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -226,19 +228,19 @@ export default function OrderDetailPage() {
                 {/* Materials used */}
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>Materials Used in This Order</Typography>
+                        <Typography variant="h6" mb={2}>{t('orders.detail.materialsInOrder')}</Typography>
                         {!order.materials || order.materials.length === 0 ? (
-                            <Typography color="text.secondary" variant="body2">No materials recorded for this order.</Typography>
+                            <Typography color="text.secondary" variant="body2">{t('orders.detail.noMaterials')}</Typography>
                         ) : (
                             <Table size="small">
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                        <TableCell>Material</TableCell>
-                                        <TableCell>Type</TableCell>
-                                        <TableCell align="right">Qty Used</TableCell>
-                                        <TableCell>Unit</TableCell>
-                                        <TableCell align="right">Cost / Unit</TableCell>
-                                        <TableCell align="right">Line Cost</TableCell>
+                                        <TableCell>{t('orders.detail.col.material')}</TableCell>
+                                        <TableCell>{t('orders.detail.col.type')}</TableCell>
+                                        <TableCell align="right">{t('orders.detail.col.qtyUsed')}</TableCell>
+                                        <TableCell>{t('orders.detail.col.unit')}</TableCell>
+                                        <TableCell align="right">{t('orders.detail.col.costPerUnit')}</TableCell>
+                                        <TableCell align="right">{t('orders.detail.col.lineCost')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -270,18 +272,18 @@ export default function OrderDetailPage() {
                 <Grid item xs={12} md={6}>
                     <Paper sx={{ p: 0, overflow: "hidden" }}>
                         <Box sx={{ px: 3, py: 2, bgcolor: "background.default", borderBottom: 1, borderColor: "divider" }}>
-                            <Typography variant="h6">Financial Breakdown</Typography>
+                            <Typography variant="h6">{t('orders.detail.financialBreakdown')}</Typography>
                         </Box>
                         <Box sx={{ px: 3, py: 2 }}>
                             {[
-                                { label: "Item Price",   value: fmt(order.totalCharged) },
-                                order.buyerTax > 0   && { label: "+ Buyer Tax",     value: `+${fmt(order.buyerTax)}`,     color: "success.main" },
-                                order.discount > 0   && { label: order.discountType === "percent" ? `Discount (${order.discount}%)` : "Discount", value: `–${fmt(discountAmt)}`, color: "error.main" },
-                                { label: "Shipping Cost",   value: fmt(order.shippingCost) },
-                                { label: "– Hosting Fees",  value: `–${fmt(order.hostingCost)}`,     color: "error.main" },
-                                order.marketingCost > 0 && { label: "– Marketing Costs", value: `–${fmt(order.marketingCost)}`, color: "error.main" },
-                                { label: "– Material Cost", value: `–${fmt(order.totalMaterialCost)}`, color: "error.main" },
-                                order.refund > 0 && { label: "– Refund", value: `–${fmt(order.refund)}`, color: "error.main" },
+                                { label: t('orders.detail.itemPrice'),   value: fmt(order.totalCharged) },
+                                order.buyerTax > 0   && { label: t('orders.detail.buyerTax'),     value: `+${fmt(order.buyerTax)}`,     color: "success.main" },
+                                order.discount > 0   && { label: order.discountType === "percent" ? t('orders.detail.discountPercent', { value: order.discount }) : t('orders.detail.discount'), value: `–${fmt(discountAmt)}`, color: "error.main" },
+                                { label: t('orders.detail.shippingCost'),   value: fmt(order.shippingCost) },
+                                { label: t('orders.detail.hostingFees'),  value: `–${fmt(order.hostingCost)}`,     color: "error.main" },
+                                order.marketingCost > 0 && { label: t('orders.detail.marketingCosts'), value: `–${fmt(order.marketingCost)}`, color: "error.main" },
+                                { label: t('orders.detail.materialCost'), value: `–${fmt(order.totalMaterialCost)}`, color: "error.main" },
+                                order.refund > 0 && { label: t('orders.detail.refund'), value: `–${fmt(order.refund)}`, color: "error.main" },
                             ].filter(Boolean).map((row, i) => (
                                 <Stack key={i} direction="row" justifyContent="space-between" alignItems="center" py={0.75}>
                                     <Typography variant="body2" color="text.secondary">{row.label}</Typography>
@@ -292,11 +294,11 @@ export default function OrderDetailPage() {
                         <Divider />
                         <Box sx={{ px: 3, py: 1.5 }}>
                             <Stack direction="row" justifyContent="space-between" alignItems="center" py={0.5}>
-                                <Typography variant="body2" fontWeight={700}>Gross Revenue</Typography>
+                                <Typography variant="body2" fontWeight={700}>{t('orders.detail.grossRevenue')}</Typography>
                                 <Typography variant="body2" fontWeight={700}>{fmt(totalPaid)}</Typography>
                             </Stack>
                             <Stack direction="row" justifyContent="space-between" alignItems="center" py={0.5}>
-                                <Typography variant="body2" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>Net Revenue</Typography>
+                                <Typography variant="body2" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>{t('orders.detail.netRevenue')}</Typography>
                                 <Typography variant="body2" fontWeight={700} color={(order.profit + (order.shippingCost || 0)) >= 0 ? "success.main" : "error.main"}>
                                     {fmt((order.profit || 0) + (order.shippingCost || 0))}
                                 </Typography>
@@ -305,7 +307,7 @@ export default function OrderDetailPage() {
                         <Box sx={{ px: 3, py: 2, bgcolor: order.profit >= 0 ? "#C1D7AE22" : "#FFCAB122", borderTop: 2, borderColor: order.profit >= 0 ? "success.main" : "error.main" }}>
                             <Stack direction="row" justifyContent="space-between" alignItems="center">
                                 <Typography variant="subtitle1" fontWeight={700} color={order.profit >= 0 ? "success.main" : "error.main"}>
-                                    Net Profit
+                                    {t('orders.detail.netProfit')}
                                 </Typography>
                                 <Typography variant="h5" fontWeight={700} color={order.profit >= 0 ? "success.main" : "error.main"}>
                                     {fmt(order.profit)}
