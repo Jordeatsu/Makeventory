@@ -197,7 +197,7 @@ export default function OrderDetailPage() {
                             <Typography variant="h6" mb={2}>Products Ordered</Typography>
                             <Table size="small">
                                 <TableHead>
-                                    <TableRow>
+                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
                                         <TableCell>Product</TableCell>
                                         <TableCell>SKU</TableCell>
                                         <TableCell>Category</TableCell>
@@ -232,7 +232,7 @@ export default function OrderDetailPage() {
                         ) : (
                             <Table size="small">
                                 <TableHead>
-                                    <TableRow>
+                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
                                         <TableCell>Material</TableCell>
                                         <TableCell>Type</TableCell>
                                         <TableCell align="right">Qty Used</TableCell>
