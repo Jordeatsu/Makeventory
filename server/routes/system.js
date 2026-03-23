@@ -62,7 +62,7 @@ router.post('/system/update', requireAuth, requireAdmin, async (_req, res) => {
         await execAsync('git checkout main',               { cwd: REPO_ROOT, timeout: 15_000 });
         await execAsync(`git reset --hard ${latestTag}`,   { cwd: REPO_ROOT, timeout: 15_000 });
         await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'server'), timeout: 120_000 });
-        await execAsync('npm install', { cwd: path.join(REPO_ROOT, 'client'), timeout: 120_000 });
+        await execAsync('npm install --include=dev', { cwd: path.join(REPO_ROOT, 'client'), timeout: 120_000 });
         await execAsync('npm run build', { cwd: path.join(REPO_ROOT, 'client'), timeout: 300_000 });
         // Send response before triggering the restart
         res.json({ ok: true });

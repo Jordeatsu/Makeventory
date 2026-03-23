@@ -94,7 +94,7 @@ echo "🚀 Starting Makeventory (production)..."
 # ── Install dependencies (ensures node_modules are current after any update) ──
 echo "  → Installing dependencies..."
 cd "$ROOT_DIR/server" && npm install --prefer-offline
-cd "$ROOT_DIR/client" && npm install --prefer-offline
+cd "$ROOT_DIR/client" && npm install --prefer-offline --include=dev
 
 # ── Build client ──────────────────────────────────────────────────────────────
 echo "  → Building client..."
