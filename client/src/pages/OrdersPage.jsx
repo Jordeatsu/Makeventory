@@ -110,6 +110,8 @@ export default function OrdersPage() {
                         <Typography variant="body2" fontWeight={600}>{o.origin}</Typography>
                         {o.originOrderId && <Typography variant="caption" color="text.secondary">{o.originOrderId}</Typography>}
                     </>
+                ) : o.orderNumber ? (
+                    <Typography variant="body2" fontWeight={600}>{o.orderNumber}</Typography>
                 ) : <Typography variant="caption" color="text.disabled">—</Typography>}
             </TableCell>
             <TableCell>{fmtDate(o.orderDate)}</TableCell>
@@ -179,7 +181,7 @@ export default function OrdersPage() {
     const tableHead = (
         <TableHead>
             <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
-                <TableCell>Origin</TableCell>
+                <TableCell>Order</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Customer</TableCell>
                 <TableCell>Status</TableCell>
