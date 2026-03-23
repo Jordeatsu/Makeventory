@@ -155,7 +155,7 @@ export default function CustomerDetailPage() {
                         <TableContainer component={Paper}>
                             <Table size="small">
                                 <TableHead>
-                                    <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
+                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
                                         <TableCell>Date</TableCell>
                                         <TableCell>Product</TableCell>
                                         <TableCell>Status</TableCell>

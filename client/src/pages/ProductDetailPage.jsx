@@ -156,7 +156,7 @@ export default function ProductDetailPage() {
                         {allMaterials.length > 0 ? (
                             <Table size="small">
                                 <TableHead>
-                                    <TableRow>
+                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
                                         <TableCell>Material</TableCell>
                                         <TableCell>Type</TableCell>
                                         <TableCell align="right">Qty</TableCell>
@@ -204,7 +204,7 @@ export default function ProductDetailPage() {
                             </Stack>
                             <Table size="small">
                                 <TableHead>
-                                    <TableRow>
+                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
                                         <TableCell>Country</TableCell>
                                         <TableCell align="right">Orders</TableCell>
                                         <TableCell align="right">Revenue</TableCell>
