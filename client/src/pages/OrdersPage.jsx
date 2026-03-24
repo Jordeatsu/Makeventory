@@ -267,7 +267,7 @@ export default function OrdersPage() {
                 loading ? (
                     <Box sx={{ textAlign: "center", py: 4 }}><CircularProgress size={28} /></Box>
                 ) : groupedByMonth.length === 0 ? (
-                ) : <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>{t('orders.noOrders')}</Typography>
+                    <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>{t('orders.noOrders')}</Typography>
                 ) : (
                     groupedByMonth.map(({ label, orders: monthOrders }) => (
                         <Box key={label} sx={{ mb: 4 }}>
