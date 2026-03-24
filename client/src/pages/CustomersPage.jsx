@@ -135,7 +135,7 @@ export default function CustomersPage() {
                     variant={c.orderCount > 1 ? "filled" : "outlined"}
                 />
                 {c.orderCount > 1 && (
-                    <Typography variant="caption" color="success.main" display="block">returning</Typography>
+                    <Typography variant="caption" color="success.main" display="block">{t('customers.returning')}</Typography>
                 )}
             </TableCell>
             <TableCell align="right">
