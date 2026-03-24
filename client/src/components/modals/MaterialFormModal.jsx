@@ -1,5 +1,5 @@
 /**
- * @file MaterialFormDialog.jsx
+ * @file MaterialFormModal.jsx
  * @description Modal dialog for creating or editing a material record.
  *
  * Adapts dynamically to the selected MaterialType's usageType:
@@ -49,7 +49,7 @@ const EMPTY_FORM = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function MaterialFormDialog({
+export default function MaterialFormModal({
     open, onClose, onSave, onSaveMore, onStockAdjusted, initial, materialTypes = [],
 }) {
     const { t } = useTranslation();

@@ -29,10 +29,21 @@ Makeventory/
 ├── package.json            # Root-level scripts (start/stop/restart wrappers)
 │
 ├── install/                # One-time web installer (separate Vite app)
-│   ├── server.js           # Installer Express server (port 3001)
+│   ├── server.js           # Installer Express server (port 3000) + SSE npm-progress stream
 │   ├── src/
-│   │   ├── App.jsx         # Stepped wizard (Deps → DB → Account → Locale → Modules)
-│   │   └── components/     # One component per wizard step
+│   │   ├── main.jsx        # React entry point
+│   │   ├── App.jsx         # 7-step wizard (Locale → Deps → DB → Account → Business → Modules → ThankYou)
+│   │   ├── api.js          # Axios helpers for all installer API calls
+│   │   ├── components/
+│   │   │   ├── LocaleStep.jsx        # Step 1 — language + currency selection
+│   │   │   ├── DependenciesStep.jsx  # Step 2 — live npm install via SSE
+│   │   │   ├── DatabaseStep.jsx      # Step 3 — MongoDB connect + DB create
+│   │   │   ├── AccountStep.jsx       # Step 4 — admin user creation
+│   │   │   ├── BusinessStep.jsx      # Step 5 — business name, logo, social URLs
+│   │   │   ├── ModuleStep.jsx        # Step 6 — enable/disable modules + completeInstall
+│   │   │   └── ThankYouStep.jsx      # Step 7 — completion screen
+│   │   └── services/
+│   │       └── theme.js              # MUI theme for the installer UI
 │   └── vite.config.js
 │
 ├── server/                 # API server (Node/Express, ESM)
@@ -50,6 +61,7 @@ Makeventory/
 │   │   ├── customers.js    # Customer CRUD
 │   │   ├── settings.js     # GlobalSettings + BusinessInfo read/write
 │   │   ├── modules.js      # Feature module enable/disable
+│   │   ├── yearReview.js   # Year-in-review aggregation endpoint
 │   │   └── system.js       # /update-check, /apply-update, /restart
 │   ├── middleware/
 │   │   └── authMiddleware.js  # requireAuth, requireAdmin JWT verifiers
@@ -59,11 +71,16 @@ Makeventory/
 │   │   ├── MaterialType.js
 │   │   ├── MaterialSettings.js
 │   │   ├── Product.js
+│   │   ├── ProductSettings.js
 │   │   ├── Order.js
+│   │   ├── OrderSettings.js
 │   │   ├── Customer.js
+│   │   ├── CustomerSettings.js
 │   │   ├── GlobalSettings.js
 │   │   ├── BusinessInfo.js
-│   │   └── Module.js
+│   │   ├── Module.js
+│   │   ├── Overhead.js
+│   │   └── YearInReviewSettings.js
 │   └── lib/
 │       └── helpers.js      # Shared utilities: hashPassword, verifyPassword,
 │                           #   cookieOpts, isValidId, escapeRegex, userLabel
@@ -76,8 +93,8 @@ Makeventory/
 │   │   ├── App.jsx         # Route tree + ProtectedRoute wrapper
 │   │   ├── api.js          # Axios instance (baseURL /api, withCredentials)
 │   │   ├── theme.js        # MUI theme customisation
-│   │   ├── colours.js      # App-wide colour tokens (STATUS_COLOURS, SEMANTIC, BRAND)
 │   │   ├── i18n.js         # i18next init, language detection
+│   │   ├── version.js      # APP_VERSION constant (used by AppFooter + update check)
 │   │   ├── locales/        # Translation files
 │   │   │   ├── en/translation.json
 │   │   │   ├── fr/translation.json
@@ -87,8 +104,9 @@ Makeventory/
 │   │   │   ├── GlobalSettingsContext.jsx # currency, language, loaded from API
 │   │   │   └── BrandingContext.jsx      # business name/logo from API
 │   │   ├── hooks/
-│   │   │   ├── useToast.js   # Shared toast notification state
-│   │   │   └── useModules.jsx # Reads enabled feature modules
+│   │   │   ├── useToast.js             # Shared toast notification state
+│   │   │   ├── useModules.jsx          # Reads enabled feature modules
+│   │   │   └── useCustomerSettings.js  # Fetches customer settings (label, defaults)
 │   │   ├── utils/
 │   │   │   └── formatting.js # CURRENCY_SYMBOLS, useCurrencyFormatter,
 │   │   │                     #   fmtDate, fmtDateLong, fmtDateTime, TABLE_HEAD_SX
@@ -102,14 +120,18 @@ Makeventory/
 │   │   │   │   ├── StatCard.jsx      # KPI card (with optional icon)
 │   │   │   │   ├── DetailRow.jsx     # DetailRow (stacked) + InfoRow (side-by-side)
 │   │   │   │   ├── RecordInfo.jsx    # Created/Updated audit panel
+│   │   │   │   ├── CountrySelect.jsx # Country drop-down (MUI Select + flag emoji)
 │   │   │   │   └── ToastSnackbar.jsx # Standard MUI Snackbar+Alert wrapper
 │   │   │   └── modals/
-│   │   │       ├── MaterialFormDialog.jsx
+│   │   │       ├── MaterialFormModal.jsx
 │   │   │       ├── MaterialTypeModal.jsx
 │   │   │       ├── MaterialSettingsModal.jsx
-│   │   │       ├── ProductFormDialog.jsx
-│   │   │       ├── OrderFormDialog.jsx
-│   │   │       ├── CustomerFormDialog.jsx
+│   │   │       ├── ProductFormModal.jsx
+│   │   │       ├── ProductSettingsModal.jsx
+│   │   │       ├── OrderFormModal.jsx
+│   │   │       ├── OrderSettingsModal.jsx
+│   │   │       ├── CustomerFormModal.jsx
+│   │   │       ├── YearInReviewSettingsModal.jsx
 │   │   │       ├── LanguageRegionModal.jsx
 │   │   │       └── DeleteBlockedModal.jsx
 │   │   └── pages/
@@ -123,7 +145,9 @@ Makeventory/
 │   │       ├── OrderDetailPage.jsx
 │   │       ├── CustomersPage.jsx
 │   │       ├── CustomerDetailPage.jsx
+│   │       ├── YearReviewPage.jsx
 │   │       ├── ProfilePage.jsx
+│   │       ├── SettingsPage.jsx
 │   │       ├── NotFoundPage.jsx
 │   │       └── settings/
 │   │           ├── ModuleSelectionPage.jsx
@@ -143,6 +167,12 @@ Makeventory/
 │   ├── restart.sh          # stop + start
 │   └── dev/                # Development-mode equivalents (vite dev server)
 │
+├── documentation/          # Developer documentation (one .md per source file)
+│   ├── server/
+│   ├── client/
+│   ├── install/
+│   └── systemfiles/
+│
 └── logs/
     ├── server.log / server.pid
     ├── client.log / client.pid
@@ -160,28 +190,31 @@ user runs install.sh
     ↓
 install.sh checks for Node.js
     ↓
-cd install/ && npm install
+cd install/ && npm install && vite build (produces install/dist/)
     ↓
-vite build (produces install/dist/)
+node install/server.js  (port 3000, serves install/dist/)
+  └─ simultaneously: spawns npm install for client/ and server/ (SSE progress stream)
     ↓
-node install/server.js  (port 3001, serves install/dist/)
-    ↓
-browser opens http://localhost:3001
+browser opens http://localhost:3000
     ↓
 React wizard steps:
-  1. DependenciesStep — verifies Node + MongoDB URI
-  2. DatabaseStep     — tests MongoDB connection, writes server/.env
-  3. AccountStep      — creates first admin user in MongoDB
-  4. LocaleStep       — sets default language and currency in GlobalSettings
-  5. ModuleStep       — enables/disables feature modules
+  1. LocaleStep        — choose language (en/fr/es) and currency
+  2. DependenciesStep  — watches SSE stream; advances when npm install completes
+  3. DatabaseStep      — detects Docker/local MongoDB, creates DB + seeds data
+  4. AccountStep       — creates first admin user in MongoDB
+  5. BusinessStep      — saves business name, logo (base64), and social URLs
+  6. ModuleStep        — enables/disables feature modules, calls completeInstall()
+  7. ThankYouStep      — confirmation screen
     ↓
-Installer writes:  server/.env  (MONGODB_URI, JWT_SECRET, PORT, COOKIE_SECURE)
-                   GlobalSettings doc in MongoDB
-                   Module docs in MongoDB
+Installer seeds MongoDB with:
+    GlobalSettings (language, currency)
+    User (admin account)
+    BusinessInfo (name, logo, social links)
+    Module docs (enabled/disabled per selection)
     ↓
-install.sh starts the main app via systemfiles/start.sh
+install.sh waits for installer server to exit, then runs systemfiles/start.sh
     ↓
-Main app runs at http://localhost:3000 (Vite built) or :5001 (API)
+Main app runs at http://localhost:3000 (client) + :5001 (API)
 ```
 
 ---
@@ -207,6 +240,7 @@ routes/index.js
   /customers     → routes/customers.js
   /settings      → routes/settings.js
   /modules       → routes/modules.js
+  /year-review   → routes/yearReview.js
   /system        → routes/system.js
     ↓
 middleware/authMiddleware.js  — requireAuth (any logged-in user)
@@ -263,7 +297,9 @@ All routes except `/login` are wrapped in `<ProtectedRoute>`, which redirects un
 | `/orders/:id` | OrderDetailPage | Layout |
 | `/customers` | CustomersPage | Layout |
 | `/customers/:id` | CustomerDetailPage | Layout |
+| `/year-review` | YearReviewPage | Layout |
 | `/profile` | ProfilePage | Layout |
+| `/settings` | SettingsPage | SettingsLayout |
 | `/settings/*` | (see below) | SettingsLayout |
 
 Settings sub-routes under `/settings/`:
@@ -292,6 +328,8 @@ All pages pull formatting and UI primitives from shared modules rather than defi
 | `components/common/RecordInfo.jsx` | `<RecordInfo createdAt updatedAt createdBy updatedBy />` | MaterialDetailPage, ProductDetailPage, OrderDetailPage |
 | `components/common/StatCard.jsx` | `<StatCard icon? label value sub? color? />` | DashboardPage, ProductDetailPage |
 | `components/common/DetailRow.jsx` | `DetailRow` (stacked), `InfoRow` (side-by-side row) | MaterialDetailPage, ProductDetailPage, OrderDetailPage |
+| `components/common/CountrySelect.jsx` | `<CountrySelect value onChange />` | CustomerFormModal, CustomerDetailPage |
+| `hooks/useCustomerSettings.js` | `{ settings, loading }` — fetches customer label config | CustomersPage, CustomerDetailPage, CustomerFormModal |
 
 ### Data fetching pattern
 
@@ -303,7 +341,7 @@ Pages use `api.js` (Axios, baseURL `/api`, `withCredentials: true`) directly —
 
 Modules are stored in MongoDB (`Module` collection) and can be toggled per-installation from the Settings → Modules page. The `useModules` hook reads the current list of enabled modules and the `Layout` sidebar renders only the enabled nav items.
 
-Current modules: **Materials**, **Products**, **Orders**, **Customers**.
+Current modules: **Materials**, **Products**, **Orders**, **Customers**, **Year in Review**.
 
 ---
 

@@ -9,7 +9,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTranslation } from "react-i18next";
 import api from "../api";
-import MaterialFormDialog from "../components/modals/MaterialFormDialog";
+import MaterialFormModal from "../components/modals/MaterialFormModal";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { useCurrencyFormatter } from "../utils/formatting";
 import { useToast } from "../hooks/useToast";
@@ -162,7 +162,7 @@ export default function MaterialDetailPage() {
                         </Typography>
                         <Typography variant="h3" fontWeight={700} lineHeight={1}>{fmt(m.costPerUnit)}</Typography>
                         {hasPackQty && (
-                            <Typography variant="caption" color="text.secondary">{m.unitsPerPack} {unitLabel} / purchase</Typography>
+                            <Typography variant="caption" color="text.secondary">{t("materials.detail.perPurchase", { qty: m.unitsPerPack, unit: unitLabel })}</Typography>
                         )}
                     </Box>
                     <Box sx={{ p: 3, flex: 1, textAlign: "center" }}>
@@ -199,7 +199,7 @@ export default function MaterialDetailPage() {
                 <Grid item xs={12} md={6}>
                     <Paper variant="outlined" sx={{ p: 3, height: "100%" }}>
                         <Typography variant="overline" color="primary.main" display="block" mb={1.5}>
-                            Supplier &amp; Notes
+                            {t("materials.detail.supplierNotes")}
                         </Typography>
                         <Grid container spacing={2}>
                             <DetailRow label={t("materials.form.supplier", "Supplier")} value={m.supplier} />
@@ -218,7 +218,7 @@ export default function MaterialDetailPage() {
             />
 
             {/* Edit dialog */}
-            <MaterialFormDialog
+            <MaterialFormModal
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSave={handleSave}

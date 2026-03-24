@@ -19,7 +19,9 @@ import AccountStep from "./components/AccountStep";
 import BusinessStep from "./components/BusinessStep";
 import ModuleStep from "./components/ModuleStep";
 import LocaleStep from "./components/LocaleStep";
+import ThankYouStep from "./components/ThankYouStep";
 import LanguageIcon from "@mui/icons-material/Language";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 const DRAWER_WIDTH = 270;
 
@@ -30,6 +32,7 @@ const STEPS = [
     { id: "account", label: "User Account", Icon: PersonAddIcon },
     { id: "business", label: "Business Profile", Icon: BusinessIcon },
     { id: "modules", label: "Module Selection", Icon: ExtensionIcon },
+    { id: "thankyou", label: "All Done!", Icon: FavoriteIcon },
 ];
 
 // status: 'complete' | 'active' | 'pending' | 'error'
@@ -40,6 +43,7 @@ const INITIAL_STATUS = {
     account: "pending",
     business: "pending",
     modules: "pending",
+    thankyou: "pending",
 };
 
 function StepIcon({ status }) {
@@ -172,6 +176,7 @@ export default function App() {
                     {currentStep === "account" && <AccountStep savedData={savedAccount} onSave={(data) => setSavedAccount(data)} onComplete={() => markComplete("account")} />}
                     {currentStep === "business" && <BusinessStep savedData={savedBusiness} onSave={(data) => setSavedBusiness(data)} onComplete={() => markComplete("business")} />}
                     {currentStep === "modules" && <ModuleStep onComplete={() => markComplete("modules")} />}
+                    {currentStep === "thankyou" && <ThankYouStep />}
                 </Box>
             </Box>
         </ThemeProvider>

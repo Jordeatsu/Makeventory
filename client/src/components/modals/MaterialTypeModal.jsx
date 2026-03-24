@@ -114,14 +114,14 @@ export default function MaterialTypeModal({ open, initial, onClose, onSaved }) {
                 {error && <Alert severity="error">{error}</Alert>}
 
                 <TextField
-                    label="Name"
+                    label={t('common.name')}
                     value={form.name}
                     onChange={set('name')}
                     required
                     fullWidth
                 />
                 <TextField
-                    label="Description"
+                    label={t('common.description')}
                     value={form.description}
                     onChange={set('description')}
                     fullWidth

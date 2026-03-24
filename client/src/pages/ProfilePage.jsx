@@ -79,8 +79,8 @@ export default function ProfilePage() {
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
-        if (pwForm.newPassword !== pwForm.confirmPassword) { setPwError('Passwords do not match.'); return; }
-        if (pwForm.newPassword.length < 8) { setPwError('Password must be at least 8 characters.'); return; }
+        if (pwForm.newPassword !== pwForm.confirmPassword) { setPwError(t('profile.passwordsNoMatch')); return; }
+        if (pwForm.newPassword.length < 8) { setPwError(t('profile.passwordTooShort')); return; }
         setPwLoading(true);
         setPwError('');
         try {
@@ -89,9 +89,9 @@ export default function ProfilePage() {
                 newPassword:     pwForm.newPassword,
             });
             setPwOpen(false);
-            showToast('Password updated successfully.');
+            showToast(t('profile.passwordUpdated'));
         } catch (err) {
-            setPwError(err.response?.data?.error || 'Failed to update password.');
+            setPwError(err.response?.data?.error || t('profile.passwordFailed'));
         } finally {
             setPwLoading(false);
         }
@@ -111,9 +111,9 @@ export default function ProfilePage() {
             const res = await api.patch(`/users/${profile._id}`, editForm);
             setProfile(res.data.user);
             setEditOpen(false);
-            showToast('Profile updated successfully.');
+            showToast(t('profile.profileUpdated'));
         } catch (err) {
-            setEditError(err.response?.data?.error || 'Failed to update profile.');
+            setEditError(err.response?.data?.error || t('profile.profileFailed'));
         } finally {
             setEditLoading(false);
         }
@@ -127,19 +127,19 @@ export default function ProfilePage() {
         { icon: <PersonIcon />,         label: t('profile.username'),  value: profile?.username },
         { icon: <EmailIcon />,          label: t('profile.email'),     value: profile?.email },
         { icon: <BadgeIcon />,          label: t('profile.role'),      value: profile?.role },
-        { icon: <CalendarTodayIcon />,  label: 'Member Since',         value: fmt(profile?.createdAt) },
+        { icon: <CalendarTodayIcon />,  label: t('profile.memberSince'),  value: fmt(profile?.createdAt) },
     ];
 
     const detailRows = [
         { icon: <FingerprintIcon sx={{ fontSize: 18 }} />,    label: t('profile.userId'),   value: profile?._id,          mono: true },
-        { icon: <CalendarTodayIcon sx={{ fontSize: 18 }} />,  label: 'Account Created',     value: fmt(profile?.createdAt) },
-        { icon: <UpdateIcon sx={{ fontSize: 18 }} />,         label: 'Last Updated',        value: fmt(profile?.updatedAt) },
+        { icon: <CalendarTodayIcon sx={{ fontSize: 18 }} />,  label: t('profile.accountCreated'),     value: fmt(profile?.createdAt) },
+        { icon: <UpdateIcon sx={{ fontSize: 18 }} />,         label: t('profile.lastUpdated'),        value: fmt(profile?.updatedAt) },
     ];
 
     const pwFields = [
-        { key: 'currentPassword',  label: 'Current Password' },
-        { key: 'newPassword',      label: 'New Password' },
-        { key: 'confirmPassword',  label: 'Confirm New Password' },
+        { key: 'currentPassword',  label: t('profile.currentPassword') },
+        { key: 'newPassword',      label: t('profile.newPassword') },
+        { key: 'confirmPassword',  label: t('profile.confirmPassword') },
     ];
 
     return (
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                         />
                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <CalendarTodayIcon sx={{ fontSize: 14 }} />
-                            Member since {fmt(profile?.createdAt)}
+                            {t('profile.memberSinceDate', { date: fmt(profile?.createdAt) })}
                         </Typography>
                     </Box>
                 </Box>
@@ -207,7 +207,7 @@ export default function ProfilePage() {
             {canEdit && (
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1.5, fontWeight: 600, letterSpacing: '0.08em' }}>
-                        Actions
+                        {t('common.actions')}
                     </Typography>
                     <Grid container spacing={2}>
                         {isOwnProfile && (
@@ -217,13 +217,13 @@ export default function ProfilePage() {
                                         <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <LockResetIcon sx={{ color: 'white' }} />
                                         </Box>
-                                        <Typography variant="subtitle1" fontWeight={600}>Change Password</Typography>
+                                        <Typography variant="subtitle1" fontWeight={600}>{t('profile.changePassword')}</Typography>
                                     </Box>
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        Update your password to keep your account secure.
+                                        {t('profile.changePasswordDesc')}
                                     </Typography>
                                     <Button fullWidth variant="contained" onClick={openPwDialog}>
-                                        Change Password
+                                        {t('profile.changePassword')}
                                     </Button>
                                 </Paper>
                             </Grid>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
             <Paper variant="outlined" sx={{ borderRadius: 2 }}>
                 <Box sx={{ px: 3, py: 1.75, bgcolor: 'grey.50', borderBottom: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="overline" color="text.secondary" fontWeight={600} sx={{ letterSpacing: '0.08em' }}>
-                        Account Details
+                        {t('profile.accountDetails')}
                     </Typography>
                 </Box>
                 {detailRows.map(({ icon, label, value, mono }, i) => (
@@ -276,7 +276,7 @@ export default function ProfilePage() {
             {/* ── Change Password Dialog ───────────────────────────────────── */}
             <Dialog open={pwOpen} onClose={() => !pwLoading && setPwOpen(false)} maxWidth="xs" fullWidth>
                 <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LockResetIcon color="primary" /> Change Password
+                    <LockResetIcon color="primary" /> {t('profile.changePassword')}
                 </DialogTitle>
                 <Box component="form" onSubmit={handlePasswordSubmit}>
                     <DialogContent sx={{ pt: 1 }}>
@@ -304,9 +304,9 @@ export default function ProfilePage() {
                         ))}
                     </DialogContent>
                     <DialogActions sx={{ px: 3, pb: 2 }}>
-                        <Button onClick={() => setPwOpen(false)} disabled={pwLoading}>Cancel</Button>
+                        <Button onClick={() => setPwOpen(false)} disabled={pwLoading}>{t('common.cancel')}</Button>
                         <Button type="submit" variant="contained" disabled={pwLoading}>
-                            {pwLoading ? <CircularProgress size={20} color="inherit" /> : 'Update Password'}
+                            {pwLoading ? <CircularProgress size={20} color="inherit" /> : t('profile.updatePassword')}
                         </Button>
                     </DialogActions>
                 </Box>
@@ -315,7 +315,7 @@ export default function ProfilePage() {
             {/* ── Edit Profile Dialog ──────────────────────────────────────── */}
             <Dialog open={editOpen} onClose={() => !editLoading && setEditOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EditIcon color="primary" /> Edit Profile
+                    <EditIcon color="primary" /> {t('profile.editProfile')}
                 </DialogTitle>
                 <Box component="form" onSubmit={handleEditSubmit}>
                     <DialogContent sx={{ pt: 1 }}>
@@ -352,9 +352,9 @@ export default function ProfilePage() {
                         </Grid>
                     </DialogContent>
                     <DialogActions sx={{ px: 3, pb: 2 }}>
-                        <Button onClick={() => setEditOpen(false)} disabled={editLoading}>Cancel</Button>
+                        <Button onClick={() => setEditOpen(false)} disabled={editLoading}>{t('common.cancel')}</Button>
                         <Button type="submit" variant="contained" disabled={editLoading}>
-                            {editLoading ? <CircularProgress size={20} color="inherit" /> : 'Save Changes'}
+                            {editLoading ? <CircularProgress size={20} color="inherit" /> : t('common.saveChanges')}
                         </Button>
                     </DialogActions>
                 </Box>

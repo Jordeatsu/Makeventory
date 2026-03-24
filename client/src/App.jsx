@@ -27,6 +27,7 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import CustomersPage from './pages/CustomersPage';
 import CustomerDetailPage from './pages/CustomerDetailPage';
+import YearReviewPage     from './pages/YearReviewPage';
 
 // ── Protected route wrapper ───────────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -89,6 +90,7 @@ function AppRoutes() {
                                 <Route path="orders/:id" element={<OrderDetailPage />} />
                                 <Route path="customers" element={<CustomersPage />} />
                                 <Route path="customers/:id" element={<CustomerDetailPage />} />
+                                <Route path="year-review" element={<YearReviewPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="*" element={<NotFoundPage />} />
                             </Routes>

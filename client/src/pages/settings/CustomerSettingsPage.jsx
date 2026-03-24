@@ -1,25 +1,145 @@
-import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+    Alert, Box, Button, CircularProgress, Divider,
+    Paper, Stack, Switch, Tooltip, Typography,
+} from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
+import SaveIcon   from '@mui/icons-material/Save';
 import { useTranslation } from 'react-i18next';
+import api from '../../api';
+
+// Keys for togglable fields — labels/descriptions come from i18n
+const FIELD_KEYS = ['email', 'phone', 'addressLine1', 'addressLine2', 'city', 'state', 'postcode', 'country'];
+
+const DEFAULT_FIELDS = {
+    email: true, phone: true, addressLine1: true, addressLine2: false,
+    city: true, state: true, postcode: true, country: true,
+};
+
+function FieldToggleRow({ label, description, enabled, onChange, isLast }) {
+    return (
+        <>
+            <Box sx={{ px: 3, py: 2 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Box>
+                        <Typography variant="body2" fontWeight={500}>{label}</Typography>
+                        <Typography variant="caption" color="text.secondary">{description}</Typography>
+                    </Box>
+                    <Switch
+                        checked={enabled}
+                        onChange={(e) => onChange(e.target.checked)}
+                        size="small"
+                        color="primary"
+                    />
+                </Stack>
+            </Box>
+            {!isLast && <Divider />}
+        </>
+    );
+}
 
 export default function CustomerSettingsPage() {
     const { t } = useTranslation();
-    return (
-        <Box sx={{ maxWidth: 700, mx: 'auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                <PeopleIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                <Typography variant="h5" fontWeight={600}>{t('settings.customerSettings.title')}</Typography>
+    const [fields, setFields]   = useState(DEFAULT_FIELDS);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving]   = useState(false);
+    const [error, setError]     = useState(null);
+    const [success, setSuccess] = useState(false);
+
+    useEffect(() => {
+        api.get('/settings/customers')
+            .then(({ data }) => {
+                if (data?.settings?.fields) {
+                    setFields({ ...DEFAULT_FIELDS, ...data.settings.fields });
+                }
+            })
+            .catch(() => setError(t('settings.customerSettings.loadFailed')))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleToggle = (key) => (value) => {
+        setFields((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        setError(null);
+        setSuccess(false);
+        try {
+            await api.put('/settings/customers', { fields });
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 3000);
+        } catch {
+            setError(t('settings.customerSettings.saveFailed'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+                <CircularProgress />
             </Box>
-            <Paper variant="outlined" sx={{ borderRadius: 2, py: 8, textAlign: 'center' }}>
-                <PeopleIcon sx={{ fontSize: 56, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                    {t('settings.customerSettings.title')}
-                </Typography>
-                <Typography variant="body2" color="text.disabled" sx={{ maxWidth: 380, mx: 'auto' }}>
-                    {t('settings.customerSettings.description')}
-                </Typography>
+        );
+    }
+
+    return (
+        <Box sx={{ maxWidth: 640, mx: 'auto' }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+                <Stack direction="row" alignItems="center" gap={1.5}>
+                    <PeopleIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
+                    <Typography variant="h5" fontWeight={600}>{t('settings.customerSettings.title')}</Typography>
+                </Stack>
+                <Tooltip title="Save changes">
+                    <Button
+                        variant="contained"
+                        startIcon={<SaveIcon />}
+                        onClick={handleSave}
+                        disabled={saving}
+                    >
+                        {saving ? t('settings.customerSettings.saving') : t('common.save')}
+                    </Button>
+                </Tooltip>
+            </Stack>
+
+            {error   && <Alert severity="error"   sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mb: 2 }}>{t('settings.customerSettings.saved')}</Alert>}
+
+            <Typography variant="body2" color="text.secondary" mb={2}>
+                {t('settings.customerSettings.subtitle')}
+            </Typography>
+
+            {/* Always-on row for Name */}
+            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
+                <Box sx={{ px: 3, py: 2 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                            <Typography variant="body2" fontWeight={500}>{t('settings.customerSettings.nameField')}</Typography>
+                            <Typography variant="caption" color="text.secondary">{t('settings.customerSettings.nameFieldDesc')}</Typography>
+                        </Box>
+                        <Tooltip title={t('settings.customerSettings.nameAlwaysRequired')}>
+                            <span>
+                                <Switch checked disabled size="small" color="primary" />
+                            </span>
+                        </Tooltip>
+                    </Stack>
+                </Box>
+
+                <Divider />
+
+                {FIELD_KEYS.map((key, idx) => (
+                    <FieldToggleRow
+                        key={key}
+                        label={t(`settings.customerSettings.fields.${key}`)}
+                        description={t(`settings.customerSettings.fields.${key}Desc`)}
+                        enabled={!!fields[key]}
+                        onChange={handleToggle(key)}
+                        isLast={idx === FIELD_KEYS.length - 1}
+                    />
+                ))}
             </Paper>
         </Box>
     );
 }
+

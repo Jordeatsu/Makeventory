@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
     Alert, Autocomplete, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
-    Divider, Grid, IconButton, InputAdornment, MenuItem, Paper, Table, TableBody,
+    Divider, Grid, IconButton, InputAdornment, MenuItem, Paper, Stack, Table, TableBody,
     TableCell, TableHead, TableRow, TextField, Tooltip, Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import api from "../../api";
 import { useGlobalSettings } from "../../context/GlobalSettingsContext";
+import CountrySelect from "../common/CountrySelect";
+import { useCustomerSettings } from "../../hooks/useCustomerSettings";
 
 const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
 
@@ -15,17 +17,13 @@ const ALL_STATUSES = ["Pending", "In Progress", "Completed", "Shipped", "Cancell
 const UNITS = ["pieces", "m", "cm", "mm", "m²", "cm²", "mm²", "in", "in²"];
 const BULK_TYPES = ["Bulk Pack", "Multipack"];
 
-const EMPTY_CUSTOMER = {
-    name: "", email: "", phone: "",
-    addressLine1: "", addressLine2: "",
-    city: "", state: "", postcode: "", country: "",
-};
+const EMPTY_NEW_CUSTOMER = { email: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", postcode: "", country: "" };
 
 const EMPTY_PRODUCT_LINE = { productId: "", productName: "", sku: "", category: "", basePrice: "", quantity: "1" };
 const EMPTY_MATERIAL_LINE = { materialRef: null, materialName: "", materialType: "", quantityUsed: "1", unit: "pieces", costPerUnit: "", packCost: "", lineCost: "" };
 
 const EMPTY_FORM = {
-    orderNumber: "", origin: "", originOrderId: "",
+    origin: "", originOrderId: "",
     orderDate: "", status: "Pending",
     productDescription: "", notes: "", trackingNumber: "",
     totalCharged: "", shippingCost: "", buyerTax: "",
@@ -40,12 +38,16 @@ function toDateInput(d) {
     return dt.toISOString().slice(0, 10);
 }
 
-export default function OrderFormDialog({ open, onClose, onSave, initial }) {
+export default function OrderFormModal({ open, onClose, onSave, initial }) {
     const { settings } = useGlobalSettings();
     const currencySymbol = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
+    const { fields: customerFields } = useCustomerSettings();
 
-    const [form, setForm]         = useState(EMPTY_FORM);
-    const [customer, setCustomer] = useState({ ...EMPTY_CUSTOMER });
+    const [form, setForm]                         = useState(EMPTY_FORM);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [customerInput, setCustomerInput]       = useState('');
+    const [customerOptions, setCustomerOptions]   = useState([]);
+    const [newCustomerData, setNewCustomerData]   = useState({ ...EMPTY_NEW_CUSTOMER });
     const [products, setProducts] = useState([]);
     const [materials, setMaterials] = useState([]);
     const [productOptions, setProductOptions] = useState([]);
@@ -61,7 +63,6 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
         if (open) {
             if (initial) {
                 setForm({
-                    orderNumber:        initial.orderNumber ?? "",
                     origin:             initial.origin ?? "",
                     originOrderId:      initial.originOrderId ?? "",
                     orderDate:          toDateInput(initial.orderDate),
@@ -78,17 +79,9 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
                     marketingCost:      initial.marketingCost ?? "",
                     refund:             initial.refund ?? "",
                 });
-                setCustomer({
-                    name:         initial.customer?.name ?? "",
-                    email:        initial.customer?.email ?? "",
-                    phone:        initial.customer?.phone ?? "",
-                    addressLine1: initial.customer?.addressLine1 ?? "",
-                    addressLine2: initial.customer?.addressLine2 ?? "",
-                    city:         initial.customer?.city ?? "",
-                    state:        initial.customer?.state ?? "",
-                    postcode:     initial.customer?.postcode ?? "",
-                    country:      initial.customer?.country ?? "",
-                });
+                setSelectedCustomer(initial.customer?._id ? initial.customer : null);
+                setCustomerInput(initial.customer?.name ?? '');
+                setNewCustomerData({ ...EMPTY_NEW_CUSTOMER });
                 setProducts(
                     (initial.products || []).map((p) => ({
                         productId:   p.productId ?? "",
@@ -113,7 +106,9 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
                 );
             } else {
                 setForm(EMPTY_FORM);
-                setCustomer({ ...EMPTY_CUSTOMER });
+                setSelectedCustomer(null);
+                setCustomerInput('');
+                setNewCustomerData({ ...EMPTY_NEW_CUSTOMER });
                 setProducts([]);
                 setMaterials([]);
             }
@@ -129,11 +124,12 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
         if (open) {
             api.get("/products").then((r) => setProductOptions(r.data.products ?? [])).catch(() => {});
             api.get("/materials").then((r) => setAllMaterials(r.data.materials ?? [])).catch(() => {});
+            api.get("/customers").then((r) => setCustomerOptions(r.data.customers ?? [])).catch(() => {});
         }
     }, [open]);
 
-    const setF = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-    const setC = (field) => (e) => setCustomer((c) => ({ ...c, [field]: e.target.value }));
+    const setF  = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+    const setNC = (field) => (e) => setNewCustomerData((d) => ({ ...d, [field]: e.target.value }));
 
     const addProductLine = () => {
         setProductLineError("");
@@ -211,12 +207,15 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
                 lineCost:     parseFloat(m.lineCost) || 0,
             }));
             await onSave({
-                orderNumber:        form.orderNumber.trim(),
                 origin:             form.origin.trim(),
                 originOrderId:      form.originOrderId.trim(),
                 orderDate:          form.orderDate || null,
                 status:             form.status,
-                customer,
+                customer:           selectedCustomer?._id ?? (
+                    customerInput.trim()
+                        ? { name: customerInput.trim(), ...Object.fromEntries(Object.entries(newCustomerData).filter(([, v]) => v.trim())) }
+                        : null
+                ),
                 products:           productLines,
                 materials:          materialLines,
                 productDescription: form.productDescription.trim(),
@@ -264,7 +263,13 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
                 <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Order Info</Typography>
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={4}>
-                        <TextField label="Order Number" fullWidth size="small" value={form.orderNumber} onChange={setF("orderNumber")} />
+                        <TextField
+                            label="Order Number"
+                            fullWidth size="small"
+                            value={initial?._id ? initial.orderNumber : 'Auto-assigned'}
+                            InputProps={{ readOnly: true }}
+                            sx={{ '& .MuiInputBase-input': { color: 'text.secondary', fontStyle: initial?._id ? 'normal' : 'italic' } }}
+                        />
                     </Grid>
                     <Grid item xs={12} sm={4}>
                         <TextField label="Origin (e.g. Etsy)" fullWidth size="small" value={form.origin} onChange={setF("origin")} />
@@ -290,33 +295,109 @@ export default function OrderFormDialog({ open, onClose, onSave, initial }) {
                 <Divider sx={{ my: 2.5 }} />
                 <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Customer</Typography>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                        <TextField label="Customer Name" fullWidth size="small" value={customer.name} onChange={setC("name")} />
+                    <Grid item xs={12}>
+                        <Autocomplete
+                            freeSolo
+                            options={customerOptions}
+                            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name ?? '')}
+                            isOptionEqualToValue={(opt, val) => opt?._id === val?._id}
+                            value={selectedCustomer}
+                            inputValue={customerInput}
+                            onInputChange={(_, val, reason) => {
+                                setCustomerInput(val);
+                                if (reason === 'clear' || !val) setSelectedCustomer(null);
+                            }}
+                            onChange={(_, val) => {
+                                if (!val || typeof val === 'string') {
+                                    setSelectedCustomer(null);
+                                    setCustomerInput(typeof val === 'string' ? val : '');
+                                } else {
+                                    setSelectedCustomer(val);
+                                    setCustomerInput(val.name ?? '');
+                                    setNewCustomerData({ ...EMPTY_NEW_CUSTOMER });
+                                }
+                            }}
+                            renderOption={(props, opt) => (
+                                <li {...props} key={opt._id}>
+                                    <Box>
+                                        <Typography variant="body2" fontWeight={500}>{opt.name}</Typography>
+                                        {opt.email && <Typography variant="caption" color="text.secondary">{opt.email}</Typography>}
+                                    </Box>
+                                </li>
+                            )}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Customer" size="small" fullWidth />
+                            )}
+                        />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField label="Email" fullWidth size="small" value={customer.email} onChange={setC("email")} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField label="Phone" fullWidth size="small" value={customer.phone} onChange={setC("phone")} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField label="Address Line 1" fullWidth size="small" value={customer.addressLine1} onChange={setC("addressLine1")} />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField label="Address Line 2" fullWidth size="small" value={customer.addressLine2} onChange={setC("addressLine2")} />
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                        <TextField label="City" fullWidth size="small" value={customer.city} onChange={setC("city")} />
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                        <TextField label="State / County" fullWidth size="small" value={customer.state} onChange={setC("state")} />
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                        <TextField label="Postcode" fullWidth size="small" value={customer.postcode} onChange={setC("postcode")} />
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                        <TextField label="Country" fullWidth size="small" value={customer.country} onChange={setC("country")} />
-                    </Grid>
+
+                    {/* Existing customer summary */}
+                    {selectedCustomer && (
+                        <Grid item xs={12}>
+                            <Paper variant="outlined" sx={{ px: 2, py: 1, bgcolor: 'background.default' }}>
+                                <Stack direction="row" gap={1.5} flexWrap="wrap">
+                                    {selectedCustomer.email   && <Typography variant="caption" color="text.secondary">{selectedCustomer.email}</Typography>}
+                                    {selectedCustomer.phone   && <Typography variant="caption" color="text.secondary">· {selectedCustomer.phone}</Typography>}
+                                    {selectedCustomer.city    && <Typography variant="caption" color="text.secondary">· {selectedCustomer.city}</Typography>}
+                                    {selectedCustomer.country && <Typography variant="caption" color="text.secondary">· {selectedCustomer.country}</Typography>}
+                                </Stack>
+                            </Paper>
+                        </Grid>
+                    )}
+
+                    {/* New customer detail fields — shown when typing a name that isn't an existing customer */}
+                    {!selectedCustomer && customerInput.trim() && (
+                        <>
+                            <Grid item xs={12}>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                    New customer — fill in optional details below
+                                </Typography>
+                            </Grid>
+                            {customerFields.email && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField label="Email" fullWidth size="small" value={newCustomerData.email} onChange={setNC('email')} />
+                                </Grid>
+                            )}
+                            {customerFields.phone && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField label="Phone" fullWidth size="small" value={newCustomerData.phone} onChange={setNC('phone')} />
+                                </Grid>
+                            )}
+                            {customerFields.addressLine1 && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField label="Address Line 1" fullWidth size="small" value={newCustomerData.addressLine1} onChange={setNC('addressLine1')} />
+                                </Grid>
+                            )}
+                            {customerFields.addressLine2 && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField label="Address Line 2" fullWidth size="small" value={newCustomerData.addressLine2} onChange={setNC('addressLine2')} />
+                                </Grid>
+                            )}
+                            {customerFields.city && (
+                                <Grid item xs={6} sm={3}>
+                                    <TextField label="City" fullWidth size="small" value={newCustomerData.city} onChange={setNC('city')} />
+                                </Grid>
+                            )}
+                            {customerFields.state && (
+                                <Grid item xs={6} sm={3}>
+                                    <TextField label="State / County" fullWidth size="small" value={newCustomerData.state} onChange={setNC('state')} />
+                                </Grid>
+                            )}
+                            {customerFields.postcode && (
+                                <Grid item xs={6} sm={3}>
+                                    <TextField label="Postcode" fullWidth size="small" value={newCustomerData.postcode} onChange={setNC('postcode')} />
+                                </Grid>
+                            )}
+                            {customerFields.country && (
+                                <Grid item xs={6} sm={3}>
+                                    <CountrySelect
+                                        value={newCustomerData.country}
+                                        onChange={(v) => setNewCustomerData((d) => ({ ...d, country: v }))}
+                                    />
+                                </Grid>
+                            )}
+                        </>
+                    )}
                 </Grid>
 
                 {/* ── Products ordered ── */}

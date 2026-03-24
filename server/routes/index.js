@@ -10,6 +10,7 @@ import ordersRouter        from './orders.js';
 import customersRouter     from './customers.js';
 import settingsRouter      from './settings.js';
 import systemRouter        from './system.js';
+import yearReviewRouter    from './yearReview.js';
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use(ordersRouter);
 router.use(customersRouter);
 router.use(settingsRouter);
 router.use(systemRouter);
+router.use(yearReviewRouter);
 
 export default router;
