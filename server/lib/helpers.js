@@ -28,7 +28,7 @@ export function cookieOpts() {
         httpOnly: true,
         sameSite: 'lax',
         // Default secure to true in production even if COOKIE_SECURE is not explicitly set
-        secure:   process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
+        secure:   process.env.COOKIE_SECURE === 'true',
         maxAge:   30 * 24 * 60 * 60 * 1000, // 30 days
     };
 }
