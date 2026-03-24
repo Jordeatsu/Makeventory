@@ -61,6 +61,8 @@ Rather than querying orders once per customer (which would be slow), the route u
 
 **Required fields:** `name`
 
+**Accepted fields:** `name`, `email`, `phone`, `addressLine1`, `addressLine2`, `city`, `state`, `postcode`, `country` — only these known fields are written to the database.
+
 **Returns:** The newly created customer document.
 
 ---
@@ -69,7 +71,7 @@ Rather than querying orders once per customer (which would be slow), the route u
 
 **Authentication required:** Yes.
 
-**Purpose:** Updates an existing customer record with whatever fields are supplied in the request body.
+**Purpose:** Updates an existing customer record. Only the known customer fields are accepted; any other keys in the request body are ignored.
 
 **Returns:** The updated customer document.
 

@@ -84,6 +84,8 @@ The `name` field is always shown and is not included in this object.
 
 These are currently placeholder singletons with no configurable fields. They were seeded during installation and are ready to have fields added in future versions.
 
+**Security note:** The `PUT` routes for these three settings types strip any MongoDB operator keys (keys beginning with `$`) from the request body before passing it to Mongoose. When schema fields are added, explicit extraction should replace the generic filter.
+
 ## The "upsert" pattern
 
 All `PUT` routes use MongoDB's `upsert: true` option. This means:

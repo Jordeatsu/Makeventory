@@ -46,7 +46,7 @@ const valid = await verifyPassword('mypassword123', user.passwordHash);
 **What it contains:**
 - `httpOnly: true` — the cookie cannot be read by JavaScript (prevents XSS theft)
 - `sameSite: 'lax'` — prevents the cookie being sent in cross-site requests (prevents CSRF)
-- `secure` — set to `true` in production (requires HTTPS)
+- `secure` — `true` when `COOKIE_SECURE=true` **or** when `NODE_ENV=production` (guarantees HTTPS cookies in production even if the env var was omitted)
 - `maxAge` — 30 days in milliseconds
 
 ---

@@ -43,8 +43,9 @@ This prevents malicious users from sending enormous payloads to crash the server
 
 The environment is controlled by the `NODE_ENV` environment variable.
 
-### Port
-Port **5001** is used. If something else is already using this port, the server won't start.
+### JWT secret startup check
+
+In **production** (`NODE_ENV=production`), the server will **refuse to start** if `JWT_SECRET` is not set — this prevents accidentally running with the insecure development fallback. In development mode it logs a warning but continues.
 
 ## Environment variables it reads
 
@@ -56,8 +57,8 @@ Port **5001** is used. If something else is already using this port, the server 
 | `NODE_ENV` | `production` or `development` |
 | `COOKIE_SECURE` | Set to `true` in production to require HTTPS for cookies |
 
-## Relationship to other files
-
+### Port
+Port **5001** is used. If something else is already using this port, the server won't start.
 - Imports and mounts **`routes/index.js`**, which in turn connects all individual route files
 - All API routes become accessible at `/api/...` (e.g. `/api/orders`, `/api/materials`)
 - The React front-end (`client/`) communicates with this server via the `/api` prefix

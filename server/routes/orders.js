@@ -97,16 +97,27 @@ router.get('/orders/:id', requireAuth, async (req, res) => {
 // ── Create order ──────────────────────────────────────────────────────────────
 router.post('/orders', requireAuth, async (req, res) => {
     try {
-        const body = req.body ?? {};
-        if (!body.status) body.status = 'Pending';
-        const { profit, totalMaterialCost } = calcProfit(body);
+        const {
+            origin, originOrderId, orderDate, status = 'Pending',
+            locked, products, materials, productDescription, notes,
+            trackingNumber, totalCharged, shippingCost, buyerTax,
+            discount, discountType, hostingCost, marketingCost, refund,
+            customer: customerInput,
+        } = req.body ?? {};
+        const allowedBody = {
+            origin, originOrderId, orderDate, status,
+            locked, products, materials, productDescription, notes,
+            trackingNumber, totalCharged, shippingCost, buyerTax,
+            discount, discountType, hostingCost, marketingCost, refund,
+        };
+        const { profit, totalMaterialCost } = calcProfit(allowedBody);
         // Auto-assign next order number (ORD-0000001 format)
         const latest = await Order.findOne({ orderNumber: { $ne: null } }).sort({ createdAt: -1 }).select('orderNumber').lean();
         const lastSeq = latest?.orderNumber ? parseInt(latest.orderNumber.replace('ORD-', ''), 10) : 0;
         const nextNumber = `ORD-${String(lastSeq + 1).padStart(8, '0')}`;
-        const customerId = await findOrCreateCustomer(body.customer);
+        const customerId = await findOrCreateCustomer(customerInput);
         const doc = await Order.create({
-            ...body,
+            ...allowedBody,
             customer: customerId,
             orderNumber: nextNumber,
             profit,
@@ -125,14 +136,24 @@ router.put('/orders/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: 'Invalid ID.' });
-        const body = req.body ?? {};
-        // Prevent overwriting the auto-assigned order number
-        delete body.orderNumber;
-        const { profit, totalMaterialCost } = calcProfit(body);
-        const customerId = await findOrCreateCustomer(body.customer);
+        const {
+            origin, originOrderId, orderDate, status,
+            locked, products, materials, productDescription, notes,
+            trackingNumber, totalCharged, shippingCost, buyerTax,
+            discount, discountType, hostingCost, marketingCost, refund,
+            customer: customerInput,
+        } = req.body ?? {};
+        const allowedBody = {
+            origin, originOrderId, orderDate, status,
+            locked, products, materials, productDescription, notes,
+            trackingNumber, totalCharged, shippingCost, buyerTax,
+            discount, discountType, hostingCost, marketingCost, refund,
+        };
+        const { profit, totalMaterialCost } = calcProfit(allowedBody);
+        const customerId = await findOrCreateCustomer(customerInput);
         const doc = await Order.findByIdAndUpdate(
             id,
-            { ...body, customer: customerId, profit, totalMaterialCost, updatedBy: req.user.sub },
+            { ...allowedBody, customer: customerId, profit, totalMaterialCost, updatedBy: req.user.sub },
             { new: true, runValidators: true },
         );
         if (!doc) return res.status(404).json({ error: 'Order not found.' });

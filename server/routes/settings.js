@@ -106,9 +106,14 @@ router.get('/settings/orders', requireAuth, async (_req, res) => {
 
 router.put('/settings/orders', requireAuth, async (req, res) => {
     try {
+        // Strip MongoDB operator keys (any key starting with '$') to prevent operator injection.
+        // When schema fields are added to OrderSettings, explicitly extract them here.
+        const safeUpdate = Object.fromEntries(
+            Object.entries(req.body ?? {}).filter(([k]) => !k.startsWith('$'))
+        );
         const settings = await OrderSettings.findOneAndUpdate(
             {},
-            { ...(req.body ?? {}) },
+            safeUpdate,
             { new: true, upsert: true },
         );
         res.json({ settings });
@@ -131,9 +136,12 @@ router.get('/settings/products', requireAuth, async (_req, res) => {
 
 router.put('/settings/products', requireAuth, async (req, res) => {
     try {
+        const safeUpdate = Object.fromEntries(
+            Object.entries(req.body ?? {}).filter(([k]) => !k.startsWith('$'))
+        );
         const settings = await ProductSettings.findOneAndUpdate(
             {},
-            { ...(req.body ?? {}) },
+            safeUpdate,
             { new: true, upsert: true },
         );
         res.json({ settings });
@@ -156,9 +164,12 @@ router.get('/settings/year-in-review', requireAuth, async (_req, res) => {
 
 router.put('/settings/year-in-review', requireAuth, async (req, res) => {
     try {
+        const safeUpdate = Object.fromEntries(
+            Object.entries(req.body ?? {}).filter(([k]) => !k.startsWith('$'))
+        );
         const settings = await YearInReviewSettings.findOneAndUpdate(
             {},
-            { ...(req.body ?? {}) },
+            safeUpdate,
             { new: true, upsert: true },
         );
         res.json({ settings });

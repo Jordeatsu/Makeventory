@@ -78,9 +78,9 @@ router.get('/customers/:id', requireAuth, async (req, res) => {
 // ── Create customer ───────────────────────────────────────────────────────────
 router.post('/customers', requireAuth, async (req, res) => {
     try {
-        const { name } = req.body ?? {};
-        if (!name) return res.status(400).json({ error: 'Name is required.' });
-        const doc = await Customer.create(req.body);
+        const { name, email, phone, addressLine1, addressLine2, city, state, postcode, country } = req.body ?? {};
+        if (!name?.trim()) return res.status(400).json({ error: 'Name is required.' });
+        const doc = await Customer.create({ name: name.trim(), email, phone, addressLine1, addressLine2, city, state, postcode, country });
         res.status(201).json({ customer: doc });
     } catch (e) {
         res.status(500).json({ error: 'Server error.' });
@@ -92,7 +92,9 @@ router.put('/customers/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: 'Invalid ID.' });
-        const doc = await Customer.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+        const { name, email, phone, addressLine1, addressLine2, city, state, postcode, country } = req.body ?? {};
+        const update = { name, email, phone, addressLine1, addressLine2, city, state, postcode, country };
+        const doc = await Customer.findByIdAndUpdate(id, update, { new: true, runValidators: true });
         if (!doc) return res.status(404).json({ error: 'Customer not found.' });
         res.json({ customer: doc });
     } catch {

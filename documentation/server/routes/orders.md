@@ -66,6 +66,8 @@ Orders are returned sorted by date (newest first), with the customer record full
 
 **Purpose:** Creates a new order.
 
+**Accepted fields from client:** `origin`, `originOrderId`, `orderDate`, `status`, `locked`, `products`, `materials`, `productDescription`, `notes`, `trackingNumber`, `totalCharged`, `shippingCost`, `buyerTax`, `discount`, `discountType`, `hostingCost`, `marketingCost`, `refund`, `customer` — only these known fields are written. Other keys are ignored.
+
 **Auto-assigned fields:**
 - `orderNumber` — automatically assigned in `ORD-00000001` format, incrementing from the last order
 - `status` — defaults to `'Pending'` if not provided

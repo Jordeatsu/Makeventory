@@ -19,8 +19,11 @@ const log = pino({
   ...(IS_PROD ? {} : { transport: { target: 'pino-pretty', options: { colorize: true } } }),
 });
 
-if (!process.env.JWT_SECRET) {
-  log.warn('JWT_SECRET is not set in server/.env — using an insecure default. Set it before going to production.');
+if (IS_PROD && !process.env.JWT_SECRET) {
+  log.fatal('JWT_SECRET must be set in production. Refusing to start.');
+  process.exit(1);
+} else if (!process.env.JWT_SECRET) {
+  log.warn('JWT_SECRET is not set — using an insecure default. Set it in server/.env before going to production.');
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
