@@ -317,7 +317,7 @@ export default function MaterialFormModal({
                     {/* ── Basic Info ──────────────────────────────────────── */}
                     <Grid item xs={12} sm={8}>
                         <TextField
-                            label={t("materials.form.name", "Name") + " *"}
+                            label={t("materials.form.name", "Name")}
                             fullWidth
                             value={form.name}
                             onChange={(e) => {
@@ -334,7 +334,7 @@ export default function MaterialFormModal({
                     <Grid item xs={12} sm={4}>
                         <TextField
                             select
-                            label={t("materials.form.type", "Type") + " *"}
+                            label={t("materials.form.type", "Type")}
                             fullWidth
                             value={form.typeId}
                             onChange={handleTypeChange}
