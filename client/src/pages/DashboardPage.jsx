@@ -16,9 +16,6 @@ import { STATUS_COLOURS, SEMANTIC, BRAND } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import StatCard from "../components/common/StatCard";
 
-// Types whose cost is expressed per-pack rather than per-unit
-const BULK_TYPES = ["Bulk Pack", "Multipack"];
-
 /**
  * @component
  * @returns {JSX.Element}
@@ -72,7 +69,7 @@ export default function DashboardPage() {
     const chartData = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
 
     const totalStockValue = materials.reduce((s, m) => {
-        const effectiveCost = BULK_TYPES.includes(m.type) && m.unitsPerPack > 0 ? m.costPerUnit / m.unitsPerPack : m.costPerUnit;
+        const effectiveCost = m.unitsPerPack > 0 ? m.costPerUnit / m.unitsPerPack : m.costPerUnit;
         return s + m.quantity * effectiveCost;
     }, 0);
 

@@ -1,26 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import {
-    Alert, Box, Button, CircularProgress, Divider,
-    Paper, Tooltip, Typography,
-} from '@mui/material';
-import TuneIcon from '@mui/icons-material/Tune';
-import EditIcon from '@mui/icons-material/Edit';
-import MaterialSettingsModal from '../../components/modals/MaterialSettingsModal';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useState } from "react";
+import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, Tooltip, Typography } from "@mui/material";
+import TuneIcon from "@mui/icons-material/Tune";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import MaterialSettingsModal from "../../components/modals/MaterialSettingsModal";
+import { useTranslation } from "react-i18next";
+import api from "../../api";
 
-const CURRENCY_SYMBOLS = { GBP: '£', USD: '$', EUR: '€', AUD: '$', CAD: '$', NZD: '$' };
+const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
+
+// Columns that can be toggled  (name + actions are always visible)
+const MAT_COL_KEYS = ["type", "colour", "inStock"];
 
 function SettingRow({ label, description, value }) {
     return (
         <Box sx={{ px: 3, py: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <Box>
-                    <Typography variant="body2" fontWeight={500}>{label}</Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                        {label}
+                    </Typography>
                     {description && (
-                        <Typography variant="caption" color="text.secondary">{description}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {description}
+                        </Typography>
                     )}
                 </Box>
-                <Typography variant="body2" color="text.primary" sx={{ ml: 2, whiteSpace: 'nowrap' }}>
+                <Typography variant="body2" color="text.primary" sx={{ ml: 2, whiteSpace: "nowrap" }}>
                     {value}
                 </Typography>
             </Box>
@@ -28,81 +34,145 @@ function SettingRow({ label, description, value }) {
     );
 }
 
+function ColToggleRow({ label, enabled, onChange, isLast }) {
+    return (
+        <>
+            <Box sx={{ px: 3, py: 2 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" fontWeight={500}>
+                        {label}
+                    </Typography>
+                    <Switch checked={enabled} onChange={(e) => onChange(e.target.checked)} size="small" color="primary" />
+                </Stack>
+            </Box>
+            {!isLast && <Divider />}
+        </>
+    );
+}
+
 export default function MaterialSettingsPage() {
     const [settings, setSettings] = useState(null);
-    const [loading, setLoading]   = useState(true);
-    const [error, setError]       = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [tableCols, setTableCols] = useState({});
+    const [colSaving, setColSaving] = useState(false);
+    const [colSaved, setColSaved] = useState(false);
+    const [colError, setColError] = useState(null);
     const { t } = useTranslation();
 
     useEffect(() => {
-        fetch('/api/settings/materials', { credentials: 'include' })
-            .then((r) => r.ok ? r.json() : r.json().then((b) => Promise.reject(b.error)))
-            .then(({ settings: data }) => setSettings(data))
-            .catch((msg) => setError(msg || 'Failed to load settings.'))
+        fetch("/api/settings/materials", { credentials: "include" })
+            .then((r) => (r.ok ? r.json() : r.json().then((b) => Promise.reject(b.error))))
+            .then(({ settings: data }) => {
+                setSettings(data);
+                setTableCols(data?.tableColumns ?? {});
+            })
+            .catch((msg) => setError(msg || "Failed to load settings."))
             .finally(() => setLoading(false));
     }, []);
 
+    const handleColSave = async () => {
+        setColSaving(true);
+        setColError(null);
+        try {
+            await api.put("/settings/materials", { tableColumns: tableCols });
+            setColSaved(true);
+            setTimeout(() => setColSaved(false), 3000);
+        } catch {
+            setColError("Failed to save column settings.");
+        } finally {
+            setColSaving(false);
+        }
+    };
+
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
                 <CircularProgress />
             </Box>
         );
     }
 
     return (
-        <Box sx={{ maxWidth: 640, mx: 'auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <TuneIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>{t('settings.materialSettings.title')}</Typography>
+        <Box sx={{ maxWidth: 640, mx: "auto" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <TuneIcon sx={{ color: "text.secondary", fontSize: 28 }} />
+                    <Typography variant="h5" fontWeight={600}>
+                        {t("settings.materialSettings.title")}
+                    </Typography>
                 </Box>
                 {settings && (
-                    <Tooltip title={t('settings.materialSettings.editTitle')}>
+                    <Tooltip title={t("settings.materialSettings.editTitle")}>
                         <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setModalOpen(true)}>
-                            {t('common.edit')}
+                            {t("common.edit")}
                         </Button>
                     </Tooltip>
                 )}
             </Box>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
 
             {settings && (
                 <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-                    <SettingRow
-                        label={t('settings.materialSettings.defaultLowStock')}
-                        description={t('settings.materialSettings.defaultLowStockDesc')}
-                        value={settings.defaultLowStockThreshold}
-                    />
+                    <SettingRow label={t("settings.materialSettings.defaultLowStock")} description={t("settings.materialSettings.defaultLowStockDesc")} value={settings.defaultLowStockThreshold} />
                     <Divider />
-                    <SettingRow
-                        label={t('settings.materialSettings.currency')}
-                        description={t('settings.materialSettings.currencyDesc')}
-                        value={`${CURRENCY_SYMBOLS[settings.currency] ?? ''} ${settings.currency}`}
-                    />
+                    <SettingRow label={t("settings.materialSettings.currency")} description={t("settings.materialSettings.currencyDesc")} value={`${CURRENCY_SYMBOLS[settings.currency] ?? ""} ${settings.currency}`} />
                     <Divider />
-                    <SettingRow
-                        label={t('settings.materialSettings.autoDeduct')}
-                        description={t('settings.materialSettings.autoDeductDesc')}
-                        value={settings.autoDeductOnOrderComplete ? t('common.on') : t('common.off')}
-                    />
+                    <SettingRow label={t("settings.materialSettings.autoDeduct")} description={t("settings.materialSettings.autoDeductDesc")} value={settings.autoDeductOnOrderComplete ? t("common.on") : t("common.off")} />
                     <Divider />
-                    <SettingRow
-                        label={t('settings.materialSettings.trackFractional')}
-                        description={t('settings.materialSettings.trackFractionalDesc')}
-                        value={settings.trackFractionalQuantities ? t('common.on') : t('common.off')}
-                    />
+                    <SettingRow label={t("settings.materialSettings.trackFractional")} description={t("settings.materialSettings.trackFractionalDesc")} value={settings.trackFractionalQuantities ? t("common.on") : t("common.off")} />
                 </Paper>
             )}
 
-            <MaterialSettingsModal
-                open={modalOpen}
-                current={settings}
-                onClose={() => setModalOpen(false)}
-                onSaved={(updated) => setSettings(updated)}
-            />
+            {/* Table Column Visibility */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
+                <Typography variant="h6" fontWeight={600}>
+                    Table Columns
+                </Typography>
+                <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleColSave} disabled={colSaving}>
+                    {colSaving ? "Saving…" : t("common.save")}
+                </Button>
+            </Stack>
+            {colError && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setColError(null)}>
+                    {colError}
+                </Alert>
+            )}
+            {colSaved && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                    Column settings saved.
+                </Alert>
+            )}
+            <Typography variant="body2" color="text.secondary" mb={2}>
+                Choose which columns appear in the Materials table. Name and Actions are always visible.
+            </Typography>
+            <Paper variant="outlined" sx={{ borderRadius: 2 }}>
+                {/* Always-on: Name */}
+                <Box sx={{ px: 3, py: 2 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="body2" fontWeight={500}>
+                            {t("materials.col.name", "Name")}
+                        </Typography>
+                        <Tooltip title="Always visible">
+                            <span>
+                                <Switch checked disabled size="small" />
+                            </span>
+                        </Tooltip>
+                    </Stack>
+                </Box>
+                <Divider />
+                {MAT_COL_KEYS.map((key, idx) => (
+                    <ColToggleRow key={key} label={t(`materials.col.${key}`, key)} enabled={tableCols[key] !== false} onChange={(v) => setTableCols((prev) => ({ ...prev, [key]: v }))} isLast={idx === MAT_COL_KEYS.length - 1} />
+                ))}
+            </Paper>
+
+            <MaterialSettingsModal open={modalOpen} current={settings} onClose={() => setModalOpen(false)} onSaved={(updated) => setSettings(updated)} />
         </Box>
     );
 }

@@ -9,8 +9,6 @@ import api from "../../api";
 import { useGlobalSettings } from "../../context/GlobalSettingsContext";
 
 const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", NZD: "$" };
-const BULK_TYPES = ["Bulk Pack", "Multipack"];
-
 export default function ProductMaterialsModal({ open, onClose, product }) {
     const { settings } = useGlobalSettings();
     const sym = CURRENCY_SYMBOLS[settings?.currency] ?? "£";
@@ -124,7 +122,7 @@ export default function ProductMaterialsModal({ open, onClose, product }) {
     // Effective cost per unit (bulk-pack materials divide pack price by units per pack)
     const effectiveCpu = (mat) => {
         if (!mat) return 0;
-        return BULK_TYPES.includes(mat.materialType) && mat.unitsPerPack > 0 ? mat.costPerUnit / mat.unitsPerPack : (mat.costPerUnit ?? 0);
+        return mat.unitsPerPack > 0 ? mat.costPerUnit / mat.unitsPerPack : (mat.costPerUnit ?? 0);
     };
 
     const totalCost = rows.reduce((sum, r) => {

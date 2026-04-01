@@ -11,8 +11,6 @@ const CURRENCY_SYMBOLS = { GBP: "£", USD: "$", EUR: "€", AUD: "$", CAD: "$", 
 
 const ALL_STATUSES = ["Pending", "In Progress", "Completed", "Shipped", "Cancelled"];
 const UNITS = ["pieces", "m", "cm", "mm", "m²", "cm²", "mm²", "in", "in²"];
-const BULK_TYPES = ["Bulk Pack", "Multipack"];
-
 const EMPTY_NEW_CUSTOMER = { email: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", postcode: "", country: "" };
 
 const EMPTY_PRODUCT_LINE = { productId: "", productName: "", sku: "", category: "", basePrice: "", quantity: "1" };
@@ -184,7 +182,7 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
             return;
         }
         const mat = newLine.material;
-        const effectiveCost = BULK_TYPES.includes(mat.type) && mat.unitsPerPack > 0 ? mat.costPerUnit / mat.unitsPerPack : mat.costPerUnit;
+        const effectiveCost = mat.unitsPerPack > 0 ? mat.costPerUnit / mat.unitsPerPack : mat.costPerUnit;
         setMaterials((ms) => [
             ...ms,
             {
@@ -194,7 +192,7 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
                 quantityUsed: String(qty),
                 unit: mat.unit ?? "pieces",
                 costPerUnit: String(effectiveCost),
-                packCost: BULK_TYPES.includes(mat.type) ? String(mat.costPerUnit) : "",
+                packCost: mat.unitsPerPack > 0 ? String(mat.costPerUnit) : "",
                 lineCost: String((qty * effectiveCost).toFixed(4)),
             },
         ]);
