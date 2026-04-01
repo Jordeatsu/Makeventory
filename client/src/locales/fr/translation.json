@@ -295,7 +295,8 @@
         "restarting": "Mise à jour appliquée. Le serveur redémarre — actualisez la page dans quelques secondes.",
         "changeLog": "Voir le journal des modifications",
         "whatsNew": "Nouveautés dans {{tag}}",
-        "noReleaseNotes": "Aucune note de version disponible pour cette version."
+        "noReleaseNotes": "Aucune note de version disponible pour cette version.",
+        "installing": "Installation de la mise \u00e0 jour\u2026 cela peut prendre quelques minutes."
     },
     "orders": {
         "title": "Commandes",

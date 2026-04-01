@@ -93,10 +93,11 @@ router.post("/system/update", requireAuth, requireAdmin, async (_req, res) => {
         // Send response before triggering the restart
         res.json({ ok: true });
 
-        // Spawn start.sh as a fully detached process so it survives this Node process
-        // being killed by kill_port inside start.sh.
-        // start.sh handles killing stale ports itself — no need to call stop.sh first.
-        const startScript = path.join(REPO_ROOT, "systemfiles", "start.sh");
+        // Spawn update.sh as a fully detached process so it survives this Node process
+        // being killed by kill_port inside update.sh.
+        // update.sh skips npm install/build (already done above) and does NOT open a
+        // browser — the existing tab reloads itself via AppUpdateBanner's polling logic.
+        const startScript = path.join(REPO_ROOT, "systemfiles", "update.sh");
         const updateLog = path.join(REPO_ROOT, "logs", "update.log");
         const isWindows = process.platform === "win32";
         let child;

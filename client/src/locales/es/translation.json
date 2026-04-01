@@ -295,7 +295,8 @@
         "restarting": "Actualización aplicada. El servidor se está reiniciando — actualiza la página en unos segundos.",
         "changeLog": "Ver registro de cambios",
         "whatsNew": "Novedades en {{tag}}",
-        "noReleaseNotes": "No hay notas de versión disponibles para esta versión."
+        "noReleaseNotes": "No hay notas de versión disponibles para esta versión.",
+        "installing": "Instalando actualización\u2026 esto puede tardar unos minutos."
     },
     "orders": {
         "title": "Pedidos",

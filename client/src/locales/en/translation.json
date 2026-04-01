@@ -295,7 +295,8 @@
         "restarting": "Update applied. The server is restarting — refresh the page in a few seconds.",
         "changeLog": "See Change Log",
         "whatsNew": "What's new in {{tag}}",
-        "noReleaseNotes": "No release notes available for this version."
+        "noReleaseNotes": "No release notes available for this version.",
+        "installing": "Installing update\u2026 this may take a few minutes."
     },
     "orders": {
         "title": "Orders",
