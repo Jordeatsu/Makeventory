@@ -143,6 +143,14 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
     }, [open]);
 
     const setF = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+    // Auto-sum product lines into Item Price Charged
+    useEffect(() => {
+        if (products.length > 0) {
+            const total = products.reduce((s, p) => s + (parseFloat(p.basePrice) || 0) * (parseInt(p.quantity, 10) || 1), 0);
+            setForm((f) => ({ ...f, totalCharged: total.toFixed(2) }));
+        }
+    }, [products]);
     const setNC = (field) => (e) => setNewCustomerData((d) => ({ ...d, [field]: e.target.value }));
 
     const addProductLine = () => {
@@ -637,27 +645,37 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
                         { field: "marketingCost", label: "Marketing Costs" },
                         { field: "refund", label: "Refund" },
                     ].map(({ field, label }) => (
-                        <Grid key={field} item xs={6} sm={4}>
+                        <Grid key={field} size={{ xs: 6, sm: 4 }}>
                             <TextField label={label} fullWidth size="small" type="number" value={form[field]} onChange={setF(field)} InputProps={{ startAdornment: <InputAdornment position="start">{currencySymbol}</InputAdornment> }} inputProps={{ min: 0, step: "any" }} />
                         </Grid>
                     ))}
-                    <Grid size={{ xs: 6, sm: 3 }}>
+                    <Grid size={{ xs: 12, sm: 4 }}>
                         <TextField
                             label="Discount"
+                            type="number"
                             fullWidth
                             size="small"
-                            type="number"
                             value={form.discount}
                             onChange={setF("discount")}
-                            InputProps={{ startAdornment: <InputAdornment position="start">{form.discountType === "percent" ? "%" : currencySymbol}</InputAdornment> }}
-                            inputProps={{ min: 0, step: "any" }}
+                            helperText={form.discountType === "percent" ? `= ${fmt(discountAmt)} off item price` : "Fixed amount deducted from item price"}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <TextField
+                                            select
+                                            value={form.discountType}
+                                            onChange={setF("discountType")}
+                                            variant="standard"
+                                            sx={{ width: 48, "& .MuiSelect-select": { py: 0, fontSize: "0.85rem" }, "& .MuiInput-underline:before": { borderBottom: "none" }, "& .MuiInput-underline:after": { borderBottom: "none" } }}
+                                        >
+                                            <MenuItem value="fixed">{currencySymbol}</MenuItem>
+                                            <MenuItem value="percent">%</MenuItem>
+                                        </TextField>
+                                    </InputAdornment>
+                                ),
+                            }}
+                            inputProps={{ min: 0, step: form.discountType === "percent" ? 1 : 0.01 }}
                         />
-                    </Grid>
-                    <Grid size={{ xs: 6, sm: 3 }}>
-                        <TextField select label="Discount Type" fullWidth size="small" value={form.discountType} onChange={setF("discountType")}>
-                            <MenuItem value="fixed">Fixed ({currencySymbol})</MenuItem>
-                            <MenuItem value="percent">Percent (%)</MenuItem>
-                        </TextField>
                     </Grid>
                 </Grid>
 
