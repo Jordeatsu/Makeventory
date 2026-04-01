@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-    Avatar, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent,
-    DialogTitle, Divider, Grid, Stack, TextField, Typography,
-} from "@mui/material";
+import { Avatar, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, Stack, TextField, Typography } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import CountrySelect from "../common/CountrySelect";
@@ -133,13 +130,10 @@ export default function CustomerFormModal({ open, onClose, onSave, initial }) {
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-                    <Button onClick={onClose} disabled={saving}>Cancel</Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={saving || !form.name.trim()}
-                        startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-                    >
+                    <Button onClick={onClose} disabled={saving}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="contained" disabled={saving || !form.name.trim()} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>
                         {saving ? "Saving…" : "Save"}
                     </Button>
                 </DialogActions>

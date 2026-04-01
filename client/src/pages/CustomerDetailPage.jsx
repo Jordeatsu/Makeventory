@@ -26,15 +26,39 @@ function CustomerHeader({ customer, ordersEnabled, orders, t }) {
         <Paper variant="outlined" sx={{ mb: 3, overflow: "hidden", borderColor: "divider" }}>
             <Box sx={{ px: 3, py: 2.5, bgcolor: "primary.main", color: "primary.contrastText" }}>
                 <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" gap={1} flexWrap="wrap">
-                    <Typography variant="h4" fontWeight={700}>{customer?.name}</Typography>
-                    {ordersEnabled && <Chip label={orders.length > 1 ? t("customers.returningCustomer") : t("customers.oneTimeCustomer")} color={orders.length > 1 ? "success" : "default"} sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "inherit", borderColor: "rgba(255,255,255,0.4)", fontWeight: 600 }} variant="outlined" />}
+                    <Typography variant="h4" fontWeight={700}>
+                        {customer?.name}
+                    </Typography>
+                    {ordersEnabled && (
+                        <Chip
+                            label={orders.length > 1 ? t("customers.returningCustomer") : t("customers.oneTimeCustomer")}
+                            color={orders.length > 1 ? "success" : "default"}
+                            sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "inherit", borderColor: "rgba(255,255,255,0.4)", fontWeight: 600 }}
+                            variant="outlined"
+                        />
+                    )}
                 </Stack>
             </Box>
             <Box sx={{ px: 3, py: 2 }}>
                 <Stack direction={{ xs: "column", sm: "row" }} gap={3} flexWrap="wrap">
-                    {customer?.email && <Stack direction="row" alignItems="center" gap={1}><EmailIcon fontSize="small" color="action" /><Typography variant="body2">{customer.email}</Typography></Stack>}
-                    {customer?.phone && <Stack direction="row" alignItems="center" gap={1}><PhoneIcon fontSize="small" color="action" /><Typography variant="body2">{customer.phone}</Typography></Stack>}
-                    {addressParts.length > 0 && <Stack direction="row" alignItems="flex-start" gap={1}><LocationOnIcon fontSize="small" color="action" sx={{ mt: 0.2 }} /><Typography variant="body2">{addressParts.join(", ")}</Typography></Stack>}
+                    {customer?.email && (
+                        <Stack direction="row" alignItems="center" gap={1}>
+                            <EmailIcon fontSize="small" color="action" />
+                            <Typography variant="body2">{customer.email}</Typography>
+                        </Stack>
+                    )}
+                    {customer?.phone && (
+                        <Stack direction="row" alignItems="center" gap={1}>
+                            <PhoneIcon fontSize="small" color="action" />
+                            <Typography variant="body2">{customer.phone}</Typography>
+                        </Stack>
+                    )}
+                    {addressParts.length > 0 && (
+                        <Stack direction="row" alignItems="flex-start" gap={1}>
+                            <LocationOnIcon fontSize="small" color="action" sx={{ mt: 0.2 }} />
+                            <Typography variant="body2">{addressParts.join(", ")}</Typography>
+                        </Stack>
+                    )}
                 </Stack>
             </Box>
         </Paper>
