@@ -13,12 +13,21 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # ── OS detection ─────────────────────────────────────────────────────────────
 detect_os() {
     case "$(uname -s 2>/dev/null)" in
-        Darwin*)  echo "mac"     ;;
-        Linux*)   echo "linux"   ;;
-        MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
-        *)        echo "unix"    ;;
+        Darwin*)
+            echo "mac"
+        ;;
+        Linux*)
+            echo "linux"
+        ;;
+        MINGW*|MSYS*|CYGWIN*)
+            echo "windows"
+        ;;
+        *)
+            echo "unix"
+        ;;
     esac
 }
+
 OS=$(detect_os)
 
 # ── Kill any process bound to a TCP port ─────────────────────────────────────
@@ -35,6 +44,16 @@ kill_port() {
 }
 
 echo "🔄 Restarting Makeventory after update..."
+
+# ── Install dependencies (ensures node_modules are current after any update) ──
+echo "  → Installing dependencies..."
+cd "$ROOT_DIR/server" && npm install --prefer-offline
+cd "$ROOT_DIR/client" && npm install --prefer-offline --include=dev
+
+# ── Build client ──────────────────────────────────────────────────────────────
+echo "  → Building client..."
+cd "$ROOT_DIR/client"
+npm run build
 
 # ── Clear any stale processes on our ports ───────────────────────────────────
 kill_port 3000
