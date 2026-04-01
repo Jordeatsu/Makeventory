@@ -28,13 +28,14 @@ router.get("/settings/materials", requireAuth, async (_req, res) => {
 // Upsert
 router.put("/settings/materials", requireAuth, async (req, res) => {
     try {
-        const { defaultLowStockThreshold, currency, autoDeductOnOrderComplete, trackFractionalQuantities, tableColumns } = req.body ?? {};
+        const { defaultLowStockThreshold, currency, autoDeductOnOrderComplete, trackFractionalQuantities, tableColumns, numberPrefix } = req.body ?? {};
         const update = {};
         if (defaultLowStockThreshold !== undefined) update.defaultLowStockThreshold = defaultLowStockThreshold;
         if (currency !== undefined) update.currency = currency;
         if (autoDeductOnOrderComplete !== undefined) update.autoDeductOnOrderComplete = autoDeductOnOrderComplete;
         if (trackFractionalQuantities !== undefined) update.trackFractionalQuantities = trackFractionalQuantities;
         if (tableColumns !== undefined) update.tableColumns = tableColumns;
+        if (numberPrefix !== undefined) update.numberPrefix = numberPrefix;
         const settings = await MaterialSettings.findOneAndUpdate({}, update, { new: true, upsert: true });
         res.json({ settings });
     } catch {
@@ -78,10 +79,11 @@ router.get("/settings/customers", requireAuth, async (_req, res) => {
 
 router.put("/settings/customers", requireAuth, async (req, res) => {
     try {
-        const { fields, tableColumns } = req.body ?? {};
+        const { fields, tableColumns, numberPrefix } = req.body ?? {};
         const update = {};
         if (fields !== undefined) update.fields = fields;
         if (tableColumns !== undefined) update.tableColumns = tableColumns;
+        if (numberPrefix !== undefined) update.numberPrefix = numberPrefix;
         const settings = await CustomerSettings.findOneAndUpdate({}, update, { new: true, upsert: true, runValidators: true });
         res.json({ settings });
     } catch {

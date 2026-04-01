@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import TuneIcon from "@mui/icons-material/Tune";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -59,6 +59,10 @@ export default function MaterialSettingsPage() {
     const [colSaving, setColSaving] = useState(false);
     const [colSaved, setColSaved] = useState(false);
     const [colError, setColError] = useState(null);
+    const [prefix, setPrefix] = useState("");
+    const [prefixSaving, setPrefixSaving] = useState(false);
+    const [prefixSaved, setPrefixSaved] = useState(false);
+    const [prefixError, setPrefixError] = useState(null);
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -67,6 +71,7 @@ export default function MaterialSettingsPage() {
             .then(({ settings: data }) => {
                 setSettings(data);
                 setTableCols(data?.tableColumns ?? {});
+                setPrefix((data?.numberPrefix ?? "MTL-").replace(/-$/, ""));
             })
             .catch((msg) => setError(msg || "Failed to load settings."))
             .finally(() => setLoading(false));
@@ -83,6 +88,20 @@ export default function MaterialSettingsPage() {
             setColError("Failed to save column settings.");
         } finally {
             setColSaving(false);
+        }
+    };
+
+    const handlePrefixSave = async () => {
+        setPrefixSaving(true);
+        setPrefixError(null);
+        try {
+            await api.put("/settings/materials", { numberPrefix: (prefix.trim() || "MTL") + "-" });
+            setPrefixSaved(true);
+            setTimeout(() => setPrefixSaved(false), 3000);
+        } catch {
+            setPrefixError("Failed to save prefix.");
+        } finally {
+            setPrefixSaving(false);
         }
     };
 
@@ -129,6 +148,34 @@ export default function MaterialSettingsPage() {
                     <SettingRow label={t("settings.materialSettings.trackFractional")} description={t("settings.materialSettings.trackFractionalDesc")} value={settings.trackFractionalQuantities ? t("common.on") : t("common.off")} />
                 </Paper>
             )}
+
+            {/* Number Prefix */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
+                <Typography variant="h6" fontWeight={600}>
+                    Number Prefix
+                </Typography>
+                <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handlePrefixSave} disabled={prefixSaving}>
+                    {prefixSaving ? "Saving…" : t("common.save")}
+                </Button>
+            </Stack>
+            {prefixError && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPrefixError(null)}>
+                    {prefixError}
+                </Alert>
+            )}
+            {prefixSaved && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                    Prefix saved.
+                </Alert>
+            )}
+            <Typography variant="body2" color="text.secondary" mb={2}>
+                Set the prefix used for auto-generated material numbers (e.g. {(prefix || "MTL") + "-"}00000001).
+            </Typography>
+            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
+                <Box sx={{ px: 3, py: 2 }}>
+                    <TextField label="Number Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
+                </Box>
+            </Paper>
 
             {/* Table Column Visibility */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>

@@ -461,6 +461,23 @@ app.put("/api/modules/save", async (req, res) => {
     }
 });
 
+// ─── Settings prefixes ────────────────────────────────────────────────────────
+app.put("/api/settings/prefixes", async (req, res) => {
+    const { orders = "ORD-", materials = "MTL-", products = "PRD-", customers = "CST-" } = req.body ?? {};
+    try {
+        await withDb(async (db) => {
+            const ts = new Date();
+            await db.collection("ordersettings").updateOne({}, { $set: { numberPrefix: orders,    updatedAt: ts } }, { upsert: true });
+            await db.collection("materialsettings").updateOne({}, { $set: { numberPrefix: materials, updatedAt: ts } }, { upsert: true });
+            await db.collection("productsettings").updateOne({}, { $set: { numberPrefix: products,  updatedAt: ts } }, { upsert: true });
+            await db.collection("customersettings").updateOne({}, { $set: { numberPrefix: customers, updatedAt: ts } }, { upsert: true });
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Catch-all: serve the React app
 app.get("*", (_req, res) => {
     res.sendFile(path.join(__dirname, "dist", "index.html"));

@@ -7,6 +7,9 @@ const orderSettingsSchema = new mongoose.Schema(
     {
         // Column visibility map for the orders table – key → boolean (absent = true)
         tableColumns: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+        // Prefix used when auto-assigning order numbers (e.g. ORD-00000001)
+        numberPrefix: { type: String, default: "ORD-" },
     },
     { timestamps: true },
 );

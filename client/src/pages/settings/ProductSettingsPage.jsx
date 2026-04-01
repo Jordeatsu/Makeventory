@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import SaveIcon from "@mui/icons-material/Save";
 import { useTranslation } from "react-i18next";
@@ -27,6 +27,7 @@ function ColToggleRow({ label, enabled, onChange, isLast }) {
 export default function ProductSettingsPage() {
     const { t } = useTranslation();
     const [tableCols, setTableCols] = useState({});
+    const [prefix, setPrefix] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -34,7 +35,10 @@ export default function ProductSettingsPage() {
 
     useEffect(() => {
         api.get("/settings/products")
-            .then(({ data }) => setTableCols(data?.settings?.tableColumns ?? {}))
+            .then(({ data }) => {
+                setTableCols(data?.settings?.tableColumns ?? {});
+                setPrefix((data?.settings?.numberPrefix ?? "PRD-").replace(/-$/, ""));
+            })
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
@@ -43,7 +47,7 @@ export default function ProductSettingsPage() {
         setSaving(true);
         setError(null);
         try {
-            await api.put("/settings/products", { tableColumns: tableCols });
+            await api.put("/settings/products", { tableColumns: tableCols, numberPrefix: (prefix.trim() || "PRD") + "-" });
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch {
@@ -82,9 +86,21 @@ export default function ProductSettingsPage() {
             )}
             {saved && (
                 <Alert severity="success" sx={{ mb: 2 }}>
-                    Column settings saved.
+                    Settings saved.
                 </Alert>
             )}
+
+            <Typography variant="h6" fontWeight={600} mb={2}>
+                Number Prefix
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+                Set the prefix used for auto-generated product numbers (e.g. {(prefix || "PRD") + "-"}00000001).
+            </Typography>
+            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
+                <Box sx={{ px: 3, py: 2 }}>
+                    <TextField label="Number Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
+                </Box>
+            </Paper>
 
             <Typography variant="h6" fontWeight={600} mb={2}>
                 Table Columns

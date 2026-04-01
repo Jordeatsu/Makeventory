@@ -19,6 +19,9 @@ const customerSettingsSchema = new mongoose.Schema(
 
         // Column visibility map for the customers table – key → boolean (absent = true)
         tableColumns: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+        // Prefix used when auto-assigning customer numbers (e.g. CST-00000001)
+        numberPrefix: { type: String, default: "CST-" },
     },
     { timestamps: true },
 );

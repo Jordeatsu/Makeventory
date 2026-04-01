@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import SaveIcon from "@mui/icons-material/Save";
 import { useTranslation } from "react-i18next";
@@ -47,6 +47,7 @@ export default function CustomerSettingsPage() {
     const { t } = useTranslation();
     const [fields, setFields] = useState(DEFAULT_FIELDS);
     const [tableCols, setTableCols] = useState({});
+    const [prefix, setPrefix] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
@@ -54,6 +55,9 @@ export default function CustomerSettingsPage() {
     const [colSaving, setColSaving] = useState(false);
     const [colSaved, setColSaved] = useState(false);
     const [colError, setColError] = useState(null);
+    const [prefixSaving, setPrefixSaving] = useState(false);
+    const [prefixSaved, setPrefixSaved] = useState(false);
+    const [prefixError, setPrefixError] = useState(null);
 
     useEffect(() => {
         api.get("/settings/customers")
@@ -62,6 +66,7 @@ export default function CustomerSettingsPage() {
                     setFields({ ...DEFAULT_FIELDS, ...data.settings.fields });
                 }
                 setTableCols(data?.settings?.tableColumns ?? {});
+                setPrefix((data?.settings?.numberPrefix ?? "CST-").replace(/-$/, ""));
             })
             .catch(() => setError(t("settings.customerSettings.loadFailed")))
             .finally(() => setLoading(false));
@@ -97,6 +102,20 @@ export default function CustomerSettingsPage() {
             setColError("Failed to save column settings.");
         } finally {
             setColSaving(false);
+        }
+    };
+
+    const handlePrefixSave = async () => {
+        setPrefixSaving(true);
+        setPrefixError(null);
+        try {
+            await api.put("/settings/customers", { numberPrefix: (prefix.trim() || "CST") + "-" });
+            setPrefixSaved(true);
+            setTimeout(() => setPrefixSaved(false), 3000);
+        } catch {
+            setPrefixError("Failed to save prefix.");
+        } finally {
+            setPrefixSaving(false);
         }
     };
 
@@ -164,6 +183,34 @@ export default function CustomerSettingsPage() {
                 {FIELD_KEYS.map((key, idx) => (
                     <FieldToggleRow key={key} label={t(`settings.customerSettings.fields.${key}`)} description={t(`settings.customerSettings.fields.${key}Desc`)} enabled={!!fields[key]} onChange={handleToggle(key)} isLast={idx === FIELD_KEYS.length - 1} />
                 ))}
+            </Paper>
+
+            {/* Number Prefix */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
+                <Typography variant="h6" fontWeight={600}>
+                    Number Prefix
+                </Typography>
+                <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handlePrefixSave} disabled={prefixSaving}>
+                    {prefixSaving ? "Saving…" : t("common.save")}
+                </Button>
+            </Stack>
+            {prefixError && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPrefixError(null)}>
+                    {prefixError}
+                </Alert>
+            )}
+            {prefixSaved && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                    Prefix saved.
+                </Alert>
+            )}
+            <Typography variant="body2" color="text.secondary" mb={2}>
+                Set the prefix used for auto-generated customer numbers (e.g. {(prefix || "CST") + "-"}00000001).
+            </Typography>
+            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
+                <Box sx={{ px: 3, py: 2 }}>
+                    <TextField label="Number Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
+                </Box>
             </Paper>
 
             {/* Table Column Visibility */}

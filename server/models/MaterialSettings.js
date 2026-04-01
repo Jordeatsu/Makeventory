@@ -22,6 +22,9 @@ const materialSettingsSchema = new mongoose.Schema(
 
         // Column visibility map for the materials table – key → boolean (absent = true)
         tableColumns: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+        // Prefix used when auto-assigning material numbers (e.g. MTL-00000001)
+        numberPrefix: { type: String, default: "MTL-" },
     },
     { timestamps: true },
 );
