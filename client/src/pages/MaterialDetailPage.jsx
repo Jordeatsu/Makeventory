@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, IconButton, LinearProgress, Paper, Stack, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, LinearProgress, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -96,33 +96,51 @@ export default function MaterialDetailPage() {
 
     return (
         <Box>
-            {/* Back + title row */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={1}>
-                <Stack direction="row" alignItems="center" gap={1}>
-                    <Tooltip title={t("materials.detail.back", "Back to Materials")}>
-                        <IconButton onClick={() => navigate("/materials")} size="small">
-                            <ArrowBackIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Box>
-                        <Stack direction="row" alignItems="center" gap={1}>
-                            <Typography variant="h4">{m.name}</Typography>
-                            {isLow && (
-                                <Tooltip title={t("materials.lowStockTip", "Low stock! Threshold") + `: ${m.lowStockThreshold} ${unitLabel}`}>
-                                    <WarningAmberIcon color="warning" />
-                                </Tooltip>
-                            )}
-                        </Stack>
-                        <Stack direction="row" gap={1} mt={0.5} flexWrap="wrap">
-                            <Chip label={m.type} size="small" variant="outlined" />
-                            {m.color && <Chip label={m.color} size="small" />}
-                        </Stack>
-                    </Box>
-                </Stack>
-                <Button variant="contained" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
+            {/* Action bar */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/materials")} color="inherit">
+                    {t("materials.detail.back", "Back to Materials")}
+                </Button>
+                <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
                     {t("materials.detail.edit", "Edit Material")}
                 </Button>
             </Stack>
+
+            {/* Header banner */}
+            <Paper variant="outlined" sx={{ mb: 3, overflow: "hidden", borderColor: "divider" }}>
+                <Box sx={{ px: 3, py: 2.5, bgcolor: "primary.main", color: "primary.contrastText" }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" gap={1} flexWrap="wrap">
+                        <Stack direction="row" alignItems="center" gap={1.5}>
+                            <Typography variant="h4" fontWeight={700}>
+                                {m.name}
+                            </Typography>
+                            {isLow && (
+                                <Tooltip title={t("materials.lowStockTip", "Low stock! Threshold") + `: ${m.lowStockThreshold} ${unitLabel}`}>
+                                    <WarningAmberIcon sx={{ color: "warning.light" }} />
+                                </Tooltip>
+                            )}
+                        </Stack>
+                        <Stack direction="row" gap={1} flexWrap="wrap">
+                            <Chip label={m.type} size="small" variant="outlined" sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "inherit", borderColor: "rgba(255,255,255,0.4)" }} />
+                            {m.color && <Chip label={m.color} size="small" variant="outlined" sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "inherit", borderColor: "rgba(255,255,255,0.4)" }} />}
+                        </Stack>
+                    </Stack>
+                </Box>
+                <Box sx={{ px: 3, py: 2 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} gap={3} flexWrap="wrap">
+                        {m.sku && (
+                            <Typography variant="body2" color="text.secondary">
+                                {t("materials.form.sku", "SKU / Reference")}: <strong>{m.sku}</strong>
+                            </Typography>
+                        )}
+                        {m.supplier && (
+                            <Typography variant="body2" color="text.secondary">
+                                {t("materials.form.supplier", "Supplier")}: <strong>{m.supplier}</strong>
+                            </Typography>
+                        )}
+                    </Stack>
+                </Box>
+            </Paper>
 
             {/* Metric bar — single card with 4 stats and stock level indicator */}
             <Paper variant="outlined" sx={{ mb: 3, overflow: "hidden" }}>
@@ -182,33 +200,16 @@ export default function MaterialDetailPage() {
                 </Stack>
             </Paper>
 
-            {/* Details — two‑column split: attributes left, supplier/notes right */}
-            <Grid container spacing={3} mb={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper variant="outlined" sx={{ p: 3, height: "100%" }}>
-                        <Typography variant="overline" color="primary.main" display="block" mb={1.5}>
-                            {t("materials.detail.details", "Details")}
-                        </Typography>
-                        <Grid container spacing={2}>
-                            <DetailRow label={t("materials.col.name", "Name")} value={m.name} />
-                            <DetailRow label={t("materials.col.type", "Type")} value={m.type} />
-                            <DetailRow label={t("materials.form.colour", "Colour / Shade")} value={m.color} />
-                            <DetailRow label={t("materials.form.sku", "SKU / Reference")} value={m.sku} />
-                        </Grid>
-                    </Paper>
+            {/* Supplier & notes */}
+            <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+                <Typography variant="overline" color="primary.main" display="block" mb={1.5}>
+                    {t("materials.detail.supplierNotes")}
+                </Typography>
+                <Grid container spacing={2}>
+                    <DetailRow label={t("materials.form.supplier", "Supplier")} value={m.supplier} />
+                    <DetailRow label={t("materials.form.description", "Description / Notes")} value={m.description} />
                 </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper variant="outlined" sx={{ p: 3, height: "100%" }}>
-                        <Typography variant="overline" color="primary.main" display="block" mb={1.5}>
-                            {t("materials.detail.supplierNotes")}
-                        </Typography>
-                        <Grid container spacing={2}>
-                            <DetailRow label={t("materials.form.supplier", "Supplier")} value={m.supplier} />
-                            <DetailRow label={t("materials.form.description", "Description / Notes")} value={m.description} />
-                        </Grid>
-                    </Paper>
-                </Grid>
-            </Grid>
+            </Paper>
 
             {/* Record Info */}
             <RecordInfo createdAt={m.createdAt} updatedAt={m.updatedAt} createdBy={m.createdBy} updatedBy={m.updatedBy} />

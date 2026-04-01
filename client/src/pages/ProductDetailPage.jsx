@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import BuildIcon from "@mui/icons-material/Build";
@@ -18,11 +18,15 @@ import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
 import { InfoRow } from "../components/common/DetailRow";
+import { useModules } from "../hooks/useModules.jsx";
 
 export default function ProductDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { activeModules } = useModules();
+    const inventoryEnabled = activeModules.includes("Inventory");
+    const ordersEnabled = activeModules.includes("Orders");
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;
@@ -77,35 +81,57 @@ export default function ProductDetailPage() {
 
     return (
         <Box>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                <IconButton onClick={() => navigate("/products")} size="small">
-                    <ArrowBackIcon />
-                </IconButton>
-                <Typography variant="h4" sx={{ flex: 1 }}>
-                    {product.name}
-                </Typography>
-                {!product.active && <Chip label={t("common.inactive")} color="default" size="small" />}
-                <Button variant="outlined" startIcon={<BuildIcon />} onClick={() => setMatsOpen(true)}>
-                    Materials
+            {/* Action bar */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/products")} color="inherit">
+                    {t("products.detail.allProducts")}
                 </Button>
-                <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
-                    {t("common.edit")}
-                </Button>
+                <Stack direction="row" gap={1}>
+                    {inventoryEnabled && (
+                        <Button variant="outlined" startIcon={<BuildIcon />} onClick={() => setMatsOpen(true)}>
+                            {t("products.detail.materials")}
+                        </Button>
+                    )}
+                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
+                        {t("common.edit")}
+                    </Button>
+                </Stack>
             </Stack>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-                {product.category && (
-                    <>
-                        <strong>{product.category}</strong> ·{" "}
-                    </>
-                )}
-                {product.sku && (
-                    <>
-                        {t("products.col.sku")}: {product.sku} ·{" "}
-                    </>
-                )}
-                {t("products.detail.added", { date: fmtDate(product.createdAt) })}
-            </Typography>
+
+            {/* Header card */}
+            <Paper variant="outlined" sx={{ mb: 3, borderLeft: 4, borderLeftColor: "primary.main", borderColor: "divider" }}>
+                <Box sx={{ px: 3, py: 2.5 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" gap={1} flexWrap="wrap">
+                        <Box>
+                            <Typography variant="h4" fontWeight={700}>
+                                {product.name}
+                            </Typography>
+                            {product.description && (
+                                <Typography variant="body2" color="text.secondary" mt={0.5}>
+                                    {product.description}
+                                </Typography>
+                            )}
+                        </Box>
+                        <Stack direction="row" gap={1} flexWrap="wrap">
+                            {!product.active && <Chip label={t("common.inactive")} color="default" size="small" />}
+                            {product.category && <Chip label={product.category} size="small" variant="outlined" color="primary" />}
+                        </Stack>
+                    </Stack>
+                </Box>
+                <Divider />
+                <Box sx={{ px: 3, py: 1.5 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} gap={3} flexWrap="wrap">
+                        {product.sku && (
+                            <Typography variant="body2" color="text.secondary">
+                                {t("products.col.sku")}: <strong>{product.sku}</strong>
+                            </Typography>
+                        )}
+                        <Typography variant="body2" color="text.secondary">
+                            {t("products.detail.added", { date: fmtDate(product.createdAt) })}
+                        </Typography>
+                    </Stack>
+                </Box>
+            </Paper>
 
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
@@ -114,56 +140,58 @@ export default function ProductDetailPage() {
             )}
 
             <Grid container spacing={3}>
-                {/* KPI strip — single card with 4 metrics separated by dividers */}
-                <Grid size={12}>
-                    <Paper sx={{ overflow: "hidden" }}>
-                        <Stack direction={{ xs: "column", sm: "row" }} divider={<Divider orientation="vertical" flexItem />}>
-                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
-                                    {t("products.detail.kpi.totalOrders")}
-                                </Typography>
-                                <Typography variant="h4" fontWeight={700} color="primary.main">
-                                    {totalOrders}
-                                </Typography>
-                            </Box>
-                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
-                                    {t("products.detail.kpi.grossRevenue")}
-                                </Typography>
-                                <Typography variant="h4" fontWeight={700}>
-                                    {fmt(totalRevenue)}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {t("products.detail.kpi.incShipping")}
-                                </Typography>
-                            </Box>
-                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
-                                    {t("products.detail.kpi.totalProfit")}
-                                </Typography>
-                                <Typography variant="h4" fontWeight={700} color={totalProfit >= 0 ? "success.main" : "error.main"}>
-                                    {fmt(totalProfit)}
-                                </Typography>
-                                {totalRevenue > 0 && (
-                                    <Typography variant="caption" color="text.secondary">
-                                        {t("products.detail.kpi.margin", { value: Number(profitMargin).toFixed(1) })}
+                {/* KPI strip — only meaningful when Orders is enabled */}
+                {ordersEnabled && (
+                    <Grid size={12}>
+                        <Paper sx={{ overflow: "hidden" }}>
+                            <Stack direction={{ xs: "column", sm: "row" }} divider={<Divider orientation="vertical" flexItem />}>
+                                <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                    <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
+                                        {t("products.detail.kpi.totalOrders")}
                                     </Typography>
-                                )}
-                            </Box>
-                            <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
-                                <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
-                                    {t("products.detail.kpi.avgProfit")}
-                                </Typography>
-                                <Typography variant="h4" fontWeight={700} color={avgProfit >= 0 ? "success.main" : "error.main"}>
-                                    {fmt(avgProfit)}
-                                </Typography>
-                            </Box>
-                        </Stack>
-                    </Paper>
-                </Grid>
+                                    <Typography variant="h4" fontWeight={700} color="primary.main">
+                                        {totalOrders}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                    <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
+                                        {t("products.detail.kpi.grossRevenue")}
+                                    </Typography>
+                                    <Typography variant="h4" fontWeight={700}>
+                                        {fmt(totalRevenue)}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {t("products.detail.kpi.incShipping")}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                    <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
+                                        {t("products.detail.kpi.totalProfit")}
+                                    </Typography>
+                                    <Typography variant="h4" fontWeight={700} color={totalProfit >= 0 ? "success.main" : "error.main"}>
+                                        {fmt(totalProfit)}
+                                    </Typography>
+                                    {totalRevenue > 0 && (
+                                        <Typography variant="caption" color="text.secondary">
+                                            {t("products.detail.kpi.margin", { value: Number(profitMargin).toFixed(1) })}
+                                        </Typography>
+                                    )}
+                                </Box>
+                                <Box sx={{ p: 2.5, flex: 1, textAlign: "center" }}>
+                                    <Typography variant="overline" color="text.secondary" display="block" lineHeight={1} mb={0.5}>
+                                        {t("products.detail.kpi.avgProfit")}
+                                    </Typography>
+                                    <Typography variant="h4" fontWeight={700} color={avgProfit >= 0 ? "success.main" : "error.main"}>
+                                        {fmt(avgProfit)}
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                        </Paper>
+                    </Grid>
+                )}
 
                 {/* Product info */}
-                <Grid size={{ xs: 12, md: 5 }}>
+                <Grid size={{ xs: 12, md: inventoryEnabled ? 5 : 12 }}>
                     <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "primary.light" }}>
                         <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                             <BuildIcon color="primary" fontSize="small" />
@@ -178,23 +206,25 @@ export default function ProductDetailPage() {
                 </Grid>
 
                 {/* Materials */}
-                <Grid size={{ xs: 12, md: 7 }}>
-                    <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "secondary.light", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: 1 }}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                            <BuildIcon color="primary" fontSize="small" />
-                            <Typography variant="h6">{t("products.detail.materialsRecipe")}</Typography>
-                        </Stack>
-                        <Typography variant="body2" color="text.secondary">
-                            Materials are managed via the dedicated Materials view.
-                        </Typography>
-                        <Button variant="outlined" startIcon={<BuildIcon />} onClick={() => setMatsOpen(true)}>
-                            View / Manage Materials
-                        </Button>
-                    </Paper>
-                </Grid>
+                {inventoryEnabled && (
+                    <Grid size={{ xs: 12, md: 7 }}>
+                        <Paper sx={{ p: 3, height: "100%", borderLeft: 4, borderColor: "secondary.light", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: 1 }}>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <BuildIcon color="primary" fontSize="small" />
+                                <Typography variant="h6">{t("products.detail.materialsRecipe")}</Typography>
+                            </Stack>
+                            <Typography variant="body2" color="text.secondary">
+                                Materials are managed via the dedicated Materials view.
+                            </Typography>
+                            <Button variant="outlined" startIcon={<BuildIcon />} onClick={() => setMatsOpen(true)}>
+                                View / Manage Materials
+                            </Button>
+                        </Paper>
+                    </Grid>
+                )}
 
                 {/* Revenue by country */}
-                {byCountry?.length > 0 && (
+                {ordersEnabled && byCountry?.length > 0 && (
                     <Grid size={{ xs: 12, md: 5 }}>
                         <Paper sx={{ p: 3 }}>
                             <Stack direction="row" alignItems="center" spacing={1} mb={2}>
@@ -230,7 +260,7 @@ export default function ProductDetailPage() {
                 )}
 
                 {/* Recent orders */}
-                {recentOrders?.length > 0 && (
+                {ordersEnabled && recentOrders?.length > 0 && (
                     <Grid size={{ xs: 12, md: byCountry?.length > 0 ? 7 : 12 }}>
                         <Paper sx={{ p: 3 }}>
                             <Stack direction="row" alignItems="center" spacing={1} mb={2}>
@@ -269,7 +299,7 @@ export default function ProductDetailPage() {
                     </Grid>
                 )}
 
-                {totalOrders === 0 && (
+                {ordersEnabled && totalOrders === 0 && (
                     <Grid size={12}>
                         <Paper sx={{ p: 4, textAlign: "center" }}>
                             <TrendingUpIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
@@ -283,7 +313,7 @@ export default function ProductDetailPage() {
             <RecordInfo createdAt={product.createdAt} updatedAt={product.updatedAt} createdBy={product.createdBy} updatedBy={product.updatedBy} />
 
             <ProductFormModal open={editOpen} onClose={() => setEditOpen(false)} onSave={handleSave} initial={product} />
-            <ProductMaterialsModal open={matsOpen} onClose={() => setMatsOpen(false)} product={product} />
+            {inventoryEnabled && <ProductMaterialsModal open={matsOpen} onClose={() => setMatsOpen(false)} product={product} />}
 
             <ToastSnackbar toast={toast} onClose={closeToast} />
         </Box>

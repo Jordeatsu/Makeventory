@@ -482,6 +482,8 @@
         },
         "detail": {
             "loadFailed": "Impossible de charger le produit.",
+            "allProducts": "Tous les produits",
+            "materials": "Matériaux",
             "edit": "Modifier",
             "added": "Ajouté le {{date}}",
             "kpi": {

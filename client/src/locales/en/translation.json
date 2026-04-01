@@ -482,6 +482,8 @@
         },
         "detail": {
             "loadFailed": "Failed to load product.",
+            "allProducts": "All Products",
+            "materials": "Materials",
             "edit": "Edit",
             "added": "Added {{date}}",
             "kpi": {
