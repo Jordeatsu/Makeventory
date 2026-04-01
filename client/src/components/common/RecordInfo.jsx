@@ -17,12 +17,14 @@ export default function RecordInfo({ createdAt, updatedAt, createdBy, updatedBy,
             </Typography>
             <Grid container spacing={2}>
                 {createdAt && (
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption" color="text.secondary" display="block">
                             {createdLabel}
                         </Typography>
                         {createdBy?.name && (
-                            <Typography variant="body1" fontWeight={600}>{createdBy.name}</Typography>
+                            <Typography variant="body1" fontWeight={600}>
+                                {createdBy.name}
+                            </Typography>
                         )}
                         <Typography variant="body2" color="text.secondary">
                             {fmtDateTime(createdAt)}
@@ -30,12 +32,14 @@ export default function RecordInfo({ createdAt, updatedAt, createdBy, updatedBy,
                     </Grid>
                 )}
                 {updatedAt && (
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption" color="text.secondary" display="block">
                             {updatedLabel}
                         </Typography>
                         {updatedBy?.name && (
-                            <Typography variant="body1" fontWeight={600}>{updatedBy.name}</Typography>
+                            <Typography variant="body1" fontWeight={600}>
+                                {updatedBy.name}
+                            </Typography>
                         )}
                         <Typography variant="body2" color="text.secondary">
                             {fmtDateTime(updatedAt)}
