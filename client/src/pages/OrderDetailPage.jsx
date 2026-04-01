@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
 import { InfoRow as DetailRow } from "../components/common/DetailRow";
+import { useModules } from "../hooks/useModules.jsx";
 
 const LOCK_MS = 45 * 24 * 60 * 60 * 1000;
 
@@ -25,6 +26,8 @@ export default function OrderDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { activeModules } = useModules();
+    const customersEnabled = activeModules.includes("Customers");
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtDate = fmtDateLong;
@@ -140,44 +143,46 @@ export default function OrderDetailPage() {
             </Paper>
 
             <Grid container spacing={3}>
-                {/* Customer card */}
-                <Grid size={{ xs: 12, md: 4 }}>
-                    <Paper sx={{ p: 3, height: "100%" }}>
-                        <Typography variant="h6" mb={2}>
-                            {t("orders.detail.customer")}
-                        </Typography>
-                        <Typography variant="subtitle1" fontWeight={700} mb={1}>
-                            {c.name}
-                        </Typography>
-                        {c.email && (
-                            <Stack direction="row" alignItems="center" gap={1} mb={0.5}>
-                                <EmailIcon fontSize="small" color="action" />
-                                <Typography variant="body2">{c.email}</Typography>
-                            </Stack>
-                        )}
-                        {c.phone && (
-                            <Stack direction="row" alignItems="center" gap={1} mb={0.5}>
-                                <PhoneIcon fontSize="small" color="action" />
-                                <Typography variant="body2">{c.phone}</Typography>
-                            </Stack>
-                        )}
-                        {addressParts.length > 0 && (
-                            <Stack direction="row" alignItems="flex-start" gap={1} mt={1}>
-                                <LocationOnIcon fontSize="small" color="action" sx={{ mt: 0.2 }} />
-                                <Box>
-                                    {c.addressLine1 && <Typography variant="body2">{c.addressLine1}</Typography>}
-                                    {c.addressLine2 && <Typography variant="body2">{c.addressLine2}</Typography>}
-                                    {(c.city || c.state) && <Typography variant="body2">{[c.city, c.state].filter(Boolean).join(", ")}</Typography>}
-                                    {c.postcode && <Typography variant="body2">{c.postcode}</Typography>}
-                                    {c.country && <Typography variant="body2">{c.country}</Typography>}
-                                </Box>
-                            </Stack>
-                        )}
-                    </Paper>
-                </Grid>
+                {/* Customer card — hidden when Customers module is disabled */}
+                {customersEnabled && (
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <Paper sx={{ p: 3, height: "100%" }}>
+                            <Typography variant="h6" mb={2}>
+                                {t("orders.detail.customer")}
+                            </Typography>
+                            <Typography variant="subtitle1" fontWeight={700} mb={1}>
+                                {c.name}
+                            </Typography>
+                            {c.email && (
+                                <Stack direction="row" alignItems="center" gap={1} mb={0.5}>
+                                    <EmailIcon fontSize="small" color="action" />
+                                    <Typography variant="body2">{c.email}</Typography>
+                                </Stack>
+                            )}
+                            {c.phone && (
+                                <Stack direction="row" alignItems="center" gap={1} mb={0.5}>
+                                    <PhoneIcon fontSize="small" color="action" />
+                                    <Typography variant="body2">{c.phone}</Typography>
+                                </Stack>
+                            )}
+                            {addressParts.length > 0 && (
+                                <Stack direction="row" alignItems="flex-start" gap={1} mt={1}>
+                                    <LocationOnIcon fontSize="small" color="action" sx={{ mt: 0.2 }} />
+                                    <Box>
+                                        {c.addressLine1 && <Typography variant="body2">{c.addressLine1}</Typography>}
+                                        {c.addressLine2 && <Typography variant="body2">{c.addressLine2}</Typography>}
+                                        {(c.city || c.state) && <Typography variant="body2">{[c.city, c.state].filter(Boolean).join(", ")}</Typography>}
+                                        {c.postcode && <Typography variant="body2">{c.postcode}</Typography>}
+                                        {c.country && <Typography variant="body2">{c.country}</Typography>}
+                                    </Box>
+                                </Stack>
+                            )}
+                        </Paper>
+                    </Grid>
+                )}
 
                 {/* Order Summary */}
-                <Grid size={{ xs: 12, md: 8 }}>
+                <Grid size={{ xs: 12, md: customersEnabled ? 8 : 12 }}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" mb={2}>
                             {t("orders.detail.orderSummary")}
