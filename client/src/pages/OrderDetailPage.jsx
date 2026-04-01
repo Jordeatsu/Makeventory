@@ -28,6 +28,8 @@ export default function OrderDetailPage() {
     const { t } = useTranslation();
     const { activeModules } = useModules();
     const customersEnabled = activeModules.includes("Customers");
+    const productsEnabled = activeModules.includes("Products");
+    const inventoryEnabled = activeModules.includes("Inventory");
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtDate = fmtDateLong;
@@ -200,7 +202,7 @@ export default function OrderDetailPage() {
                             {order.originOrderId && <DetailRow label={t("orders.detail.originOrderId")} value={order.originOrderId} />}
                             <DetailRow label={t("orders.detail.orderDate")} value={fmtDate(order.orderDate)} />
                             <DetailRow label={t("orders.detail.status")} value={order.status} />
-                            <DetailRow label={t("orders.detail.materialsUsed")} value={t("orders.detail.materialsUsedCount", { count: order.materials?.length || 0 })} />
+                            {inventoryEnabled && <DetailRow label={t("orders.detail.materialsUsed")} value={t("orders.detail.materialsUsedCount", { count: order.materials?.length || 0 })} />}
                             {order.notes && <DetailRow label={t("orders.detail.notes")} value={order.notes} />}
                             {order.trackingNumber && <DetailRow label={t("orders.detail.trackingNumber")} value={order.trackingNumber} />}
                         </Box>
@@ -208,7 +210,7 @@ export default function OrderDetailPage() {
                 </Grid>
 
                 {/* Products ordered */}
-                {order.products?.length > 0 && (
+                {productsEnabled && order.products?.length > 0 && (
                     <Grid size={12}>
                         <Paper sx={{ p: 3 }}>
                             <Typography variant="h6" mb={2}>
@@ -241,51 +243,53 @@ export default function OrderDetailPage() {
                 )}
 
                 {/* Materials used */}
-                <Grid size={12}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>
-                            {t("orders.detail.materialsInOrder")}
-                        </Typography>
-                        {!order.materials || order.materials.length === 0 ? (
-                            <Typography color="text.secondary" variant="body2">
-                                {t("orders.detail.noMaterials")}
+                {inventoryEnabled && (
+                    <Grid size={12}>
+                        <Paper sx={{ p: 3 }}>
+                            <Typography variant="h6" mb={2}>
+                                {t("orders.detail.materialsInOrder")}
                             </Typography>
-                        ) : (
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                        <TableCell>{t("orders.detail.col.material")}</TableCell>
-                                        <TableCell>{t("orders.detail.col.type")}</TableCell>
-                                        <TableCell align="right">{t("orders.detail.col.qtyUsed")}</TableCell>
-                                        <TableCell>{t("orders.detail.col.unit")}</TableCell>
-                                        <TableCell align="right">{t("orders.detail.col.costPerUnit")}</TableCell>
-                                        <TableCell align="right">{t("orders.detail.col.lineCost")}</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {[...order.materials]
-                                        .sort((a, b) => (a.materialType || "").localeCompare(b.materialType || ""))
-                                        .map((m, i) => (
-                                            <TableRow key={i}>
-                                                <TableCell>
-                                                    <Typography variant="body2" fontWeight={600}>
-                                                        {m.materialName}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell>{m.materialType && <Chip label={m.materialType} size="small" variant="outlined" />}</TableCell>
-                                                <TableCell align="right">{m.quantityUsed}</TableCell>
-                                                <TableCell>{m.unit}</TableCell>
-                                                <TableCell align="right">{fmt(m.costPerUnit)}</TableCell>
-                                                <TableCell align="right">
-                                                    <Typography fontWeight={600}>{fmt(m.lineCost)}</Typography>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </Paper>
-                </Grid>
+                            {!order.materials || order.materials.length === 0 ? (
+                                <Typography color="text.secondary" variant="body2">
+                                    {t("orders.detail.noMaterials")}
+                                </Typography>
+                            ) : (
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
+                                            <TableCell>{t("orders.detail.col.material")}</TableCell>
+                                            <TableCell>{t("orders.detail.col.type")}</TableCell>
+                                            <TableCell align="right">{t("orders.detail.col.qtyUsed")}</TableCell>
+                                            <TableCell>{t("orders.detail.col.unit")}</TableCell>
+                                            <TableCell align="right">{t("orders.detail.col.costPerUnit")}</TableCell>
+                                            <TableCell align="right">{t("orders.detail.col.lineCost")}</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {[...order.materials]
+                                            .sort((a, b) => (a.materialType || "").localeCompare(b.materialType || ""))
+                                            .map((m, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell>
+                                                        <Typography variant="body2" fontWeight={600}>
+                                                            {m.materialName}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>{m.materialType && <Chip label={m.materialType} size="small" variant="outlined" />}</TableCell>
+                                                    <TableCell align="right">{m.quantityUsed}</TableCell>
+                                                    <TableCell>{m.unit}</TableCell>
+                                                    <TableCell align="right">{fmt(m.costPerUnit)}</TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography fontWeight={600}>{fmt(m.lineCost)}</Typography>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </Paper>
+                    </Grid>
+                )}
 
                 {/* Financial breakdown — invoice ledger style */}
                 <Grid size={{ xs: 12, md: 6 }}>

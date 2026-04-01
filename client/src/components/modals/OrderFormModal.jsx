@@ -48,6 +48,8 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
     const { fields: customerFields } = useCustomerSettings();
     const { activeModules } = useModules();
     const customersEnabled = activeModules.includes("Customers");
+    const productsEnabled = activeModules.includes("Products");
+    const inventoryEnabled = activeModules.includes("Inventory");
 
     const [form, setForm] = useState(EMPTY_FORM);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -447,167 +449,175 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
                 )}
 
                 {/* ── Products ordered ── */}
-                <Divider sx={{ my: 2.5 }} />
-                <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-                    Products Ordered
-                </Typography>
+                {productsEnabled && (
+                    <>
+                        <Divider sx={{ my: 2.5 }} />
+                        <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
+                            Products Ordered
+                        </Typography>
 
-                {/* Add product row */}
-                <Grid container spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                        <Autocomplete
-                            size="small"
-                            options={productOptions}
-                            getOptionLabel={(opt) => `${opt.name}${opt.sku ? ` (${opt.sku})` : ""}${opt.category ? ` — ${opt.category}` : ""}`}
-                            isOptionEqualToValue={(opt, val) => opt?._id === val?._id}
-                            value={newProductLine.product}
-                            onChange={(_, val) => setNewProductLine((nl) => ({ ...nl, product: val }))}
-                            renderInput={(params) => <TextField {...params} label="Product" size="small" />}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 3 }}>
-                        <TextField size="small" fullWidth type="number" label="Quantity" value={newProductLine.quantity} onChange={(e) => setNewProductLine((nl) => ({ ...nl, quantity: e.target.value }))} inputProps={{ min: 1 }} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex", alignItems: "center" }}>
-                        <Button variant="outlined" startIcon={<AddIcon />} onClick={addProductLine} fullWidth>
-                            Add
-                        </Button>
-                    </Grid>
-                    {productLineError && (
-                        <Grid size={12}>
-                            <Alert severity="warning" sx={{ py: 0 }}>
-                                {productLineError}
-                            </Alert>
+                        {/* Add product row */}
+                        <Grid container spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <Autocomplete
+                                    size="small"
+                                    options={productOptions}
+                                    getOptionLabel={(opt) => `${opt.name}${opt.sku ? ` (${opt.sku})` : ""}${opt.category ? ` — ${opt.category}` : ""}`}
+                                    isOptionEqualToValue={(opt, val) => opt?._id === val?._id}
+                                    value={newProductLine.product}
+                                    onChange={(_, val) => setNewProductLine((nl) => ({ ...nl, product: val }))}
+                                    renderInput={(params) => <TextField {...params} label="Product" size="small" />}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 3 }}>
+                                <TextField size="small" fullWidth type="number" label="Quantity" value={newProductLine.quantity} onChange={(e) => setNewProductLine((nl) => ({ ...nl, quantity: e.target.value }))} inputProps={{ min: 1 }} />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex", alignItems: "center" }}>
+                                <Button variant="outlined" startIcon={<AddIcon />} onClick={addProductLine} fullWidth>
+                                    Add
+                                </Button>
+                            </Grid>
+                            {productLineError && (
+                                <Grid size={12}>
+                                    <Alert severity="warning" sx={{ py: 0 }}>
+                                        {productLineError}
+                                    </Alert>
+                                </Grid>
+                            )}
                         </Grid>
-                    )}
-                </Grid>
 
-                {products.length > 0 && (
-                    <Paper variant="outlined" sx={{ mb: 1.5 }}>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                    <TableCell>Product</TableCell>
-                                    <TableCell>SKU</TableCell>
-                                    <TableCell>Category</TableCell>
-                                    <TableCell align="right">Qty</TableCell>
-                                    <TableCell align="right">Base Price</TableCell>
-                                    <TableCell />
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {products.map((p, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell sx={{ fontWeight: 600 }}>{p.productName}</TableCell>
-                                        <TableCell sx={{ color: "text.secondary" }}>{p.sku || "—"}</TableCell>
-                                        <TableCell>{p.category || "—"}</TableCell>
-                                        <TableCell align="right" sx={{ width: 100 }}>
-                                            <TextField size="small" type="number" value={p.quantity} onChange={(e) => updateProductQty(i, e.target.value)} inputProps={{ min: 1, style: { textAlign: "right" } }} sx={{ width: 80 }} />
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            {currencySymbol}
-                                            {parseFloat(p.basePrice || 0).toFixed(2)}
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Tooltip title="Remove product (also removes its materials from this order)">
-                                                <IconButton size="small" color="error" onClick={() => removeProduct(i)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Paper>
+                        {products.length > 0 && (
+                            <Paper variant="outlined" sx={{ mb: 1.5 }}>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
+                                            <TableCell>Product</TableCell>
+                                            <TableCell>SKU</TableCell>
+                                            <TableCell>Category</TableCell>
+                                            <TableCell align="right">Qty</TableCell>
+                                            <TableCell align="right">Base Price</TableCell>
+                                            <TableCell />
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {products.map((p, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell sx={{ fontWeight: 600 }}>{p.productName}</TableCell>
+                                                <TableCell sx={{ color: "text.secondary" }}>{p.sku || "—"}</TableCell>
+                                                <TableCell>{p.category || "—"}</TableCell>
+                                                <TableCell align="right" sx={{ width: 100 }}>
+                                                    <TextField size="small" type="number" value={p.quantity} onChange={(e) => updateProductQty(i, e.target.value)} inputProps={{ min: 1, style: { textAlign: "right" } }} sx={{ width: 80 }} />
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    {currencySymbol}
+                                                    {parseFloat(p.basePrice || 0).toFixed(2)}
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    <Tooltip title="Remove product (also removes its materials from this order)">
+                                                        <IconButton size="small" color="error" onClick={() => removeProduct(i)}>
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </Paper>
+                        )}
+                    </>
                 )}
 
                 {/* ── Materials used ── */}
-                <Divider sx={{ my: 2.5 }} />
-                <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-                    Materials Used
-                </Typography>
+                {inventoryEnabled && (
+                    <>
+                        <Divider sx={{ my: 2.5 }} />
+                        <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
+                            Materials Used
+                        </Typography>
 
-                {/* Add material row */}
-                <Grid container spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
-                    <Grid size={{ xs: 12, sm: 5 }}>
-                        <Autocomplete
-                            size="small"
-                            options={allMaterials}
-                            getOptionLabel={(opt) => `${opt.name} (${opt.type}) — ${opt.quantity?.toLocaleString() ?? 0} ${opt.unit ?? "units"} left`}
-                            isOptionEqualToValue={(opt, val) => opt?._id === val?._id}
-                            value={newLine.material}
-                            onChange={(_, val) => setNewLine((nl) => ({ ...nl, material: val }))}
-                            renderInput={(params) => <TextField {...params} label="Material" size="small" />}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                        <TextField size="small" fullWidth type="number" label={`Qty (${newLine.material?.unit || "units"})`} value={newLine.quantityUsed} onChange={(e) => setNewLine((nl) => ({ ...nl, quantityUsed: e.target.value }))} inputProps={{ min: 0, step: "any" }} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex", alignItems: "center" }}>
-                        <Button variant="outlined" startIcon={<AddIcon />} onClick={addMaterialLine} fullWidth>
-                            Add
-                        </Button>
-                    </Grid>
-                    {lineError && (
-                        <Grid size={12}>
-                            <Alert severity="warning" sx={{ py: 0 }}>
-                                {lineError}
-                            </Alert>
+                        {/* Add material row */}
+                        <Grid container spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                            <Grid size={{ xs: 12, sm: 5 }}>
+                                <Autocomplete
+                                    size="small"
+                                    options={allMaterials}
+                                    getOptionLabel={(opt) => `${opt.name} (${opt.type}) — ${opt.quantity?.toLocaleString() ?? 0} ${opt.unit ?? "units"} left`}
+                                    isOptionEqualToValue={(opt, val) => opt?._id === val?._id}
+                                    value={newLine.material}
+                                    onChange={(_, val) => setNewLine((nl) => ({ ...nl, material: val }))}
+                                    renderInput={(params) => <TextField {...params} label="Material" size="small" />}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <TextField size="small" fullWidth type="number" label={`Qty (${newLine.material?.unit || "units"})`} value={newLine.quantityUsed} onChange={(e) => setNewLine((nl) => ({ ...nl, quantityUsed: e.target.value }))} inputProps={{ min: 0, step: "any" }} />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 3 }} sx={{ display: "flex", alignItems: "center" }}>
+                                <Button variant="outlined" startIcon={<AddIcon />} onClick={addMaterialLine} fullWidth>
+                                    Add
+                                </Button>
+                            </Grid>
+                            {lineError && (
+                                <Grid size={12}>
+                                    <Alert severity="warning" sx={{ py: 0 }}>
+                                        {lineError}
+                                    </Alert>
+                                </Grid>
+                            )}
                         </Grid>
-                    )}
-                </Grid>
 
-                {materials.length > 0 && (
-                    <Table size="small" sx={{ mb: 1.5 }}>
-                        <TableHead>
-                            <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
-                                <TableCell>Material</TableCell>
-                                <TableCell>Type</TableCell>
-                                <TableCell align="right">Qty Used</TableCell>
-                                <TableCell>Unit</TableCell>
-                                <TableCell align="right">Cost/Unit</TableCell>
-                                <TableCell align="right">Line Cost</TableCell>
-                                <TableCell />
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {[...materials]
-                                .map((m, i) => ({ ...m, _origIdx: i }))
-                                .sort((a, b) => {
-                                    const t = (a.materialType || "").localeCompare(b.materialType || "");
-                                    return t !== 0 ? t : (b.lineCost || 0) - (a.lineCost || 0);
-                                })
-                                .map((line) => (
-                                    <TableRow key={line._origIdx}>
-                                        <TableCell>{line.materialName}</TableCell>
-                                        <TableCell>
-                                            <Chip label={line.materialType || ""} size="small" variant="outlined" />
-                                        </TableCell>
-                                        <TableCell align="right" sx={{ width: 120 }}>
-                                            <TextField size="small" type="number" value={line.quantityUsed} onChange={(e) => updateMaterialQty(line._origIdx, e.target.value)} inputProps={{ min: 0, step: "any", style: { textAlign: "right" } }} sx={{ width: 100 }} />
-                                        </TableCell>
-                                        <TableCell>{line.unit}</TableCell>
-                                        <TableCell align="right">
-                                            {fmt(line.costPerUnit)}
-                                            {line.packCost && (
-                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                    pack: {fmt(line.packCost)}
-                                                </Typography>
-                                            )}
-                                        </TableCell>
-                                        <TableCell align="right">{fmt(line.lineCost)}</TableCell>
-                                        <TableCell align="right">
-                                            <Tooltip title="Remove material">
-                                                <IconButton size="small" color="error" onClick={() => removeMaterial(line._origIdx)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
+                        {materials.length > 0 && (
+                            <Table size="small" sx={{ mb: 1.5 }}>
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: "primary.main", "& .MuiTableCell-head": { color: "white", fontWeight: 700 } }}>
+                                        <TableCell>Material</TableCell>
+                                        <TableCell>Type</TableCell>
+                                        <TableCell align="right">Qty Used</TableCell>
+                                        <TableCell>Unit</TableCell>
+                                        <TableCell align="right">Cost/Unit</TableCell>
+                                        <TableCell align="right">Line Cost</TableCell>
+                                        <TableCell />
                                     </TableRow>
-                                ))}
-                        </TableBody>
-                    </Table>
+                                </TableHead>
+                                <TableBody>
+                                    {[...materials]
+                                        .map((m, i) => ({ ...m, _origIdx: i }))
+                                        .sort((a, b) => {
+                                            const t = (a.materialType || "").localeCompare(b.materialType || "");
+                                            return t !== 0 ? t : (b.lineCost || 0) - (a.lineCost || 0);
+                                        })
+                                        .map((line) => (
+                                            <TableRow key={line._origIdx}>
+                                                <TableCell>{line.materialName}</TableCell>
+                                                <TableCell>
+                                                    <Chip label={line.materialType || ""} size="small" variant="outlined" />
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ width: 120 }}>
+                                                    <TextField size="small" type="number" value={line.quantityUsed} onChange={(e) => updateMaterialQty(line._origIdx, e.target.value)} inputProps={{ min: 0, step: "any", style: { textAlign: "right" } }} sx={{ width: 100 }} />
+                                                </TableCell>
+                                                <TableCell>{line.unit}</TableCell>
+                                                <TableCell align="right">
+                                                    {fmt(line.costPerUnit)}
+                                                    {line.packCost && (
+                                                        <Typography variant="caption" color="text.secondary" display="block">
+                                                            pack: {fmt(line.packCost)}
+                                                        </Typography>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell align="right">{fmt(line.lineCost)}</TableCell>
+                                                <TableCell align="right">
+                                                    <Tooltip title="Remove material">
+                                                        <IconButton size="small" color="error" onClick={() => removeMaterial(line._origIdx)}>
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </>
                 )}
 
                 {/* ── Financials ── */}
