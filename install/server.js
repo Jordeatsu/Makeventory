@@ -17,8 +17,8 @@ const app = express();
 const PORT = 3000;
 const OS = process.env.MAKEVENTORY_OS || "linux";
 
-app.use(cors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000'] }));
-app.use(express.json({ limit: '10mb' })); // 10mb allowed here for logo uploads during install
+app.use(cors({ origin: ["http://localhost:3000", "http://127.0.0.1:3000"] }));
+app.use(express.json({ limit: "10mb" })); // 10mb allowed here for logo uploads during install
 app.use(express.static(path.join(__dirname, "dist")));
 
 // ─── npm install tracking ─────────────────────────────────────────────────────
@@ -222,18 +222,14 @@ app.post("/api/database/ensure-running", async (_req, res) => {
 
 // Step 6 / 7 – Validate DB name, write .env to server/
 app.post("/api/database/create", async (req, res) => {
-    const { dbName, language = 'en', currency = 'GBP' } = req.body ?? {};
+    const { dbName, language = "en", currency = "GBP" } = req.body ?? {};
 
     if (!dbName || !/^[a-zA-Z]+$/.test(dbName)) {
         return res.status(400).json({ error: "Database name must contain letters only." });
     }
 
     const jwtSecret = randomBytes(64).toString("hex");
-    const envContentServer = `MONGODB_URI=mongodb://localhost:27017/${dbName}\n`
-        + `PORT=5001\n`
-        + `JWT_SECRET=${jwtSecret}\n`
-        + `CLIENT_ORIGIN=http://localhost:3000\n`
-        + `COOKIE_SECURE=false\n`;
+    const envContentServer = `MONGODB_URI=mongodb://localhost:27017/${dbName}\n` + `PORT=5001\n` + `JWT_SECRET=${jwtSecret}\n` + `CLIENT_ORIGIN=http://localhost:3000\n` + `COOKIE_SECURE=false\n`;
 
     const envPathServer = path.join(__dirname, "..", "server", ".env");
 
@@ -262,7 +258,8 @@ app.post("/api/database/create", async (req, res) => {
                 currency,
                 autoDeductOnOrderComplete: false,
                 trackFractionalQuantities: false,
-                createdAt: new Date(), updatedAt: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             });
 
             // Seed customer settings singleton
@@ -270,10 +267,17 @@ app.post("/api/database/create", async (req, res) => {
             await customerSettingsCol.deleteMany({});
             await customerSettingsCol.insertOne({
                 fields: {
-                    email: true, phone: true, addressLine1: true, addressLine2: false,
-                    city: true, state: true, postcode: true, country: true,
+                    email: true,
+                    phone: true,
+                    addressLine1: true,
+                    addressLine2: false,
+                    city: true,
+                    state: true,
+                    postcode: true,
+                    country: true,
                 },
-                createdAt: new Date(), updatedAt: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             });
 
             // Seed order settings singleton (placeholder — no fields yet)
@@ -454,6 +458,23 @@ app.put("/api/modules/save", async (req, res) => {
         await withDb(async (db) => {
             const col = db.collection("modules");
             await Promise.all(modules.map(({ _id, isActive }) => col.updateOne({ _id: new ObjectId(_id) }, { $set: { isActive, updatedAt: new Date() } })));
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ─── Settings prefixes ────────────────────────────────────────────────────────
+app.put("/api/settings/prefixes", async (req, res) => {
+    const { orders = "ORD-", materials = "MTL-", products = "PRD-", customers = "CST-" } = req.body ?? {};
+    try {
+        await withDb(async (db) => {
+            const ts = new Date();
+            await db.collection("ordersettings").updateOne({}, { $set: { numberPrefix: orders, updatedAt: ts } }, { upsert: true });
+            await db.collection("materialsettings").updateOne({}, { $set: { numberPrefix: materials, updatedAt: ts } }, { upsert: true });
+            await db.collection("productsettings").updateOne({}, { $set: { numberPrefix: products, updatedAt: ts } }, { upsert: true });
+            await db.collection("customersettings").updateOne({}, { $set: { numberPrefix: customers, updatedAt: ts } }, { upsert: true });
         });
         res.json({ success: true });
     } catch (err) {

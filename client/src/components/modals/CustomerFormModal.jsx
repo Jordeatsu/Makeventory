@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
-import {
-    Button, Dialog, DialogActions, DialogContent, DialogTitle,
-    Grid, TextField,
-} from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField } from "@mui/material";
 import CountrySelect from "../common/CountrySelect";
 import { useCustomerSettings } from "../../hooks/useCustomerSettings";
 
 const EMPTY = {
-    name: "", email: "", phone: "",
-    addressLine1: "", addressLine2: "",
-    city: "", state: "", postcode: "", country: "",
+    name: "",
+    email: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postcode: "",
+    country: "",
 };
 
 export default function CustomerFormModal({ open, onClose, onSave, initial }) {
@@ -39,66 +42,55 @@ export default function CustomerFormModal({ open, onClose, onSave, initial }) {
                 <DialogTitle>{initial?._id ? "Edit Customer" : "New Customer"}</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2} sx={{ pt: 0.5 }}>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Name" required fullWidth size="small"
-                                value={form.name} onChange={set("name")}
-                            />
+                        <Grid size={12}>
+                            <TextField label="Name" required fullWidth size="small" value={form.name} onChange={set("name")} />
                         </Grid>
                         {fields.email && (
-                        <Grid item xs={12} sm={6}>
-                            <TextField label="Email" fullWidth size="small" type="email"
-                                value={form.email} onChange={set("email")} />
-                        </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField label="Email" fullWidth size="small" type="email" value={form.email} onChange={set("email")} />
+                            </Grid>
                         )}
                         {fields.phone && (
-                        <Grid item xs={12} sm={6}>
-                            <TextField label="Phone" fullWidth size="small"
-                                value={form.phone} onChange={set("phone")} />
-                        </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField label="Phone" fullWidth size="small" value={form.phone} onChange={set("phone")} />
+                            </Grid>
                         )}
                         {fields.addressLine1 && (
-                        <Grid item xs={12}>
-                            <TextField label="Address Line 1" fullWidth size="small"
-                                value={form.addressLine1} onChange={set("addressLine1")} />
-                        </Grid>
+                            <Grid size={12}>
+                                <TextField label="Address Line 1" fullWidth size="small" value={form.addressLine1} onChange={set("addressLine1")} />
+                            </Grid>
                         )}
                         {fields.addressLine2 && (
-                        <Grid item xs={12}>
-                            <TextField label="Address Line 2" fullWidth size="small"
-                                value={form.addressLine2} onChange={set("addressLine2")} />
-                        </Grid>
+                            <Grid size={12}>
+                                <TextField label="Address Line 2" fullWidth size="small" value={form.addressLine2} onChange={set("addressLine2")} />
+                            </Grid>
                         )}
                         {fields.city && (
-                        <Grid item xs={12} sm={6}>
-                            <TextField label="City" fullWidth size="small"
-                                value={form.city} onChange={set("city")} />
-                        </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField label="City" fullWidth size="small" value={form.city} onChange={set("city")} />
+                            </Grid>
                         )}
                         {fields.state && (
-                        <Grid item xs={12} sm={6}>
-                            <TextField label="State / County" fullWidth size="small"
-                                value={form.state} onChange={set("state")} />
-                        </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField label="State / County" fullWidth size="small" value={form.state} onChange={set("state")} />
+                            </Grid>
                         )}
                         {fields.postcode && (
-                        <Grid item xs={12} sm={6}>
-                            <TextField label="Postcode" fullWidth size="small"
-                                value={form.postcode} onChange={set("postcode")} />
-                        </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField label="Postcode" fullWidth size="small" value={form.postcode} onChange={set("postcode")} />
+                            </Grid>
                         )}
                         {fields.country && (
-                        <Grid item xs={12} sm={6}>
-                            <CountrySelect
-                                value={form.country}
-                                onChange={(v) => setForm((f) => ({ ...f, country: v }))}
-                            />
-                        </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <CountrySelect value={form.country} onChange={(v) => setForm((f) => ({ ...f, country: v }))} />
+                            </Grid>
                         )}
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={onClose} disabled={saving}>Cancel</Button>
+                    <Button onClick={onClose} disabled={saving}>
+                        Cancel
+                    </Button>
                     <Button type="submit" variant="contained" disabled={saving || !form.name.trim()}>
                         {saving ? "Saving…" : "Save"}
                     </Button>

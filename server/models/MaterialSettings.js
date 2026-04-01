@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 // Singleton — there is always exactly one document in this collection.
 // Access via MaterialSettings.getSettings() or upsert via PUT /api/settings/materials.
@@ -9,9 +9,9 @@ const materialSettingsSchema = new mongoose.Schema(
 
         // Currency symbol shown next to costs throughout the app
         currency: {
-            type:    String,
-            enum:    ['GBP', 'USD', 'EUR', 'AUD', 'CAD', 'NZD'],
-            default: 'GBP',
+            type: String,
+            enum: ["GBP", "USD", "EUR", "AUD", "CAD", "NZD"],
+            default: "GBP",
         },
 
         // Automatically reduce material stock when an order is marked complete
@@ -19,10 +19,16 @@ const materialSettingsSchema = new mongoose.Schema(
 
         // Track bulk/percentage material quantities to 2 decimal places rather than whole numbers
         trackFractionalQuantities: { type: Boolean, default: false },
+
+        // Column visibility map for the materials table – key → boolean (absent = true)
+        tableColumns: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+        // Prefix used when auto-assigning material numbers (e.g. MTL-00000001)
+        numberPrefix: { type: String, default: "MTL-" },
     },
     { timestamps: true },
 );
 
-const MaterialSettings = mongoose.model('MaterialSettings', materialSettingsSchema);
+const MaterialSettings = mongoose.model("MaterialSettings", materialSettingsSchema);
 
 export default MaterialSettings;

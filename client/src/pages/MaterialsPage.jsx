@@ -33,12 +33,29 @@ export default function MaterialsPage() {
     const [saving, setSaving] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [lowStockMaterials, setLowStockMaterials] = useState([]);
+    const [colSettings, setColSettings] = useState({});
+
+    // Load column visibility settings
+    useEffect(() => {
+        api.get("/settings/materials")
+            .then(({ data }) => {
+                setColSettings(data?.settings?.tableColumns ?? {});
+            })
+            .catch(() => {});
+    }, []);
+
+    const col = (key) => colSettings[key] !== false;
+
+    // 2 always-visible columns (Name + Actions) + each enabled optional column
+    const visibleColCount = 2 + ["type", "colour", "inStock"].filter((k) => col(k)).length;
 
     // Load material types for filter dropdown
     useEffect(() => {
-        api.get("/material-types").then((res) => {
-            setMaterialTypes(res.data.types || []);
-        }).catch(() => {});
+        api.get("/material-types")
+            .then((res) => {
+                setMaterialTypes(res.data.types || []);
+            })
+            .catch(() => {});
     }, []);
 
     const load = useCallback(async () => {
@@ -48,14 +65,9 @@ export default function MaterialsPage() {
             const params = {};
             if (search) params.search = search;
             if (typeFilter) params.type = typeFilter;
-            const [filtered, all] = await Promise.all([
-                api.get("/materials", { params }),
-                api.get("/materials"),
-            ]);
+            const [filtered, all] = await Promise.all([api.get("/materials", { params }), api.get("/materials")]);
             setMaterials(filtered.data.materials);
-            setLowStockMaterials(
-                (all.data.materials || []).filter((m) => m.quantity <= m.lowStockThreshold)
-            );
+            setLowStockMaterials((all.data.materials || []).filter((m) => m.quantity <= m.lowStockThreshold));
         } catch {
             setError(t("materials.loadError", "Failed to load materials. Is the server running?"));
         } finally {
@@ -166,7 +178,9 @@ export default function MaterialsPage() {
                                 {lowStockMaterials.map((m) => (
                                     <TableRow key={m._id} hover>
                                         <TableCell>
-                                            <Typography variant="body2" fontWeight={600}>{m.name}</Typography>
+                                            <Typography variant="body2" fontWeight={600}>
+                                                {m.name}
+                                            </Typography>
                                         </TableCell>
                                         <TableCell>
                                             <Chip label={m.type} size="small" variant="outlined" />
@@ -249,16 +263,15 @@ export default function MaterialsPage() {
                 {typeFilter &&
                     (() => {
                         const totalValue = materials.reduce((s, m) => {
-                            const effectiveCost = m.unitsPerPack > 0
-                                ? m.costPerUnit / m.unitsPerPack
-                                : m.costPerUnit;
+                            const effectiveCost = m.unitsPerPack > 0 ? m.costPerUnit / m.unitsPerPack : m.costPerUnit;
                             return s + m.quantity * effectiveCost;
                         }, 0);
                         const totalQty = materials.reduce((s, m) => s + m.quantity, 0);
                         return (
                             <Paper variant="outlined" sx={{ px: 2, py: 0.75, ml: { sm: "auto" }, whiteSpace: "nowrap" }}>
                                 <Typography variant="caption" color="text.secondary" display="block">
-                                    {materials.length} {typeFilter}{materials.length !== 1 ? "s" : ""} &middot; {totalQty} {t("materials.units", "units")}
+                                    {materials.length} {typeFilter}
+                                    {materials.length !== 1 ? "s" : ""} &middot; {totalQty} {t("materials.units", "units")}
                                 </Typography>
                                 <Typography variant="body2" fontWeight={700}>
                                     {t("materials.totalValue", "Total value")}: {fmt(totalValue)}
@@ -272,24 +285,24 @@ export default function MaterialsPage() {
             <TableContainer component={Paper}>
                 <Table size="small">
                     <TableHead>
-                        <TableRow sx={{ '& th': { fontWeight: 600, bgcolor: 'background.default' } }}>
+                        <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
                             <TableCell>{t("materials.col.name", "Name")}</TableCell>
-                            <TableCell>{t("materials.col.type", "Type")}</TableCell>
-                            <TableCell>{t("materials.col.colour", "Colour")}</TableCell>
-                            <TableCell align="right">{t("materials.col.inStock", "In Stock")}</TableCell>
+                            {col("type") && <TableCell>{t("materials.col.type", "Type")}</TableCell>}
+                            {col("colour") && <TableCell>{t("materials.col.colour", "Colour")}</TableCell>}
+                            {col("inStock") && <TableCell align="right">{t("materials.col.inStock", "In Stock")}</TableCell>}
                             <TableCell align="right">{t("materials.col.actions", "Actions")}</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4 }}>
                                     <CircularProgress size={28} />
                                 </TableCell>
                             </TableRow>
                         ) : materials.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                     {t("materials.empty", "No materials found. Add one to get started.")}
                                 </TableCell>
                             </TableRow>
@@ -305,26 +318,25 @@ export default function MaterialsPage() {
                                                         <WarningAmberIcon fontSize="small" color="warning" />
                                                     </Tooltip>
                                                 )}
-                                                <Typography
-                                                    variant="body2"
-                                                    fontWeight={600}
-                                                    sx={{ cursor: "pointer", "&:hover": { color: "primary.main", textDecoration: "underline" } }}
-                                                    onClick={() => navigate(`/materials/${m._id}`)}
-                                                >
+                                                <Typography variant="body2" fontWeight={600} sx={{ cursor: "pointer", "&:hover": { color: "primary.main", textDecoration: "underline" } }} onClick={() => navigate(`/materials/${m._id}`)}>
                                                     {m.name}
                                                 </Typography>
                                             </Stack>
                                         </TableCell>
-                                        <TableCell>
-                                            <Chip label={m.type} size="small" variant="outlined" />
-                                        </TableCell>
-                                        <TableCell>{m.color || "—"}</TableCell>
-                                        <TableCell align="right">
-                                            {m.quantity}
-                                            <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-                                                {m.unit}
-                                            </Typography>
-                                        </TableCell>
+                                        {col("type") && (
+                                            <TableCell>
+                                                <Chip label={m.type} size="small" variant="outlined" />
+                                            </TableCell>
+                                        )}
+                                        {col("colour") && <TableCell>{m.color || "—"}</TableCell>}
+                                        {col("inStock") && (
+                                            <TableCell align="right">
+                                                {m.quantity}
+                                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                                                    {m.unit}
+                                                </Typography>
+                                            </TableCell>
+                                        )}
                                         <TableCell align="right">
                                             <Tooltip title={t("materials.edit", "Edit")}>
                                                 <IconButton
@@ -354,10 +366,9 @@ export default function MaterialsPage() {
             {/* Summary */}
             {!loading && materials.length > 0 && (
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                    {materials.length} {t("materials.materialShown", "material")}{materials.length !== 1 ? "s" : ""} {t("materials.shown", "shown")}
-                    {materials.filter((m) => m.quantity <= m.lowStockThreshold).length > 0 &&
-                        ` · ${materials.filter((m) => m.quantity <= m.lowStockThreshold).length} ${t("materials.lowStockCount", "low stock")}`
-                    }
+                    {materials.length} {t("materials.materialShown", "material")}
+                    {materials.length !== 1 ? "s" : ""} {t("materials.shown", "shown")}
+                    {materials.filter((m) => m.quantity <= m.lowStockThreshold).length > 0 && ` · ${materials.filter((m) => m.quantity <= m.lowStockThreshold).length} ${t("materials.lowStockCount", "low stock")}`}
                 </Typography>
             )}
 

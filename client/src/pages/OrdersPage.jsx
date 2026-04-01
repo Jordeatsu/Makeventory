@@ -1,10 +1,32 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
-    DialogTitle, IconButton, InputAdornment, MenuItem, Paper, Stack,
-    Tab, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination,
-    TableRow, Tabs, TextField, Tooltip, Typography,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    InputAdornment,
+    MenuItem,
+    Paper,
+    Stack,
+    Tab,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TablePagination,
+    TableRow,
+    Tabs,
+    TextField,
+    Tooltip,
+    Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -32,17 +54,32 @@ export default function OrdersPage() {
     const fmt = useCurrencyFormatter(settings);
     const { toast, showToast, closeToast } = useToast();
 
-    const [orders, setOrders]       = useState([]);
-    const [loading, setLoading]     = useState(true);
-    const [error, setError]         = useState("");
-    const [search, setSearch]       = useState("");
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
-    const [formOpen, setFormOpen]   = useState(false);
-    const [editing, setEditing]     = useState(null);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editing, setEditing] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
-    const [page, setPage]           = useState(0);
-    const [tab, setTab]             = useState(1);
+    const [page, setPage] = useState(0);
+    const [tab, setTab] = useState(1);
     const ROWS = 10;
+    const [colSettings, setColSettings] = useState({});
+
+    // Load column visibility settings
+    useEffect(() => {
+        api.get("/settings/orders")
+            .then(({ data }) => {
+                setColSettings(data?.settings?.tableColumns ?? {});
+            })
+            .catch(() => {});
+    }, []);
+
+    const col = (key) => colSettings[key] !== false;
+
+    // 2 always-visible columns (Order # + Actions) + each enabled optional column
+    const visibleColCount = 2 + ["date", "customer", "status", "products", "grossRevenue", "netRevenue", "profit"].filter((k) => col(k)).length;
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -52,28 +89,30 @@ export default function OrdersPage() {
             setOrders(data.orders ?? []);
             setPage(0);
         } catch {
-            setError(t('orders.loadError'));
+            setError(t("orders.loadError"));
         } finally {
             setLoading(false);
         }
     }, [search, statusFilter]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        load();
+    }, [load]);
 
     const handleSave = async (form) => {
         try {
             if (editing) {
                 await api.put(`/orders/${editing._id}`, form);
-                showToast(t('orders.updated'));
+                showToast(t("orders.updated"));
             } else {
                 await api.post("/orders", form);
-                showToast(t('orders.created'));
+                showToast(t("orders.created"));
             }
             setFormOpen(false);
             setEditing(null);
             await load();
         } catch (e) {
-            setError(e.response?.data?.message || t('orders.saveFailed'));
+            setError(e.response?.data?.message || t("orders.saveFailed"));
         }
     };
 
@@ -82,10 +121,10 @@ export default function OrdersPage() {
         try {
             await api.delete(`/orders/${deleteTarget._id}`);
             setDeleteTarget(null);
-            showToast(t('orders.deleted'), "info");
+            showToast(t("orders.deleted"), "info");
             await load();
         } catch {
-            setError(t('orders.deleteError'));
+            setError(t("orders.deleteError"));
         }
     };
 
@@ -109,67 +148,106 @@ export default function OrdersPage() {
             <TableCell>
                 {o.origin ? (
                     <>
-                        <Typography variant="body2" fontWeight={600}>{o.origin}</Typography>
-                        {o.originOrderId && <Typography variant="caption" color="text.secondary">{o.originOrderId}</Typography>}
+                        <Typography variant="body2" fontWeight={600}>
+                            {o.origin}
+                        </Typography>
+                        {o.originOrderId && (
+                            <Typography variant="caption" color="text.secondary">
+                                {o.originOrderId}
+                            </Typography>
+                        )}
                     </>
                 ) : o.orderNumber ? (
-                    <Typography variant="body2" fontWeight={600}>{o.orderNumber}</Typography>
-                ) : <Typography variant="caption" color="text.disabled">—</Typography>}
+                    <Typography variant="body2" fontWeight={600}>
+                        {o.orderNumber}
+                    </Typography>
+                ) : (
+                    <Typography variant="caption" color="text.disabled">
+                        —
+                    </Typography>
+                )}
             </TableCell>
-            <TableCell>{fmtDate(o.orderDate)}</TableCell>
-            <TableCell>
-                <Typography variant="body2" fontWeight={600}>{o.customer?.name}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                    {[o.customer?.city, o.customer?.postcode].filter(Boolean).join(", ")}
-                </Typography>
-            </TableCell>
-            <TableCell>
-                <Chip label={o.status} size="small" sx={{ bgcolor: STATUS_COLOURS[o.status] || "#ccc", color: "#fff", fontWeight: 600 }} />
-            </TableCell>
-            <TableCell>
-                {o.products?.length > 0 ? (
-                    <Stack spacing={0.75}>
-                        {o.products.map((p, i) => (
-                            <Box key={i}>
-                                <Typography variant="body2" fontWeight={600}>
-                                    {p.productName}{p.quantity > 1 ? ` ×${p.quantity}` : ""}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {[p.sku, p.category].filter(Boolean).join(" · ")}
-                                </Typography>
-                            </Box>
-                        ))}
-                    </Stack>
-                ) : <Typography variant="caption" color="text.disabled">—</Typography>}
-            </TableCell>
-            <TableCell align="right">
-                <Typography variant="body2" fontWeight={600}>
-                    {fmt(((o.totalCharged || 0) - (o.discountType === "percent"
-                        ? (o.totalCharged || 0) * ((o.discount || 0) / 100)
-                        : (o.discount || 0))) + (o.shippingCost || 0) + (o.buyerTax || 0))}
-                </Typography>
-            </TableCell>
-            <TableCell align="right">
-                <Typography variant="body2" fontWeight={600}>{fmt((o.profit || 0) + (o.shippingCost || 0))}</Typography>
-            </TableCell>
-            <TableCell align="right">
-                <Typography variant="body2" fontWeight={700} color={o.profit >= 0 ? "success.main" : "error.main"}>
-                    {fmt(o.profit)}
-                </Typography>
-            </TableCell>
+            {col("date") && <TableCell>{fmtDate(o.orderDate)}</TableCell>}
+            {col("customer") && (
+                <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                        {o.customer?.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                        {[o.customer?.city, o.customer?.postcode].filter(Boolean).join(", ")}
+                    </Typography>
+                </TableCell>
+            )}
+            {col("status") && (
+                <TableCell>
+                    <Chip label={o.status} size="small" sx={{ bgcolor: STATUS_COLOURS[o.status] || "#ccc", color: "#fff", fontWeight: 600 }} />
+                </TableCell>
+            )}
+            {col("products") && (
+                <TableCell>
+                    {o.products?.length > 0 ? (
+                        <Stack spacing={0.75}>
+                            {o.products.map((p, i) => (
+                                <Box key={i}>
+                                    <Typography variant="body2" fontWeight={600}>
+                                        {p.productName}
+                                        {p.quantity > 1 ? ` ×${p.quantity}` : ""}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {[p.sku, p.category].filter(Boolean).join(" · ")}
+                                    </Typography>
+                                </Box>
+                            ))}
+                        </Stack>
+                    ) : (
+                        <Typography variant="caption" color="text.disabled">
+                            —
+                        </Typography>
+                    )}
+                </TableCell>
+            )}
+            {col("grossRevenue") && (
+                <TableCell align="right">
+                    <Typography variant="body2" fontWeight={600}>
+                        {fmt((o.totalCharged || 0) - (o.discountType === "percent" ? (o.totalCharged || 0) * ((o.discount || 0) / 100) : o.discount || 0) + (o.shippingCost || 0) + (o.buyerTax || 0))}
+                    </Typography>
+                </TableCell>
+            )}
+            {col("netRevenue") && (
+                <TableCell align="right">
+                    <Typography variant="body2" fontWeight={600}>
+                        {fmt((o.profit || 0) + (o.shippingCost || 0))}
+                    </Typography>
+                </TableCell>
+            )}
+            {col("profit") && (
+                <TableCell align="right">
+                    <Typography variant="body2" fontWeight={700} color={o.profit >= 0 ? "success.main" : "error.main"}>
+                        {fmt(o.profit)}
+                    </Typography>
+                </TableCell>
+            )}
             <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                 {isLocked(o) ? (
-                    <Tooltip title={t('orders.lockedTooltip')}>
-                        <span><LockIcon fontSize="small" sx={{ color: "text.disabled", verticalAlign: "middle" }} /></span>
+                    <Tooltip title={t("orders.lockedTooltip")}>
+                        <span>
+                            <LockIcon fontSize="small" sx={{ color: "text.disabled", verticalAlign: "middle" }} />
+                        </span>
                     </Tooltip>
                 ) : (
                     <>
-                        <Tooltip title={t('common.edit')}>
-                            <IconButton size="small" onClick={() => { setEditing(o); setFormOpen(true); }}>
+                        <Tooltip title={t("common.edit")}>
+                            <IconButton
+                                size="small"
+                                onClick={() => {
+                                    setEditing(o);
+                                    setFormOpen(true);
+                                }}
+                            >
                                 <EditIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title={t('common.delete')}>
+                        <Tooltip title={t("common.delete")}>
                             <IconButton size="small" color="error" onClick={() => setDeleteTarget(o)}>
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -183,15 +261,15 @@ export default function OrdersPage() {
     const tableHead = (
         <TableHead>
             <TableRow sx={{ "& th": { fontWeight: 600, bgcolor: "background.default" } }}>
-                <TableCell>{t('orders.col.order')}</TableCell>
-                <TableCell>{t('orders.col.date')}</TableCell>
-                <TableCell>{t('orders.col.customer')}</TableCell>
-                <TableCell>{t('orders.col.status')}</TableCell>
-                <TableCell>{t('orders.col.products')}</TableCell>
-                <TableCell align="right">{t('orders.col.grossRevenue')}</TableCell>
-                <TableCell align="right">{t('orders.col.netRevenue')}</TableCell>
-                <TableCell align="right">{t('orders.col.profit')}</TableCell>
-                <TableCell align="right">{t('orders.col.actions')}</TableCell>
+                <TableCell>{t("orders.col.order")}</TableCell>
+                {col("date") && <TableCell>{t("orders.col.date")}</TableCell>}
+                {col("customer") && <TableCell>{t("orders.col.customer")}</TableCell>}
+                {col("status") && <TableCell>{t("orders.col.status")}</TableCell>}
+                {col("products") && <TableCell>{t("orders.col.products")}</TableCell>}
+                {col("grossRevenue") && <TableCell align="right">{t("orders.col.grossRevenue")}</TableCell>}
+                {col("netRevenue") && <TableCell align="right">{t("orders.col.netRevenue")}</TableCell>}
+                {col("profit") && <TableCell align="right">{t("orders.col.profit")}</TableCell>}
+                <TableCell align="right">{t("orders.col.actions")}</TableCell>
             </TableRow>
         </TableHead>
     );
@@ -200,33 +278,63 @@ export default function OrdersPage() {
         <Box>
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} mb={3} gap={2}>
                 <Box>
-                    <Typography variant="h4">{t('orders.title')}</Typography>
-                    <Typography color="text.secondary" variant="body2">{t('orders.subtitle')}</Typography>
+                    <Typography variant="h4">{t("orders.title")}</Typography>
+                    <Typography color="text.secondary" variant="body2">
+                        {t("orders.subtitle")}
+                    </Typography>
                 </Box>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditing(null); setFormOpen(true); }}>
-                    {t('orders.newOrder')}
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                        setEditing(null);
+                        setFormOpen(true);
+                    }}
+                >
+                    {t("orders.newOrder")}
                 </Button>
             </Stack>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+                    {error}
+                </Alert>
+            )}
 
             <Stack direction={{ xs: "column", sm: "row" }} gap={2} mb={2}>
                 <TextField
-                    placeholder={t('orders.searchPlaceholder')}
-                    size="small" value={search}
+                    placeholder={t("orders.searchPlaceholder")}
+                    size="small"
+                    value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     sx={{ minWidth: 260 }}
-                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon fontSize="small" />
+                            </InputAdornment>
+                        ),
+                    }}
                 />
-                <TextField select size="small" label={t('orders.filterByStatus')} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 180 }}>
-                    {ALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s || t('orders.allStatuses')}</MenuItem>)}
+                <TextField select size="small" label={t("orders.filterByStatus")} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 180 }}>
+                    {ALL_STATUSES.map((s) => (
+                        <MenuItem key={s} value={s}>
+                            {s || t("orders.allStatuses")}
+                        </MenuItem>
+                    ))}
                 </TextField>
             </Stack>
 
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-                <Tabs value={tab} onChange={(_, v) => { setTab(v); setPage(0); }}>
-                    <Tab label={t('orders.tabs.allOrders')} />
-                    <Tab label={t('orders.tabs.byMonth')} />
+                <Tabs
+                    value={tab}
+                    onChange={(_, v) => {
+                        setTab(v);
+                        setPage(0);
+                    }}
+                >
+                    <Tab label={t("orders.tabs.allOrders")} />
+                    <Tab label={t("orders.tabs.byMonth")} />
                 </Tabs>
             </Box>
 
@@ -238,40 +346,41 @@ export default function OrdersPage() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}><CircularProgress size={28} /></TableCell>
+                                    <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4 }}>
+                                        <CircularProgress size={28} />
+                                    </TableCell>
                                 </TableRow>
                             ) : orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                                        {t('orders.noOrdersFound')}
+                                    <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                        {t("orders.noOrdersFound")}
                                     </TableCell>
                                 </TableRow>
-                            ) : pagedOrders.map(renderRow)}
+                            ) : (
+                                pagedOrders.map(renderRow)
+                            )}
                         </TableBody>
                     </Table>
-                    {!loading && orders.length > ROWS && (
-                        <TablePagination
-                            component="div"
-                            count={orders.length}
-                            page={page}
-                            onPageChange={(_, p) => setPage(p)}
-                            rowsPerPage={ROWS}
-                            rowsPerPageOptions={[ROWS]}
-                        />
-                    )}
+                    {!loading && orders.length > ROWS && <TablePagination component="div" count={orders.length} page={page} onPageChange={(_, p) => setPage(p)} rowsPerPage={ROWS} rowsPerPageOptions={[ROWS]} />}
                 </TableContainer>
             )}
 
             {/* Tab 1: By Month */}
-            {tab === 1 && (
-                loading ? (
-                    <Box sx={{ textAlign: "center", py: 4 }}><CircularProgress size={28} /></Box>
+            {tab === 1 &&
+                (loading ? (
+                    <Box sx={{ textAlign: "center", py: 4 }}>
+                        <CircularProgress size={28} />
+                    </Box>
                 ) : groupedByMonth.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>{t('orders.noOrders')}</Typography>
+                    <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+                        {t("orders.noOrders")}
+                    </Typography>
                 ) : (
                     groupedByMonth.map(({ label, orders: monthOrders }) => (
                         <Box key={label} sx={{ mb: 4 }}>
-                            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>{label}</Typography>
+                            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>
+                                {label}
+                            </Typography>
                             <TableContainer component={Paper}>
                                 <Table size="small">
                                     {tableHead}
@@ -280,22 +389,31 @@ export default function OrdersPage() {
                             </TableContainer>
                         </Box>
                     ))
-                )
-            )}
+                ))}
 
-            <OrderFormModal open={formOpen} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={handleSave} initial={editing} />
+            <OrderFormModal
+                open={formOpen}
+                onClose={() => {
+                    setFormOpen(false);
+                    setEditing(null);
+                }}
+                onSave={handleSave}
+                initial={editing}
+            />
 
             {/* Delete confirmation */}
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>{t('orders.delete.title')}</DialogTitle>
+                <DialogTitle>{t("orders.delete.title")}</DialogTitle>
                 <DialogContent>
-                    <Typography>
-                        {t('orders.delete.confirm', { orderNumber: deleteTarget?.orderNumber, customer: deleteTarget?.customer?.name })}
-                    </Typography>
+                    <Typography>{t("orders.delete.confirm", { orderNumber: deleteTarget?.orderNumber, customer: deleteTarget?.customer?.name })}</Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={() => setDeleteTarget(null)} color="inherit">{t('common.cancel')}</Button>
-                    <Button variant="contained" color="error" onClick={handleDelete}>{t('common.delete')}</Button>
+                    <Button onClick={() => setDeleteTarget(null)} color="inherit">
+                        {t("common.cancel")}
+                    </Button>
+                    <Button variant="contained" color="error" onClick={handleDelete}>
+                        {t("common.delete")}
+                    </Button>
                 </DialogActions>
             </Dialog>
 

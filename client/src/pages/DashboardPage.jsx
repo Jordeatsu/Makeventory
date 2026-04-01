@@ -16,9 +16,6 @@ import { STATUS_COLOURS, SEMANTIC, BRAND } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
 import StatCard from "../components/common/StatCard";
 
-// Types whose cost is expressed per-pack rather than per-unit
-const BULK_TYPES = ["Bulk Pack", "Multipack"];
-
 /**
  * @component
  * @returns {JSX.Element}
@@ -38,7 +35,10 @@ export default function DashboardPage() {
         // Each call resolves to [] if the endpoint doesn't exist yet, so the
         // page renders with empty states rather than a full error screen.
         const safeFetch = (path) =>
-            api.get(path).then((r) => r.data?.items ?? r.data?.materials ?? r.data?.orders ?? []).catch(() => []);
+            api
+                .get(path)
+                .then((r) => r.data?.items ?? r.data?.materials ?? r.data?.orders ?? [])
+                .catch(() => []);
 
         Promise.all([safeFetch("/materials"), safeFetch("/orders")])
             .then(([mats, ords]) => {
@@ -69,7 +69,7 @@ export default function DashboardPage() {
     const chartData = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
 
     const totalStockValue = materials.reduce((s, m) => {
-        const effectiveCost = BULK_TYPES.includes(m.type) && m.unitsPerPack > 0 ? m.costPerUnit / m.unitsPerPack : m.costPerUnit;
+        const effectiveCost = m.unitsPerPack > 0 ? m.costPerUnit / m.unitsPerPack : m.costPerUnit;
         return s + m.quantity * effectiveCost;
     }, 0);
 
@@ -90,23 +90,23 @@ export default function DashboardPage() {
 
             {/* KPI cards */}
             <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard icon={<ReceiptLongIcon />} label={t("dashboard.totalOrders")} value={orders.length} sub={t("dashboard.activeOrders", { count: activeOrders.length })} color="primary.main" />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard icon={<AttachMoneyIcon />} label={t("dashboard.totalRevenue")} value={fmt(totalRevenue)} sub={t("dashboard.allTime")} color={SEMANTIC.info} />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard icon={<TrendingUpIcon />} label={t("dashboard.netProfit")} value={fmt(totalProfit)} sub={t("dashboard.margin", { value: totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0 })} color={totalProfit >= 0 ? SEMANTIC.success : SEMANTIC.error} />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard icon={<InventoryIcon />} label={t("dashboard.materialsInStock")} value={materials.length} sub={t("dashboard.lowStockCount", { count: lowStock.length })} color={lowStock.length > 0 ? SEMANTIC.warning : "primary.main"} />
                 </Grid>
             </Grid>
 
             <Grid container spacing={3}>
                 {/* Orders by status chart */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" mb={2}>
                             {t("dashboard.ordersByStatus")}
@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Stock value */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Paper sx={{ p: 3, height: "100%" }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography variant="h6">{t("dashboard.stockOverview")}</Typography>
@@ -158,9 +158,7 @@ export default function DashboardPage() {
                                 <Stack direction="row" alignItems="center" gap={1} mb={1.5}>
                                     <WarningAmberIcon color="warning" fontSize="small" />
                                     <Typography variant="subtitle2" color="warning.main">
-                                        {lowStock.length === 1
-                                            ? t("dashboard.lowStockWarning", { count: lowStock.length })
-                                            : t("dashboard.lowStockWarningPlural", { count: lowStock.length })}
+                                        {lowStock.length === 1 ? t("dashboard.lowStockWarning", { count: lowStock.length }) : t("dashboard.lowStockWarningPlural", { count: lowStock.length })}
                                     </Typography>
                                 </Stack>
                                 {lowStock.slice(0, 5).map((m) => (
@@ -180,7 +178,7 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Recent orders */}
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <Paper sx={{ p: 3 }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography variant="h6">{t("dashboard.recentOrders")}</Typography>

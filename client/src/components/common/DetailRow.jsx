@@ -10,7 +10,7 @@ import { Grid, Typography } from "@mui/material";
 export function DetailRow({ label, value, mono = false }) {
     if (value === null || value === undefined || value === "") return null;
     return (
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="caption" color="text.secondary" display="block">
                 {label}
             </Typography>
@@ -30,11 +30,15 @@ export function DetailRow({ label, value, mono = false }) {
 export function InfoRow({ label, value, valueColor }) {
     return (
         <Grid container sx={{ py: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
-            <Grid item xs={6} sm={5}>
-                <Typography variant="body2" color="text.secondary">{label}</Typography>
+            <Grid size={{ xs: 6, sm: 5 }}>
+                <Typography variant="body2" color="text.secondary">
+                    {label}
+                </Typography>
             </Grid>
-            <Grid item xs={6} sm={7}>
-                <Typography variant="body2" fontWeight={600} color={valueColor}>{value || "—"}</Typography>
+            <Grid size={{ xs: 6, sm: 7 }}>
+                <Typography variant="body2" fontWeight={600} color={valueColor}>
+                    {value || "—"}
+                </Typography>
             </Grid>
         </Grid>
     );

@@ -16,4 +16,5 @@ export const updateAccount = (data) => api.put("/account/update", data);
 export const createBusiness = (data) => api.post("/business/create", data);
 export const getModules = () => api.get("/modules");
 export const saveModules = (modules) => api.put("/modules/save", { modules });
+export const savePrefixes = (data) => api.put("/settings/prefixes", data);
 export const completeInstall = () => api.post("/install/complete");
