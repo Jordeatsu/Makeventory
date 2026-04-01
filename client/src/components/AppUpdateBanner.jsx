@@ -1,8 +1,69 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, List, ListItem, Typography } from "@mui/material";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import { useTranslation } from "react-i18next";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import api from "../api";
+
+// Maps markdown elements to MUI Typography / structural components so the
+// release notes feel native to the app's design system.
+const MD_COMPONENTS = {
+    h1: ({ children }) => (
+        <Typography variant="h6" fontWeight={700} mt={2} mb={0.5}>
+            {children}
+        </Typography>
+    ),
+    h2: ({ children }) => (
+        <Typography variant="subtitle1" fontWeight={700} mt={2} mb={0.5}>
+            {children}
+        </Typography>
+    ),
+    h3: ({ children }) => (
+        <Typography variant="subtitle2" fontWeight={700} mt={1.5} mb={0.5}>
+            {children}
+        </Typography>
+    ),
+    p: ({ children }) => (
+        <Typography variant="body2" mb={1}>
+            {children}
+        </Typography>
+    ),
+    ul: ({ children }) => (
+        <List dense disablePadding sx={{ pl: 2, mb: 1, listStyleType: "disc", display: "list-item" === "list-item" ? "block" : undefined }}>
+            {children}
+        </List>
+    ),
+    ol: ({ children }) => (
+        <List dense disablePadding component="ol" sx={{ pl: 2, mb: 1 }}>
+            {children}
+        </List>
+    ),
+    li: ({ children }) => (
+        <ListItem disableGutters disablePadding sx={{ display: "list-item", pl: 0, py: 0.25 }}>
+            <Typography variant="body2" component="span">
+                {children}
+            </Typography>
+        </ListItem>
+    ),
+    code: ({ inline, children }) =>
+        inline ? (
+            <Box component="code" sx={{ px: 0.5, py: 0.1, borderRadius: 0.5, bgcolor: "action.hover", fontFamily: "monospace", fontSize: "0.8rem" }}>
+                {children}
+            </Box>
+        ) : (
+            <Box component="pre" sx={{ p: 1.5, borderRadius: 1, bgcolor: "action.hover", fontFamily: "monospace", fontSize: "0.8rem", whiteSpace: "pre-wrap", overflowX: "auto", mb: 1 }}>
+                {children}
+            </Box>
+        ),
+    blockquote: ({ children }) => <Box sx={{ borderLeft: 3, borderColor: "divider", pl: 2, my: 1, color: "text.secondary" }}>{children}</Box>,
+    hr: () => <Divider sx={{ my: 1.5 }} />,
+    a: ({ href, children }) => (
+        <Box component="a" href={href} target="_blank" rel="noopener noreferrer" sx={{ color: "primary.main" }}>
+            {children}
+        </Box>
+    ),
+};
 
 // How often (ms) to poll the server for a newer commit on origin/main.
 const CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
@@ -96,18 +157,10 @@ export default function AppUpdateBanner() {
                             </Typography>
                         </Box>
                     ) : updateInfo?.releaseNotes ? (
-                        <Box
-                            component="pre"
-                            sx={{
-                                m: 0,
-                                whiteSpace: "pre-wrap",
-                                fontFamily: "inherit",
-                                fontSize: "0.875rem",
-                                lineHeight: 1.6,
-                                color: "text.primary",
-                            }}
-                        >
-                            {updateInfo.releaseNotes}
+                        <Box sx={{ "& > *:first-of-type": { mt: 0 } }}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+                                {updateInfo.releaseNotes}
+                            </ReactMarkdown>
                         </Box>
                     ) : (
                         <Typography variant="body2" color="text.secondary">
