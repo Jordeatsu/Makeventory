@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import LockIcon from "@mui/icons-material/Lock";
@@ -95,50 +95,54 @@ export default function OrderDetailPage() {
 
     return (
         <Box>
-            {/* Header — status-tinted banner */}
-            <Paper
-                variant="outlined"
-                sx={{
-                    mb: 3,
-                    overflow: "hidden",
-                    borderColor: "divider",
-                }}
-            >
-                <Box
-                    sx={{
-                        px: 3,
-                        py: 2,
-                        bgcolor: `${STATUS_COLOURS[order.status] || "#ccc"}22`,
-                        borderBottom: 1,
-                        borderColor: "divider",
-                    }}
-                >
-                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} gap={1} flexWrap="wrap">
-                        <Tooltip title={t("orders.detail.backToOrders")}>
-                            <IconButton size="small" onClick={() => navigate("/orders")}>
-                                <ArrowBackIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Stack direction="row" alignItems="center" gap={1.5} flex={1} flexWrap="wrap">
-                            <Typography variant="h4">{order.orderNumber || "Order"}</Typography>
-                            <Chip label={order.status} size="small" sx={{ bgcolor: STATUS_COLOURS[order.status] || "#ccc", color: "#fff", fontWeight: 700 }} />
+            {/* Action bar */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/orders")} color="inherit">
+                    {t("orders.detail.backToOrders")}
+                </Button>
+                <Stack direction="row" alignItems="center" gap={1}>
+                    {locked ? (
+                        <>
+                            <Chip icon={<LockIcon />} label={t("orders.detail.locked")} size="small" variant="outlined" color="default" />
+                            <Tooltip title={t("orders.lockedResetTooltip")}>
+                                <Button variant="outlined" size="small" startIcon={<LockOpenIcon />} onClick={handleUnlock}>
+                                    {t("orders.detail.unlock")}
+                                </Button>
+                            </Tooltip>
+                        </>
+                    ) : (
+                        <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
+                            {t("orders.detail.editOrder")}
+                        </Button>
+                    )}
+                </Stack>
+            </Stack>
+
+            {/* Header card */}
+            <Paper variant="outlined" sx={{ mb: 3, borderLeft: 4, borderLeftColor: STATUS_COLOURS[order.status] || "grey.400", borderColor: "divider" }}>
+                <Box sx={{ px: 3, py: 2.5 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" gap={1} flexWrap="wrap">
+                        <Typography variant="h4" fontWeight={700}>
+                            {order.orderNumber || "Order"}
+                        </Typography>
+                        <Chip label={order.status} size="small" sx={{ bgcolor: STATUS_COLOURS[order.status] || "#ccc", color: "#fff", fontWeight: 700 }} />
+                    </Stack>
+                </Box>
+                <Divider />
+                <Box sx={{ px: 3, py: 1.5 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} gap={3} flexWrap="wrap">
+                        <Typography variant="body2" color="text.secondary">
+                            {t("orders.detail.placed", { date: fmtDate(order.orderDate) })}
+                        </Typography>
+                        {order.origin && (
                             <Typography variant="body2" color="text.secondary">
-                                {t("orders.detail.placed", { date: fmtDate(order.orderDate) })}
+                                {order.origin}
                             </Typography>
-                        </Stack>
-                        {locked ? (
-                            <Stack direction="row" alignItems="center" gap={1}>
-                                <Chip icon={<LockIcon />} label={t("orders.detail.locked")} size="small" variant="outlined" color="default" />
-                                <Tooltip title={t("orders.lockedResetTooltip")}>
-                                    <Button variant="outlined" size="small" startIcon={<LockOpenIcon />} onClick={handleUnlock}>
-                                        {t("orders.detail.unlock")}
-                                    </Button>
-                                </Tooltip>
-                            </Stack>
-                        ) : (
-                            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
-                                {t("orders.detail.editOrder")}
-                            </Button>
+                        )}
+                        {order.originOrderId && (
+                            <Typography variant="body2" color="text.secondary">
+                                {t("orders.detail.originOrderId")}: {order.originOrderId}
+                            </Typography>
                         )}
                     </Stack>
                 </Box>

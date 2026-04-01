@@ -314,6 +314,9 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
                             ))}
                         </TextField>
                     </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                        <TextField label="Tracking Number" fullWidth size="small" value={form.trackingNumber} onChange={setF("trackingNumber")} />
+                    </Grid>
                 </Grid>
 
                 {/* ── Customer ── */}
@@ -816,11 +819,8 @@ export default function OrderFormModal({ open, onClose, onSave, initial }) {
                     <Grid size={12}>
                         <TextField label="Product / Description" fullWidth size="small" multiline rows={2} value={form.productDescription} onChange={setF("productDescription")} />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 8 }}>
+                    <Grid size={12}>
                         <TextField label="Notes" fullWidth size="small" multiline rows={2} value={form.notes} onChange={setF("notes")} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                        <TextField label="Tracking Number" fullWidth size="small" value={form.trackingNumber} onChange={setF("trackingNumber")} />
                     </Grid>
                 </Grid>
             </DialogContent>
