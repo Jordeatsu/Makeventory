@@ -85,7 +85,7 @@ export default function MaterialSettingsPage() {
             setColSaved(true);
             setTimeout(() => setColSaved(false), 3000);
         } catch {
-            setColError("Failed to save column settings.");
+            setColError(t("settings.tableColumns.saveFailed"));
         } finally {
             setColSaving(false);
         }
@@ -152,10 +152,10 @@ export default function MaterialSettingsPage() {
             {/* Number Prefix */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
                 <Typography variant="h6" fontWeight={600}>
-                    Number Prefix
+                    {t("settings.numberPrefix.title")}
                 </Typography>
                 <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handlePrefixSave} disabled={prefixSaving}>
-                    {prefixSaving ? "Saving…" : t("common.save")}
+                    {prefixSaving ? t("common.saving") : t("common.save")}
                 </Button>
             </Stack>
             {prefixError && (
@@ -165,25 +165,25 @@ export default function MaterialSettingsPage() {
             )}
             {prefixSaved && (
                 <Alert severity="success" sx={{ mb: 2 }}>
-                    Prefix saved.
+                    {t("settings.numberPrefix.saved")}
                 </Alert>
             )}
             <Typography variant="body2" color="text.secondary" mb={2}>
-                Set the prefix used for auto-generated material numbers (e.g. {(prefix || "MTL") + "-"}00000001).
+                {t("settings.numberPrefix.descMaterials", { example: `${(prefix || "MTL") + "-"}00000001` })}
             </Typography>
             <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
                 <Box sx={{ px: 3, py: 2 }}>
-                    <TextField label="Number Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
+                    <TextField label={t("settings.numberPrefix.label")} value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
                 </Box>
             </Paper>
 
             {/* Table Column Visibility */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
                 <Typography variant="h6" fontWeight={600}>
-                    Table Columns
+                    {t("settings.tableColumns.title")}
                 </Typography>
                 <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleColSave} disabled={colSaving}>
-                    {colSaving ? "Saving…" : t("common.save")}
+                    {colSaving ? t("common.saving") : t("common.save")}
                 </Button>
             </Stack>
             {colError && (
@@ -193,11 +193,11 @@ export default function MaterialSettingsPage() {
             )}
             {colSaved && (
                 <Alert severity="success" sx={{ mb: 2 }}>
-                    Column settings saved.
+                    {t("settings.tableColumns.saved")}
                 </Alert>
             )}
             <Typography variant="body2" color="text.secondary" mb={2}>
-                Choose which columns appear in the Materials table. Name and Actions are always visible.
+                {t("settings.tableColumns.descMaterials")}
             </Typography>
             <Paper variant="outlined" sx={{ borderRadius: 2 }}>
                 {/* Always-on: Name */}
@@ -206,7 +206,7 @@ export default function MaterialSettingsPage() {
                         <Typography variant="body2" fontWeight={500}>
                             {t("materials.col.name", "Name")}
                         </Typography>
-                        <Tooltip title="Always visible">
+                        <Tooltip title={t("settings.tableColumns.alwaysVisible")}>
                             <span>
                                 <Switch checked disabled size="small" />
                             </span>

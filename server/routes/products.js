@@ -123,24 +123,25 @@ router.put("/products/:id", requireAuth, async (req, res) => {
         const { name, sku, category, description, basePrice, active, isTemplate, parentProduct, defaultMaterials } = req.body ?? {};
         if (!name?.trim()) return res.status(400).json({ error: "Name is required." });
 
-        const estimatedMaterialCost = (defaultMaterials || []).reduce((s, m) => s + (m.lineCost || 0), 0);
-        const doc = await Product.findByIdAndUpdate(
-            id,
-            {
-                name: name.trim(),
-                sku,
-                category,
-                description,
-                basePrice: Number(basePrice) || 0,
-                active: active !== false,
-                isTemplate: !!isTemplate,
-                parentProduct: isValidId(parentProduct) ? parentProduct : null,
-                defaultMaterials: defaultMaterials || [],
-                estimatedMaterialCost,
-                updatedBy: req.user.sub,
-            },
-            { new: true },
-        );
+        const update = {
+            name: name.trim(),
+            sku,
+            category,
+            description,
+            basePrice: Number(basePrice) || 0,
+            active: active !== false,
+            isTemplate: !!isTemplate,
+            parentProduct: isValidId(parentProduct) ? parentProduct : null,
+            updatedBy: req.user.sub,
+        };
+        // Only overwrite the materials recipe when the client explicitly sends it.
+        // If omitted (e.g. from ProductFormModal which doesn't carry the recipe),
+        // the existing defaultMaterials and estimatedMaterialCost are preserved.
+        if (defaultMaterials !== undefined) {
+            update.defaultMaterials = defaultMaterials || [];
+            update.estimatedMaterialCost = (defaultMaterials || []).reduce((s, m) => s + (m.lineCost || 0), 0);
+        }
+        const doc = await Product.findByIdAndUpdate(id, update, { new: true });
         if (!doc) return res.status(404).json({ error: "Product not found." });
         res.json({ product: productToClient(doc) });
     } catch {

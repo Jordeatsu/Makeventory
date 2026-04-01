@@ -40,6 +40,9 @@ export default function ProductsPage() {
 
     const col = (key) => colSettings[key] !== false;
 
+    // 2 always-visible columns (Name + Actions) + each enabled optional column
+    const visibleColCount = 2 + ["sku", "category", "estMaterialCost", "basePrice", "estMargin", "status"].filter((k) => col(k)).length;
+
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -262,7 +265,7 @@ export default function ProductsPage() {
                                 <TableBody>
                                     {products.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                            <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                                 {t("products.noProducts")}
                                             </TableCell>
                                         </TableRow>

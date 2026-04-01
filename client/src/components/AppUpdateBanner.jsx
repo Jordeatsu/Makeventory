@@ -71,7 +71,7 @@ export default function AppUpdateBanner() {
                 icon={<SystemUpdateAltIcon />}
                 action={
                     <Button color="inherit" size="small" onClick={() => setLogOpen(true)}>
-                        See Change Log
+                        {t("update.changeLog")}
                     </Button>
                 }
                 sx={{ borderRadius: 0, py: 0.5 }}
@@ -83,7 +83,7 @@ export default function AppUpdateBanner() {
             <Dialog open={logOpen} onClose={() => setLogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <SystemUpdateAltIcon fontSize="small" />
-                    What&apos;s new in {updateInfo.remoteTag}
+                    {t("update.whatsNew", { tag: updateInfo.remoteTag })}
                 </DialogTitle>
                 <DialogContent dividers>
                     {updateInfo.releaseNotes ? (
@@ -102,14 +102,14 @@ export default function AppUpdateBanner() {
                         </Box>
                     ) : (
                         <Typography variant="body2" color="text.secondary">
-                            No release notes available for this version.
+                            {t("update.noReleaseNotes")}
                         </Typography>
                     )}
                 </DialogContent>
                 <Divider />
                 <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
                     <Button onClick={() => setLogOpen(false)} color="inherit">
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button variant="contained" startIcon={updating ? <CircularProgress size={14} color="inherit" /> : <SystemUpdateAltIcon />} onClick={handleUpdate} disabled={updating}>
                         {updating ? t("update.updating") : t("update.updateNow")}

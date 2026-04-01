@@ -28,9 +28,9 @@ export default function ModuleStep({ onComplete }) {
             await saveModules(modules.map(({ _id, isActive }) => ({ _id, isActive })));
             // Save prefixes with dash appended — user typed without dash
             await savePrefixes({
-                orders:    (prefixes.orders.trim()    || "ORD") + "-",
+                orders: (prefixes.orders.trim() || "ORD") + "-",
                 materials: (prefixes.materials.trim() || "MTL") + "-",
-                products:  (prefixes.products.trim()  || "PRD") + "-",
+                products: (prefixes.products.trim() || "PRD") + "-",
                 customers: (prefixes.customers.trim() || "CST") + "-",
             });
             await completeInstall();
@@ -78,23 +78,18 @@ export default function ModuleStep({ onComplete }) {
             </Typography>
             <Paper variant="outlined" sx={{ borderRadius: 2 }}>
                 {[
-                    { key: "orders",    label: "Orders" },
+                    { key: "orders", label: "Orders" },
                     { key: "materials", label: "Materials" },
-                    { key: "products",  label: "Products" },
+                    { key: "products", label: "Products" },
                     { key: "customers", label: "Customers" },
                 ].map(({ key, label }, idx, arr) => (
                     <React.Fragment key={key}>
                         <Box sx={{ px: 2, py: 1.5 }}>
                             <Stack direction="row" alignItems="center" spacing={2}>
-                                <Typography variant="body2" fontWeight={500} sx={{ minWidth: 100 }}>{label}</Typography>
-                                <TextField
-                                    value={prefixes[key]}
-                                    onChange={(e) => setPrefixes((prev) => ({ ...prev, [key]: e.target.value }))}
-                                    size="small"
-                                    disabled={saving || done}
-                                    inputProps={{ maxLength: 10 }}
-                                    sx={{ width: 130 }}
-                                />
+                                <Typography variant="body2" fontWeight={500} sx={{ minWidth: 100 }}>
+                                    {label}
+                                </Typography>
+                                <TextField value={prefixes[key]} onChange={(e) => setPrefixes((prev) => ({ ...prev, [key]: e.target.value }))} size="small" disabled={saving || done} inputProps={{ maxLength: 10 }} sx={{ width: 130 }} />
                                 <Typography variant="caption" color="text.secondary">
                                     → {(prefixes[key].trim() || DEFAULT_PREFIXES[key]) + "-"}00000001
                                 </Typography>

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const customerSchema = new mongoose.Schema(
     {
-        customerNumber: { type: String, trim: true, default: null },
+        customerNumber: { type: String, trim: true, default: null, index: { unique: true, sparse: true } },
         name: { type: String, required: true },
         email: { type: String },
         phone: { type: String },

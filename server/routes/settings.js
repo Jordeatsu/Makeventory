@@ -36,7 +36,7 @@ router.put("/settings/materials", requireAuth, async (req, res) => {
         if (trackFractionalQuantities !== undefined) update.trackFractionalQuantities = trackFractionalQuantities;
         if (tableColumns !== undefined) update.tableColumns = tableColumns;
         if (numberPrefix !== undefined) update.numberPrefix = numberPrefix;
-        const settings = await MaterialSettings.findOneAndUpdate({}, update, { new: true, upsert: true });
+        const settings = await MaterialSettings.findOneAndUpdate({}, update, { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true });
         res.json({ settings });
     } catch {
         res.status(500).json({ error: "Server error." });
@@ -105,7 +105,7 @@ router.get("/settings/orders", requireAuth, async (_req, res) => {
 
 router.put("/settings/orders", requireAuth, async (req, res) => {
     try {
-        const settings = await OrderSettings.findOneAndUpdate({}, { ...(req.body ?? {}) }, { new: true, upsert: true });
+        const settings = await OrderSettings.findOneAndUpdate({}, { ...(req.body ?? {}) }, { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true });
         res.json({ settings });
     } catch {
         res.status(500).json({ error: "Server error." });
@@ -126,7 +126,7 @@ router.get("/settings/products", requireAuth, async (_req, res) => {
 
 router.put("/settings/products", requireAuth, async (req, res) => {
     try {
-        const settings = await ProductSettings.findOneAndUpdate({}, { ...(req.body ?? {}) }, { new: true, upsert: true });
+        const settings = await ProductSettings.findOneAndUpdate({}, { ...(req.body ?? {}) }, { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true });
         res.json({ settings });
     } catch {
         res.status(500).json({ error: "Server error." });
@@ -147,7 +147,7 @@ router.get("/settings/year-in-review", requireAuth, async (_req, res) => {
 
 router.put("/settings/year-in-review", requireAuth, async (req, res) => {
     try {
-        const settings = await YearInReviewSettings.findOneAndUpdate({}, { ...(req.body ?? {}) }, { new: true, upsert: true });
+        const settings = await YearInReviewSettings.findOneAndUpdate({}, { ...(req.body ?? {}) }, { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true });
         res.json({ settings });
     } catch {
         res.status(500).json({ error: "Server error." });

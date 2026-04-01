@@ -78,6 +78,9 @@ export default function OrdersPage() {
 
     const col = (key) => colSettings[key] !== false;
 
+    // 2 always-visible columns (Order # + Actions) + each enabled optional column
+    const visibleColCount = 2 + ["date", "customer", "status", "products", "grossRevenue", "netRevenue", "profit"].filter((k) => col(k)).length;
+
     const load = useCallback(async () => {
         setLoading(true);
         setError("");
@@ -343,13 +346,13 @@ export default function OrdersPage() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                                    <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4 }}>
                                         <CircularProgress size={28} />
                                     </TableCell>
                                 </TableRow>
                             ) : orders.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                    <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                         {t("orders.noOrdersFound")}
                                     </TableCell>
                                 </TableRow>

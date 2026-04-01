@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const materialSchema = new mongoose.Schema(
     {
-        materialNumber: { type: String, trim: true, default: null },
+        materialNumber: { type: String, trim: true, default: null, index: { unique: true, sparse: true } },
         name: { type: String, required: true, trim: true },
         materialType: { type: mongoose.Schema.Types.ObjectId, ref: "MaterialType", required: true },
         color: { type: String, trim: true, default: null },

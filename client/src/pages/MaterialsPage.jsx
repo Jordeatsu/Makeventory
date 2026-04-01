@@ -46,6 +46,9 @@ export default function MaterialsPage() {
 
     const col = (key) => colSettings[key] !== false;
 
+    // 2 always-visible columns (Name + Actions) + each enabled optional column
+    const visibleColCount = 2 + ["type", "colour", "inStock"].filter((k) => col(k)).length;
+
     // Load material types for filter dropdown
     useEffect(() => {
         api.get("/material-types")
@@ -293,13 +296,13 @@ export default function MaterialsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4 }}>
                                     <CircularProgress size={28} />
                                 </TableCell>
                             </TableRow>
                         ) : materials.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                <TableCell colSpan={visibleColCount} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                     {t("materials.empty", "No materials found. Add one to get started.")}
                                 </TableCell>
                             </TableRow>

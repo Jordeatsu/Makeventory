@@ -16,7 +16,7 @@ const materialEntrySchema = new mongoose.Schema(
 
 const productSchema = new mongoose.Schema(
     {
-        productNumber: { type: String, trim: true, default: null },
+        productNumber: { type: String, trim: true, default: null, index: { unique: true, sparse: true } },
         name: { type: String, required: true, trim: true },
         sku: { type: String, trim: true, default: null },
         category: { type: String, trim: true, default: null },
