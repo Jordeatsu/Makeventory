@@ -190,7 +190,7 @@ export default function OrderDetailPage() {
                                 <Typography variant="body2">{order.productDescription}</Typography>
                             </Box>
                         )}
-                        <Grid container spacing={0}>
+                        <Box>
                             {order.origin && <DetailRow label={t("orders.detail.origin")} value={order.origin} />}
                             {order.originOrderId && <DetailRow label={t("orders.detail.originOrderId")} value={order.originOrderId} />}
                             <DetailRow label={t("orders.detail.orderDate")} value={fmtDate(order.orderDate)} />
@@ -198,7 +198,7 @@ export default function OrderDetailPage() {
                             <DetailRow label={t("orders.detail.materialsUsed")} value={t("orders.detail.materialsUsedCount", { count: order.materials?.length || 0 })} />
                             {order.notes && <DetailRow label={t("orders.detail.notes")} value={order.notes} />}
                             {order.trackingNumber && <DetailRow label={t("orders.detail.trackingNumber")} value={order.trackingNumber} />}
-                        </Grid>
+                        </Box>
                     </Paper>
                 </Grid>
 
