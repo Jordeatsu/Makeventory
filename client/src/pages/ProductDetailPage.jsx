@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import BuildIcon from "@mui/icons-material/Build";
@@ -81,37 +81,57 @@ export default function ProductDetailPage() {
 
     return (
         <Box>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                <IconButton onClick={() => navigate("/products")} size="small">
-                    <ArrowBackIcon />
-                </IconButton>
-                <Typography variant="h4" sx={{ flex: 1 }}>
-                    {product.name}
-                </Typography>
-                {!product.active && <Chip label={t("common.inactive")} color="default" size="small" />}
-                {inventoryEnabled && (
-                    <Button variant="outlined" startIcon={<BuildIcon />} onClick={() => setMatsOpen(true)}>
-                        Materials
-                    </Button>
-                )}
-                <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
-                    {t("common.edit")}
+            {/* Action bar */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+                <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/products")} color="inherit">
+                    {t("products.detail.allProducts")}
                 </Button>
+                <Stack direction="row" gap={1}>
+                    {inventoryEnabled && (
+                        <Button variant="outlined" startIcon={<BuildIcon />} onClick={() => setMatsOpen(true)}>
+                            {t("products.detail.materials")}
+                        </Button>
+                    )}
+                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditOpen(true)}>
+                        {t("common.edit")}
+                    </Button>
+                </Stack>
             </Stack>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-                {product.category && (
-                    <>
-                        <strong>{product.category}</strong> ·{" "}
-                    </>
-                )}
-                {product.sku && (
-                    <>
-                        {t("products.col.sku")}: {product.sku} ·{" "}
-                    </>
-                )}
-                {t("products.detail.added", { date: fmtDate(product.createdAt) })}
-            </Typography>
+
+            {/* Header card */}
+            <Paper variant="outlined" sx={{ mb: 3, borderLeft: 4, borderLeftColor: "primary.main", borderColor: "divider" }}>
+                <Box sx={{ px: 3, py: 2.5 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" gap={1} flexWrap="wrap">
+                        <Box>
+                            <Typography variant="h4" fontWeight={700}>
+                                {product.name}
+                            </Typography>
+                            {product.description && (
+                                <Typography variant="body2" color="text.secondary" mt={0.5}>
+                                    {product.description}
+                                </Typography>
+                            )}
+                        </Box>
+                        <Stack direction="row" gap={1} flexWrap="wrap">
+                            {!product.active && <Chip label={t("common.inactive")} color="default" size="small" />}
+                            {product.category && <Chip label={product.category} size="small" variant="outlined" color="primary" />}
+                        </Stack>
+                    </Stack>
+                </Box>
+                <Divider />
+                <Box sx={{ px: 3, py: 1.5 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} gap={3} flexWrap="wrap">
+                        {product.sku && (
+                            <Typography variant="body2" color="text.secondary">
+                                {t("products.col.sku")}: <strong>{product.sku}</strong>
+                            </Typography>
+                        )}
+                        <Typography variant="body2" color="text.secondary">
+                            {t("products.detail.added", { date: fmtDate(product.createdAt) })}
+                        </Typography>
+                    </Stack>
+                </Box>
+            </Paper>
 
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
