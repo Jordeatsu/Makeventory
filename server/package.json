@@ -1,0 +1,27 @@
+{
+    "name": "makeventory-server",
+    "version": "1.0.0",
+    "description": "Makeventory REST API",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.3",
+        "express-rate-limit": "^8.3.1",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.2.3",
+        "pino": "^10.3.1",
+        "pino-http": "^11.0.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.0",
+        "pino-pretty": "^13.1.3"
+    }
+}
