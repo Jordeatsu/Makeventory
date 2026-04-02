@@ -25,18 +25,20 @@ export function useSettingsSave(endpoint, errorKey) {
     }, []);
 
     const save = async (payload) => {
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        setSaved(false);
         setSaving(true);
         setError(null);
         try {
             const { data } = await api.put(endpoint, payload);
             setSaved(true);
-            if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
             savedTimerRef.current = setTimeout(() => {
                 setSaved(false);
                 savedTimerRef.current = null;
             }, 3000);
             return data;
         } catch {
+            setSaved(false);
             setError(t(errorKey));
         } finally {
             setSaving(false);
