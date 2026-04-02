@@ -30,7 +30,11 @@ export function useSettingsSave(endpoint, errorKey) {
         try {
             const { data } = await api.put(endpoint, payload);
             setSaved(true);
-            savedTimerRef.current = setTimeout(() => setSaved(false), 3000);
+            if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+            savedTimerRef.current = setTimeout(() => {
+                setSaved(false);
+                savedTimerRef.current = null;
+            }, 3000);
             return data;
         } catch {
             setError(t(errorKey));

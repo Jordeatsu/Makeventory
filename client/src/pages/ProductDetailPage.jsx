@@ -37,7 +37,7 @@ export default function ProductDetailPage() {
         return data;
     }, [id]);
 
-    const { data: stats, loading, error, editOpen, setEditOpen, load, toast, showToast, closeToast } = useDetailData(fetchStats, { errorKey: "products.detail.loadFailed" });
+    const { data: stats, loading, error, setError, editOpen, setEditOpen, load, toast, showToast, closeToast } = useDetailData(fetchStats, { errorKey: "products.detail.loadFailed" });
 
     const handleSave = async (payload) => {
         try {

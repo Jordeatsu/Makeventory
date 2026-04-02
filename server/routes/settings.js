@@ -19,9 +19,13 @@ createSettingsRoutes(router, "customers", CustomerSettings, {
     allowedFields: ["fields", "tableColumns", "numberPrefix"],
 });
 
-createSettingsRoutes(router, "orders", OrderSettings);
+createSettingsRoutes(router, "orders", OrderSettings, {
+    allowedFields: ["tableColumns", "numberPrefix"],
+});
 
-createSettingsRoutes(router, "products", ProductSettings);
+createSettingsRoutes(router, "products", ProductSettings, {
+    allowedFields: ["tableColumns", "numberPrefix"],
+});
 
 createSettingsRoutes(router, "year-in-review", YearInReviewSettings);
 

@@ -74,13 +74,15 @@ export async function generateNextNumber(Model, numberField, SettingsModel, defa
 
     // One-time initialization: derive the starting sequence from existing documents
     // so that upgrading from the old non-atomic code doesn't restart the counter.
+    // The filter `{ _id: settings._id, numberSeq: null }` makes this conditional-atomic:
+    // only the first request that sees numberSeq as null will perform the $set.
     if (settings.numberSeq == null) {
         const latest = await Model.findOne({ [numberField]: { $ne: null } })
             .sort({ createdAt: -1 })
             .select(numberField)
             .lean();
         const lastSeq = latest?.[numberField] ? parseInt(latest[numberField].match(/(\d+)$/)?.[1], 10) || 0 : 0;
-        settings = await SettingsModel.findByIdAndUpdate(settings._id, { $set: { numberSeq: lastSeq } }, { new: true, lean: true });
+        await SettingsModel.findOneAndUpdate({ _id: settings._id, numberSeq: null }, { $set: { numberSeq: lastSeq } }, { new: true, lean: true });
     }
 
     // Atomically increment — safe under concurrent requests.
