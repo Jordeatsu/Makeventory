@@ -1,0 +1,37 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import api from "../api";
+
+/**
+ * Encapsulates the saving/saved/error state pattern used in every settings
+ * section that issues a PUT to the API.
+ *
+ * @param {string} endpoint  - API path, e.g. "/settings/customers"
+ * @param {string} errorKey  - i18n key used when the request fails
+ *                            (defaults to "settings.save.failed")
+ * @returns {{ saving, saved, error, save }}
+ *   save(payload) — call with the request body; returns the response data
+ */
+export function useSettingsSave(endpoint, errorKey = "settings.save.failed") {
+    const { t } = useTranslation();
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [error, setError] = useState(null);
+
+    const save = async (payload) => {
+        setSaving(true);
+        setError(null);
+        try {
+            const { data } = await api.put(endpoint, payload);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+            return data;
+        } catch {
+            setError(t(errorKey));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return { saving, saved, error, save };
+}
