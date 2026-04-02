@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, LinearProgress, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -9,7 +9,7 @@ import api from "../api";
 import MaterialFormModal from "../components/modals/MaterialFormModal";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { useCurrencyFormatter } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useDetailData } from "../hooks/useDetailData";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
 import { DetailRow } from "../components/common/DetailRow";
@@ -32,31 +32,19 @@ export default function MaterialDetailPage() {
     const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
-    const { toast, showToast, closeToast } = useToast();
-
-    const [material, setMaterial] = useState(null);
-    const [materialTypes, setMaterialTypes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [editOpen, setEditOpen] = useState(false);
-
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError("");
+    const fetchMaterial = useCallback(async () => {
         try {
             const [matRes, typesRes] = await Promise.all([api.get(`/materials/${id}`), api.get("/material-types")]);
-            setMaterial(matRes.data.material);
-            setMaterialTypes(typesRes.data.types ?? []);
+            return { material: matRes.data.material, materialTypes: typesRes.data.types ?? [] };
         } catch (e) {
-            setError(e.response?.status === 404 ? t("materials.detail.notFound", "Material not found.") : t("materials.detail.loadError", "Failed to load material."));
-        } finally {
-            setLoading(false);
+            throw new Error(e.response?.status === 404 ? t("materials.detail.notFound", "Material not found.") : t("materials.detail.loadError", "Failed to load material."));
         }
     }, [id, t]);
 
-    useEffect(() => {
-        load();
-    }, [load]);
+    const { data, loading, error, editOpen, setEditOpen, load, toast, showToast, closeToast } = useDetailData(fetchMaterial);
+
+    const material = data?.material ?? null;
+    const materialTypes = data?.materialTypes ?? [];
 
     const handleSave = async (form) => {
         try {

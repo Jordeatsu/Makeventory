@@ -38,7 +38,7 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import OrderFormModal from "../components/modals/OrderFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useListData } from "../hooks/useListData";
 import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
@@ -52,31 +52,12 @@ export default function OrdersPage() {
     const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
-    const { toast, showToast, closeToast } = useToast();
+    const { items: orders, setItems: setOrders, loading, setLoading, error, setError, search, setSearch, col, formOpen, setFormOpen, editing, setEditing, deleteTarget, setDeleteTarget, toast, showToast, closeToast } = useListData(null, null, { settingsPath: "/settings/orders" });
 
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
-    const [formOpen, setFormOpen] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [deleteTarget, setDeleteTarget] = useState(null);
     const [page, setPage] = useState(0);
     const [tab, setTab] = useState(1);
     const ROWS = 10;
-    const [colSettings, setColSettings] = useState({});
-
-    // Load column visibility settings
-    useEffect(() => {
-        api.get("/settings/orders")
-            .then(({ data }) => {
-                setColSettings(data?.settings?.tableColumns ?? {});
-            })
-            .catch(() => {});
-    }, []);
-
-    const col = (key) => colSettings[key] !== false;
 
     // 2 always-visible columns (Order # + Actions) + each enabled optional column
     const visibleColCount = 2 + ["date", "customer", "status", "products", "grossRevenue", "netRevenue", "profit"].filter((k) => col(k)).length;
@@ -93,7 +74,7 @@ export default function OrdersPage() {
         } finally {
             setLoading(false);
         }
-    }, [search, statusFilter]);
+    }, [search, statusFilter, t]);
 
     useEffect(() => {
         load();

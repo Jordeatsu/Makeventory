@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -13,7 +13,7 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import OrderFormModal from "../components/modals/OrderFormModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDateLong } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useDetailData } from "../hooks/useDetailData";
 import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
@@ -33,29 +33,12 @@ export default function OrderDetailPage() {
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtDate = fmtDateLong;
-    const { toast, showToast, closeToast } = useToast();
+    const fetchOrder = useCallback(async () => {
+        const { data } = await api.get(`/orders/${id}`);
+        return data.order;
+    }, [id]);
 
-    const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [editOpen, setEditOpen] = useState(false);
-
-    const load = async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const { data } = await api.get(`/orders/${id}`);
-            setOrder(data.order);
-        } catch {
-            setError(t("orders.detail.loadFailed"));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        load();
-    }, [id]); // eslint-disable-line
+    const { data: order, setData: setOrder, loading, error, editOpen, setEditOpen, load, toast, showToast, closeToast } = useDetailData(fetchOrder, { errorKey: "orders.detail.loadFailed" });
 
     const handleSave = async (form) => {
         try {
