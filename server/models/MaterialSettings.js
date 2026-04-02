@@ -25,6 +25,9 @@ const materialSettingsSchema = new mongoose.Schema(
 
         // Prefix used when auto-assigning material numbers (e.g. MTL-00000001)
         numberPrefix: { type: String, default: "MTL-" },
+
+        // Sequence counter incremented atomically on each new material creation
+        numberSeq: { type: Number },
     },
     { timestamps: true },
 );

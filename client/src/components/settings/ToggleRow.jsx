@@ -23,7 +23,7 @@ export default function ToggleRow({ label, description, enabled, onChange, disab
                     </Typography>
                 )}
             </Box>
-            <Tooltip title={disabled ? "Always required" : ""}>
+            <Tooltip title={disabled ? "Always required" : undefined}>
                 <span>
                     <Switch checked={enabled} onChange={(e) => onChange?.(e.target.checked)} size="small" disabled={disabled} />
                 </span>

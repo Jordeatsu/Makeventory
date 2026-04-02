@@ -10,6 +10,9 @@ const orderSettingsSchema = new mongoose.Schema(
 
         // Prefix used when auto-assigning order numbers (e.g. ORD-00000001)
         numberPrefix: { type: String, default: "ORD-" },
+
+        // Sequence counter incremented atomically on each new order creation
+        numberSeq: { type: Number },
     },
     { timestamps: true },
 );

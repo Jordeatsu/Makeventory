@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import api from "../api";
 
@@ -8,15 +8,21 @@ import api from "../api";
  *
  * @param {string} endpoint  - API path, e.g. "/settings/customers"
  * @param {string} errorKey  - i18n key used when the request fails
- *                            (defaults to "settings.save.failed")
  * @returns {{ saving, saved, error, save }}
  *   save(payload) — call with the request body; returns the response data
  */
-export function useSettingsSave(endpoint, errorKey = "settings.save.failed") {
+export function useSettingsSave(endpoint, errorKey) {
     const { t } = useTranslation();
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState(null);
+    const savedTimerRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        };
+    }, []);
 
     const save = async (payload) => {
         setSaving(true);
@@ -24,7 +30,7 @@ export function useSettingsSave(endpoint, errorKey = "settings.save.failed") {
         try {
             const { data } = await api.put(endpoint, payload);
             setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
+            savedTimerRef.current = setTimeout(() => setSaved(false), 3000);
             return data;
         } catch {
             setError(t(errorKey));

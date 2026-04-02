@@ -51,25 +51,41 @@ export function escapeRegex(str) {
 }
 
 /**
- * Generates the next sequential number string for an entity.
+ * Generates the next sequential number string for an entity using an atomic counter.
  *
- * Reads the `numberPrefix` field from SettingsModel (falling back to defaultPrefix),
- * finds the most-recently-created document that already has a number assigned,
- * extracts the trailing integer, and returns `${prefix}${seq + 1}` zero-padded to 8 digits.
+ * Stores the current sequence in `SettingsModel.numberSeq` and increments it with
+ * `$inc` so concurrent requests can never generate the same number.
+ * On first use (upgrade from old code), the sequence is initialised by deriving it
+ * from the highest number already assigned to an existing document.
  *
  * @param {object} Model          - Mongoose model for the entity (Customer, Order, etc.)
  * @param {string} numberField    - Field name on the entity, e.g. "customerNumber"
- * @param {object} SettingsModel  - Mongoose settings model with a `numberPrefix` field
+ * @param {object} SettingsModel  - Mongoose settings model with `numberPrefix` / `numberSeq` fields
  * @param {string} defaultPrefix  - Fallback prefix if none is configured, e.g. "CST-"
  * @returns {Promise<string>}
  */
 export async function generateNextNumber(Model, numberField, SettingsModel, defaultPrefix) {
-    const settings = await SettingsModel.findOne().lean();
-    const prefix = settings?.numberPrefix ?? defaultPrefix;
-    const latest = await Model.findOne({ [numberField]: { $ne: null } })
-        .sort({ createdAt: -1 })
-        .select(numberField)
-        .lean();
-    const lastSeq = latest?.[numberField] ? parseInt(latest[numberField].match(/(\d+)$/)?.[1], 10) || 0 : 0;
-    return `${prefix}${String(lastSeq + 1).padStart(8, "0")}`;
+    // Ensure a settings document exists and read the current state.
+    let settings = await SettingsModel.findOne().lean();
+    if (!settings) {
+        settings = await SettingsModel.findOneAndUpdate({}, { $setOnInsert: { numberPrefix: defaultPrefix } }, { new: true, upsert: true, setDefaultsOnInsert: true, lean: true });
+    }
+    const prefix = settings.numberPrefix ?? defaultPrefix;
+
+    // One-time initialization: derive the starting sequence from existing documents
+    // so that upgrading from the old non-atomic code doesn't restart the counter.
+    if (settings.numberSeq == null) {
+        const latest = await Model.findOne({ [numberField]: { $ne: null } })
+            .sort({ createdAt: -1 })
+            .select(numberField)
+            .lean();
+        const lastSeq = latest?.[numberField] ? parseInt(latest[numberField].match(/(\d+)$/)?.[1], 10) || 0 : 0;
+        settings = await SettingsModel.findByIdAndUpdate(settings._id, { $set: { numberSeq: lastSeq } }, { new: true, lean: true });
+    }
+
+    // Atomically increment — safe under concurrent requests.
+    const updated = await SettingsModel.findByIdAndUpdate(settings._id, { $inc: { numberSeq: 1 } }, { new: true, lean: true });
+    const seq = updated.numberSeq || 1;
+
+    return `${prefix}${String(seq).padStart(8, "0")}`;
 }

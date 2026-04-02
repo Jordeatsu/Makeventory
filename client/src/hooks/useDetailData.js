@@ -29,7 +29,10 @@ export function useDetailData(fetchFn, { errorKey = "common.loadFailed" } = {}) 
             const result = await fetchFn();
             setData(result);
         } catch (e) {
-            setError(e?.message || t(errorKey));
+            const axiosAppMessage = e?.response?.data?.error;
+            const isAxiosError = !!e?.isAxiosError || !!e?.response;
+            const message = axiosAppMessage || (!isAxiosError && e?.message) || t(errorKey);
+            setError(message);
         } finally {
             setLoading(false);
         }

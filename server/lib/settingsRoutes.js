@@ -21,8 +21,7 @@ import { requireAuth } from "../middleware/authMiddleware.js";
 export function createSettingsRoutes(router, path, Model, { allowedFields } = {}) {
     router.get(`/settings/${path}`, requireAuth, async (_req, res) => {
         try {
-            let settings = await Model.findOne().lean();
-            if (!settings) settings = await Model.create({});
+            const settings = await Model.findOneAndUpdate({}, { $setOnInsert: {} }, { upsert: true, new: true, setDefaultsOnInsert: true, lean: true });
             res.json({ settings });
         } catch {
             res.status(500).json({ error: "Server error." });

@@ -14,7 +14,7 @@ export default function OrderSettingsPage() {
     const [prefix, setPrefix] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const prefix$ = useSettingsSave("/settings/orders", "settings.tableColumns.saveFailed");
+    const prefix$ = useSettingsSave("/settings/orders", "settings.numberPrefix.saveFailed");
     const cols$ = useSettingsSave("/settings/orders", "settings.tableColumns.saveFailed");
 
     useEffect(() => {

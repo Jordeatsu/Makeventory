@@ -8,7 +8,7 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
  * icon box on the right (Dashboard style).  Without an icon it renders a
  * compact stacked label / value layout (detail page style).
  *
- * @param {{ icon?: JSX.Element, label: string, value: string|number, sub?: string, color?: string, sx?: object }} props
+ * @param {{ icon?: JSX.Element, label: string, value: string|number, sub?: string, color?: string, sx?: object, elevation?: number }} props
  */
 export default function StatCard({ icon, label, value, sub, color = "primary.main", sx = {}, elevation }) {
     return (
