@@ -1,26 +1,50 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
-import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import { Alert, Box, Button, CircularProgress, Divider, Grid, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useTranslation } from "react-i18next";
 import api from "../../api";
 
-// Columns that can be toggled (name + actions are always visible)
 const PROD_COL_KEYS = ["sku", "category", "estMaterialCost", "basePrice", "estMargin", "status"];
 
-function ColToggleRow({ label, enabled, onChange, isLast }) {
+function ToggleRow({ label, enabled, onChange, disabled }) {
     return (
-        <>
-            <Box sx={{ px: 3, py: 2 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" fontWeight={500}>
-                        {label}
-                    </Typography>
-                    <Switch checked={enabled} onChange={(e) => onChange(e.target.checked)} size="small" color="primary" />
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 3, py: 1.75 }}>
+            <Typography variant="body2" fontWeight={500}>{label}</Typography>
+            <Tooltip title={disabled ? "Always required" : ""}>
+                <span>
+                    <Switch checked={enabled} onChange={(e) => onChange?.(e.target.checked)} size="small" disabled={disabled} />
+                </span>
+            </Tooltip>
+        </Stack>
+    );
+}
+
+function SectionCard({ title, description, onSave, saving, saved, children }) {
+    return (
+        <Paper variant="outlined" sx={{ overflow: "hidden" }}>
+            <Box sx={{ px: 3, py: 2, bgcolor: "primary.main", color: "primary.contrastText" }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
+                    {onSave && (
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            color="inherit"
+                            startIcon={saved ? <CheckCircleIcon /> : <SaveIcon />}
+                            onClick={onSave}
+                            disabled={saving}
+                            sx={{ borderColor: "rgba(255,255,255,0.5)", color: "inherit", "&:hover": { borderColor: "white", bgcolor: "rgba(255,255,255,0.1)" } }}
+                        >
+                            {saving ? "Saving…" : saved ? "Saved" : "Save"}
+                        </Button>
+                    )}
                 </Stack>
+                {description && <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.85 }}>{description}</Typography>}
             </Box>
-            {!isLast && <Divider />}
-        </>
+            <Divider />
+            {children}
+        </Paper>
     );
 }
 
@@ -29,9 +53,12 @@ export default function ProductSettingsPage() {
     const [tableCols, setTableCols] = useState({});
     const [prefix, setPrefix] = useState("");
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-    const [error, setError] = useState(null);
+    const [prefixSaving, setPrefixSaving] = useState(false);
+    const [prefixSaved, setPrefixSaved] = useState(false);
+    const [prefixError, setPrefixError] = useState(null);
+    const [colSaving, setColSaving] = useState(false);
+    const [colSaved, setColSaved] = useState(false);
+    const [colError, setColError] = useState(null);
 
     useEffect(() => {
         api.get("/settings/products")
@@ -43,17 +70,31 @@ export default function ProductSettingsPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const handleSave = async () => {
-        setSaving(true);
-        setError(null);
+    const handlePrefixSave = async () => {
+        setPrefixSaving(true);
+        setPrefixError(null);
         try {
-            await api.put("/settings/products", { tableColumns: tableCols, numberPrefix: (prefix.trim() || "PRD") + "-" });
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
+            await api.put("/settings/products", { numberPrefix: (prefix.trim() || "PRD") + "-" });
+            setPrefixSaved(true);
+            setTimeout(() => setPrefixSaved(false), 3000);
         } catch {
-            setError(t("settings.tableColumns.saveFailed"));
+            setPrefixError(t("settings.tableColumns.saveFailed"));
         } finally {
-            setSaving(false);
+            setPrefixSaving(false);
+        }
+    };
+
+    const handleColSave = async () => {
+        setColSaving(true);
+        setColError(null);
+        try {
+            await api.put("/settings/products", { tableColumns: tableCols });
+            setColSaved(true);
+            setTimeout(() => setColSaved(false), 3000);
+        } catch {
+            setColError(t("settings.tableColumns.saveFailed"));
+        } finally {
+            setColSaving(false);
         }
     };
 
@@ -65,68 +106,56 @@ export default function ProductSettingsPage() {
         );
     }
 
+    const errors = [prefixError, colError].filter(Boolean);
+
     return (
-        <Box sx={{ maxWidth: 640, mx: "auto" }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
-                <Stack direction="row" alignItems="center" gap={1.5}>
-                    <ShoppingBagIcon sx={{ color: "text.secondary", fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>
-                        {t("settings.productSettings.title")}
-                    </Typography>
-                </Stack>
-                <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}>
-                    {saving ? t("common.saving") : t("common.save")}
-                </Button>
-            </Stack>
-
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-                    {error}
-                </Alert>
-            )}
-            {saved && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                    {t("settings.tableColumns.saved")}
-                </Alert>
-            )}
-
-            <Typography variant="h6" fontWeight={600} mb={2}>
-                {t("settings.numberPrefix.title")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {t("settings.numberPrefix.descProducts", { example: `${(prefix || "PRD") + "-"}00000001` })}
-            </Typography>
-            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
-                <Box sx={{ px: 3, py: 2 }}>
-                    <TextField label={t("settings.numberPrefix.label")} value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
-                </Box>
-            </Paper>
-
-            <Typography variant="h6" fontWeight={600} mb={2}>
-                {t("settings.tableColumns.title")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {t("settings.tableColumns.descProducts")}
-            </Typography>
-            <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-                {/* Always-on: Name */}
-                <Box sx={{ px: 3, py: 2 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="body2" fontWeight={500}>
-                            {t("products.col.name", "Name")}
-                        </Typography>
-                        <Tooltip title={t("settings.tableColumns.alwaysVisible")}>
-                            <span>
-                                <Switch checked disabled size="small" />
-                            </span>
-                        </Tooltip>
-                    </Stack>
-                </Box>
-                <Divider />
-                {PROD_COL_KEYS.map((key, idx) => (
-                    <ColToggleRow key={key} label={t(`products.col.${key}`, key)} enabled={tableCols[key] !== false} onChange={(v) => setTableCols((prev) => ({ ...prev, [key]: v }))} isLast={idx === PROD_COL_KEYS.length - 1} />
-                ))}
-            </Paper>
+        <Box>
+            {errors.map((e) => (
+                <Alert key={e} severity="error" sx={{ mb: 2 }}>{e}</Alert>
+            ))}
+            <Grid container spacing={3} alignItems="flex-start">
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionCard
+                        title={t("settings.numberPrefix.title")}
+                        description={t("settings.numberPrefix.descProducts", { example: `${(prefix || "PRD") + "-"}00000001` })}
+                        onSave={handlePrefixSave}
+                        saving={prefixSaving}
+                        saved={prefixSaved}
+                    >
+                        <Box sx={{ px: 3, py: 2 }}>
+                            <TextField
+                                label={t("settings.numberPrefix.label")}
+                                value={prefix}
+                                onChange={(e) => setPrefix(e.target.value)}
+                                size="small"
+                                fullWidth
+                                inputProps={{ maxLength: 10 }}
+                            />
+                        </Box>
+                    </SectionCard>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionCard
+                        title={t("settings.tableColumns.title")}
+                        description={t("settings.tableColumns.descProducts")}
+                        onSave={handleColSave}
+                        saving={colSaving}
+                        saved={colSaved}
+                    >
+                        <ToggleRow label={t("products.col.name", "Name")} enabled disabled />
+                        {PROD_COL_KEYS.map((key) => (
+                            <React.Fragment key={key}>
+                                <Divider />
+                                <ToggleRow
+                                    label={t(`products.col.${key}`, key)}
+                                    enabled={tableCols[key] !== false}
+                                    onChange={(v) => setTableCols((prev) => ({ ...prev, [key]: v }))}
+                                />
+                            </React.Fragment>
+                        ))}
+                    </SectionCard>
+                </Grid>
+            </Grid>
         </Box>
     );
 }

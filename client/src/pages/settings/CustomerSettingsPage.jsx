@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
-import PeopleIcon from "@mui/icons-material/People";
+import { Alert, Box, Button, CircularProgress, Divider, Grid, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useTranslation } from "react-i18next";
 import api from "../../api";
 
-// Keys for togglable fields — labels/descriptions come from i18n
 const FIELD_KEYS = ["email", "phone", "addressLine1", "addressLine2", "city", "state", "postcode", "country"];
 
 const DEFAULT_FIELDS = {
@@ -19,29 +18,61 @@ const DEFAULT_FIELDS = {
     country: true,
 };
 
-// Columns that can be toggled in the customers table
 const CUST_COL_KEYS = ["location", "orders", "totalSpent", "totalProfit", "firstOrder", "lastOrder"];
 
-function FieldToggleRow({ label, description, enabled, onChange, isLast }) {
+function ToggleRow({ label, description, enabled, onChange, disabled }) {
     return (
-        <>
-            <Box sx={{ px: 3, py: 2 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Box>
-                        <Typography variant="body2" fontWeight={500}>
-                            {label}
-                        </Typography>
-                        {description && (
-                            <Typography variant="caption" color="text.secondary">
-                                {description}
-                            </Typography>
-                        )}
-                    </Box>
-                    <Switch checked={enabled} onChange={(e) => onChange(e.target.checked)} size="small" color="primary" />
-                </Stack>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 3, py: 1.75 }}>
+            <Box>
+                <Typography variant="body2" fontWeight={500}>
+                    {label}
+                </Typography>
+                {description && (
+                    <Typography variant="caption" color="text.secondary">
+                        {description}
+                    </Typography>
+                )}
             </Box>
-            {!isLast && <Divider />}
-        </>
+            <Tooltip title={disabled ? "Always required" : ""}>
+                <span>
+                    <Switch checked={enabled} onChange={(e) => onChange?.(e.target.checked)} size="small" disabled={disabled} />
+                </span>
+            </Tooltip>
+        </Stack>
+    );
+}
+
+function SectionCard({ title, description, onSave, saving, saved, children }) {
+    return (
+        <Paper variant="outlined" sx={{ overflow: "hidden", height: "100%" }}>
+            <Box sx={{ px: 3, py: 2, bgcolor: "primary.main", color: "primary.contrastText" }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="subtitle1" fontWeight={700}>
+                        {title}
+                    </Typography>
+                    {onSave && (
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            color="inherit"
+                            startIcon={saved ? <CheckCircleIcon /> : <SaveIcon />}
+                            onClick={onSave}
+                            disabled={saving}
+                            sx={{ borderColor: "rgba(255,255,255,0.5)", color: "inherit", "&:hover": { borderColor: "white", bgcolor: "rgba(255,255,255,0.1)" } }}
+                        >
+                            {saving ? "Saving…" : saved ? "Saved" : "Save"}
+                        </Button>
+                    )}
+                </Stack>
+                {description && (
+                    <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.85 }}>
+                        {description}
+                    </Typography>
+                )}
+            </Box>
+            <Divider />
+            {children}
+        </Paper>
     );
 }
 
@@ -73,10 +104,6 @@ export default function CustomerSettingsPage() {
             .catch(() => setError(t("settings.customerSettings.loadFailed")))
             .finally(() => setLoading(false));
     }, []);
-
-    const handleToggle = (key) => (value) => {
-        setFields((prev) => ({ ...prev, [key]: value }));
-    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -129,133 +156,51 @@ export default function CustomerSettingsPage() {
         );
     }
 
+    const errors = [error, colError, prefixError].filter(Boolean);
+
     return (
-        <Box sx={{ maxWidth: 640, mx: "auto" }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
-                <Stack direction="row" alignItems="center" gap={1.5}>
-                    <PeopleIcon sx={{ color: "text.secondary", fontSize: 28 }} />
-                    <Typography variant="h5" fontWeight={600}>
-                        {t("settings.customerSettings.title")}
-                    </Typography>
-                </Stack>
-                <Tooltip title="Save changes">
-                    <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}>
-                        {saving ? t("settings.customerSettings.saving") : t("common.save")}
-                    </Button>
-                </Tooltip>
-            </Stack>
-
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-                    {error}
+        <Box>
+            {errors.map((e) => (
+                <Alert key={e} severity="error" sx={{ mb: 2 }}>
+                    {e}
                 </Alert>
-            )}
-            {success && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                    {t("settings.customerSettings.saved")}
-                </Alert>
-            )}
+            ))}
 
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {t("settings.customerSettings.subtitle")}
-            </Typography>
+            <Grid container spacing={3} alignItems="flex-start">
+                {/* Left column — Customer Fields */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionCard title={t("settings.customerSettings.title")} description={t("settings.customerSettings.subtitle")} onSave={handleSave} saving={saving} saved={success}>
+                        <ToggleRow label={t("settings.customerSettings.nameField")} description={t("settings.customerSettings.nameFieldDesc")} enabled disabled />
+                        {FIELD_KEYS.map((key, i) => (
+                            <React.Fragment key={key}>
+                                <Divider />
+                                <ToggleRow label={t(`settings.customerSettings.fields.${key}`)} description={t(`settings.customerSettings.fields.${key}Desc`)} enabled={!!fields[key]} onChange={(v) => setFields((prev) => ({ ...prev, [key]: v }))} />
+                            </React.Fragment>
+                        ))}
+                    </SectionCard>
+                </Grid>
 
-            {/* Always-on row for Name */}
-            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
-                <Box sx={{ px: 3, py: 2 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                            <Typography variant="body2" fontWeight={500}>
-                                {t("settings.customerSettings.nameField")}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {t("settings.customerSettings.nameFieldDesc")}
-                            </Typography>
-                        </Box>
-                        <Tooltip title={t("settings.customerSettings.nameAlwaysRequired")}>
-                            <span>
-                                <Switch checked disabled size="small" color="primary" />
-                            </span>
-                        </Tooltip>
+                {/* Right column — Number Prefix + Table Columns */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack gap={3}>
+                        <SectionCard title={t("settings.numberPrefix.title")} description={t("settings.numberPrefix.descCustomers", { example: `${(prefix || "CST") + "-"}00000001` })} onSave={handlePrefixSave} saving={prefixSaving} saved={prefixSaved}>
+                            <Box sx={{ px: 3, py: 2 }}>
+                                <TextField label={t("settings.numberPrefix.label")} value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
+                            </Box>
+                        </SectionCard>
+
+                        <SectionCard title={t("settings.tableColumns.title")} description={t("settings.tableColumns.descCustomers")} onSave={handleColSave} saving={colSaving} saved={colSaved}>
+                            <ToggleRow label={t("customers.col.customer", "Customer")} enabled disabled />
+                            {CUST_COL_KEYS.map((key) => (
+                                <React.Fragment key={key}>
+                                    <Divider />
+                                    <ToggleRow label={t(`customers.col.${key}`, key)} enabled={tableCols[key] !== false} onChange={(v) => setTableCols((prev) => ({ ...prev, [key]: v }))} />
+                                </React.Fragment>
+                            ))}
+                        </SectionCard>
                     </Stack>
-                </Box>
-
-                <Divider />
-
-                {FIELD_KEYS.map((key, idx) => (
-                    <FieldToggleRow key={key} label={t(`settings.customerSettings.fields.${key}`)} description={t(`settings.customerSettings.fields.${key}Desc`)} enabled={!!fields[key]} onChange={handleToggle(key)} isLast={idx === FIELD_KEYS.length - 1} />
-                ))}
-            </Paper>
-
-            {/* Number Prefix */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
-                <Typography variant="h6" fontWeight={600}>
-                    {t("settings.numberPrefix.title")}
-                </Typography>
-                <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handlePrefixSave} disabled={prefixSaving}>
-                    {prefixSaving ? t("common.saving") : t("common.save")}
-                </Button>
-            </Stack>
-            {prefixError && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPrefixError(null)}>
-                    {prefixError}
-                </Alert>
-            )}
-            {prefixSaved && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                    {t("settings.numberPrefix.saved")}
-                </Alert>
-            )}
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {t("settings.numberPrefix.descCustomers", { example: `${(prefix || "CST") + "-"}00000001` })}
-            </Typography>
-            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
-                <Box sx={{ px: 3, py: 2 }}>
-                    <TextField label={t("settings.numberPrefix.label")} value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
-                </Box>
-            </Paper>
-
-            {/* Table Column Visibility */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mt={4} mb={2}>
-                <Typography variant="h6" fontWeight={600}>
-                    {t("settings.tableColumns.title")}
-                </Typography>
-                <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleColSave} disabled={colSaving}>
-                    {colSaving ? t("common.saving") : t("common.save")}
-                </Button>
-            </Stack>
-            {colError && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setColError(null)}>
-                    {colError}
-                </Alert>
-            )}
-            {colSaved && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                    {t("settings.tableColumns.saved")}
-                </Alert>
-            )}
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {t("settings.tableColumns.descCustomers")}
-            </Typography>
-            <Paper variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
-                {/* Always-on: Customer */}
-                <Box sx={{ px: 3, py: 2 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="body2" fontWeight={500}>
-                            {t("customers.col.customer", "Customer")}
-                        </Typography>
-                        <Tooltip title={t("settings.tableColumns.alwaysVisible")}>
-                            <span>
-                                <Switch checked disabled size="small" />
-                            </span>
-                        </Tooltip>
-                    </Stack>
-                </Box>
-                <Divider />
-                {CUST_COL_KEYS.map((key, idx) => (
-                    <FieldToggleRow key={key} label={t(`customers.col.${key}`, key)} description="" enabled={tableCols[key] !== false} onChange={(v) => setTableCols((prev) => ({ ...prev, [key]: v }))} isLast={idx === CUST_COL_KEYS.length - 1} />
-                ))}
-            </Paper>
+                </Grid>
+            </Grid>
         </Box>
     );
 }
