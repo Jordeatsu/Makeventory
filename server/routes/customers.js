@@ -4,7 +4,7 @@ import Customer from "../models/Customer.js";
 import Order from "../models/Order.js";
 import CustomerSettings from "../models/CustomerSettings.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { isValidId, escapeRegex } from "../lib/helpers.js";
+import { isValidId, escapeRegex, generateNextNumber } from "../lib/helpers.js";
 
 const router = Router();
 
@@ -81,15 +81,7 @@ router.post("/customers", requireAuth, async (req, res) => {
     try {
         const { name } = req.body ?? {};
         if (!name) return res.status(400).json({ error: "Name is required." });
-        // Auto-assign next customer number using the configurable prefix from settings
-        const custSettings = await CustomerSettings.findOne().lean();
-        const prefix = custSettings?.numberPrefix || "CST-";
-        const latestCust = await Customer.findOne({ customerNumber: { $ne: null } })
-            .sort({ createdAt: -1 })
-            .select("customerNumber")
-            .lean();
-        const lastSeq = latestCust?.customerNumber ? parseInt(latestCust.customerNumber.match(/(\d+)$/)?.[1], 10) || 0 : 0;
-        const customerNumber = `${prefix}${String(lastSeq + 1).padStart(8, "0")}`;
+        const customerNumber = await generateNextNumber(Customer, "customerNumber", CustomerSettings, "CST-");
         const doc = await Customer.create({ ...req.body, customerNumber });
         res.status(201).json({ customer: doc });
     } catch (e) {

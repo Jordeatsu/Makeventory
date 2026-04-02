@@ -4,7 +4,7 @@ import Material from "../models/Material.js";
 import MaterialType from "../models/MaterialType.js";
 import MaterialSettings from "../models/MaterialSettings.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { isValidId, escapeRegex, userLabel } from "../lib/helpers.js";
+import { isValidId, escapeRegex, userLabel, generateNextNumber } from "../lib/helpers.js";
 
 const router = Router();
 
@@ -67,15 +67,7 @@ router.post("/materials", requireAuth, async (req, res) => {
         const mt = await MaterialType.findOne({ name: type.trim() });
         if (!mt) return res.status(400).json({ error: `Material type "${type}" not found.` });
         const userId = req.user.sub;
-        // Auto-assign next material number using the configurable prefix from settings
-        const matSettings = await MaterialSettings.findOne().lean();
-        const prefix = matSettings?.numberPrefix || "MTL-";
-        const latestMat = await Material.findOne({ materialNumber: { $ne: null } })
-            .sort({ createdAt: -1 })
-            .select("materialNumber")
-            .lean();
-        const lastSeq = latestMat?.materialNumber ? parseInt(latestMat.materialNumber.match(/(\d+)$/)?.[1], 10) || 0 : 0;
-        const materialNumber = `${prefix}${String(lastSeq + 1).padStart(8, "0")}`;
+        const materialNumber = await generateNextNumber(Material, "materialNumber", MaterialSettings, "MTL-");
         const doc = await Material.create({
             materialNumber,
             name: name.trim(),

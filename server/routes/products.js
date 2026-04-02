@@ -4,7 +4,7 @@ import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import ProductSettings from "../models/ProductSettings.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { isValidId, escapeRegex, userLabel } from "../lib/helpers.js";
+import { isValidId, escapeRegex, userLabel, generateNextNumber } from "../lib/helpers.js";
 
 const router = Router();
 
@@ -84,15 +84,7 @@ router.post("/products", requireAuth, async (req, res) => {
         if (!name?.trim()) return res.status(400).json({ error: "Name is required." });
 
         const estimatedMaterialCost = (defaultMaterials || []).reduce((s, m) => s + (m.lineCost || 0), 0);
-        // Auto-assign next product number using the configurable prefix from settings
-        const prodSettings = await ProductSettings.findOne().lean();
-        const prefix = prodSettings?.numberPrefix || "PRD-";
-        const latestProd = await Product.findOne({ productNumber: { $ne: null } })
-            .sort({ createdAt: -1 })
-            .select("productNumber")
-            .lean();
-        const lastSeq = latestProd?.productNumber ? parseInt(latestProd.productNumber.match(/(\d+)$/)?.[1], 10) || 0 : 0;
-        const productNumber = `${prefix}${String(lastSeq + 1).padStart(8, "0")}`;
+        const productNumber = await generateNextNumber(Product, "productNumber", ProductSettings, "PRD-");
         const doc = await Product.create({
             productNumber,
             name: name.trim(),

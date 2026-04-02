@@ -4,7 +4,7 @@ import Order from "../models/Order.js";
 import Customer from "../models/Customer.js";
 import OrderSettings from "../models/OrderSettings.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { isValidId, escapeRegex, userLabel } from "../lib/helpers.js";
+import { isValidId, escapeRegex, userLabel, generateNextNumber } from "../lib/helpers.js";
 
 const router = Router();
 
@@ -83,16 +83,7 @@ router.post("/orders", requireAuth, async (req, res) => {
         const body = req.body ?? {};
         if (!body.status) body.status = "Pending";
         const { profit, totalMaterialCost } = calcProfit(body);
-        // Auto-assign next order number using the configurable prefix from settings
-        const orderSettings = await OrderSettings.findOne().lean();
-        const prefix = orderSettings?.numberPrefix || "ORD-";
-        const latest = await Order.findOne({ orderNumber: { $ne: null } })
-            .sort({ createdAt: -1 })
-            .select("orderNumber")
-            .lean();
-        const lastSeq = latest?.orderNumber ? parseInt(latest.orderNumber.match(/(\d+)$/)?.[1], 10) || 0 : 0;
-        const nextNumber = `${prefix}${String(lastSeq + 1).padStart(8, "0")}`;
-        const customerId = await findOrCreateCustomer(body.customer);
+        const [nextNumber, customerId] = await Promise.all([generateNextNumber(Order, "orderNumber", OrderSettings, "ORD-"), findOrCreateCustomer(body.customer)]);
         const doc = await Order.create({
             ...body,
             customer: customerId,
