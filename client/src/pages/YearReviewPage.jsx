@@ -19,6 +19,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import api from "../api";
+import StatCard from "../components/common/StatCard";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter } from "../utils/formatting";
@@ -26,30 +27,6 @@ import { useTranslation } from "react-i18next";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const fmtN = (n) => Number(n || 0).toLocaleString("en-GB", { maximumFractionDigits: 2 });
-
-// ── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({ icon, label, value, sub, color = "primary.main", bgcolor }) {
-    return (
-        <Paper elevation={2} sx={{ p: 2.5, height: "100%", bgcolor: bgcolor || "background.paper", borderRadius: 2 }}>
-            <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-                <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                        {label}
-                    </Typography>
-                    <Typography variant="h5" fontWeight={700} color={color} mt={0.5}>
-                        {value}
-                    </Typography>
-                    {sub && (
-                        <Typography variant="caption" color="text.secondary">
-                            {sub}
-                        </Typography>
-                    )}
-                </Box>
-                <Box sx={{ color, opacity: 0.22, mt: 0.5 }}>{icon}</Box>
-            </Stack>
-        </Paper>
-    );
-}
 
 // ── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({ icon, title }) {
@@ -218,16 +195,32 @@ export default function YearReviewPage() {
                     {/* ── Overview KPI cards ─────────────────────────────── */}
                     <Grid container spacing={2} mb={3}>
                         <Grid size={{ xs: 12, sm: 6, md: true }}>
-                            <StatCard icon={<ShoppingBagIcon sx={{ fontSize: 40 }} />} label={t("yearReview.kpi.totalOrders")} value={s.totalOrders || 0} color="primary.main" />
+                            <StatCard icon={<ShoppingBagIcon sx={{ fontSize: 40 }} />} label={t("yearReview.kpi.totalOrders")} value={s.totalOrders || 0} color="primary.main" elevation={2} sx={{ p: 2.5, borderRadius: 2 }} />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: true }}>
-                            <StatCard icon={<AttachMoneyIcon sx={{ fontSize: 40 }} />} label={t("yearReview.kpi.grossRevenue")} value={fmt(s.totalGrossRevenue)} sub={t("yearReview.kpi.avgPerOrder", { value: fmt((s.totalGrossRevenue || 0) / Math.max(s.totalOrders || 1, 1)) })} color="info.main" />
+                            <StatCard
+                                icon={<AttachMoneyIcon sx={{ fontSize: 40 }} />}
+                                label={t("yearReview.kpi.grossRevenue")}
+                                value={fmt(s.totalGrossRevenue)}
+                                sub={t("yearReview.kpi.avgPerOrder", { value: fmt((s.totalGrossRevenue || 0) / Math.max(s.totalOrders || 1, 1)) })}
+                                color="info.main"
+                                elevation={2}
+                                sx={{ p: 2.5, borderRadius: 2 }}
+                            />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: true }}>
-                            <StatCard icon={<TrendingUpIcon sx={{ fontSize: 40 }} />} label={t("yearReview.kpi.netRevenue")} value={fmt(s.totalRevenue)} sub={t("yearReview.kpi.avgPerOrder", { value: fmt(s.avgOrderValue) })} color="info.dark" />
+                            <StatCard icon={<TrendingUpIcon sx={{ fontSize: 40 }} />} label={t("yearReview.kpi.netRevenue")} value={fmt(s.totalRevenue)} sub={t("yearReview.kpi.avgPerOrder", { value: fmt(s.avgOrderValue) })} color="info.dark" elevation={2} sx={{ p: 2.5, borderRadius: 2 }} />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: true }}>
-                            <StatCard icon={<AttachMoneyIcon sx={{ fontSize: 40 }} />} label={t("yearReview.kpi.totalProfit")} value={fmt(s.totalProfit)} sub={t("yearReview.kpi.avgPerOrder", { value: fmt(s.avgProfit) })} color={s.totalProfit >= 0 ? "success.main" : "error.main"} />
+                            <StatCard
+                                icon={<AttachMoneyIcon sx={{ fontSize: 40 }} />}
+                                label={t("yearReview.kpi.totalProfit")}
+                                value={fmt(s.totalProfit)}
+                                sub={t("yearReview.kpi.avgPerOrder", { value: fmt(s.avgProfit) })}
+                                color={s.totalProfit >= 0 ? "success.main" : "error.main"}
+                                elevation={2}
+                                sx={{ p: 2.5, borderRadius: 2 }}
+                            />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: true }}>
                             <StatCard
@@ -236,6 +229,8 @@ export default function YearReviewPage() {
                                 value={(s.totalGrossRevenue || 0) > 0 ? `${((s.totalProfit / s.totalGrossRevenue) * 100).toFixed(1)}%` : "—"}
                                 sub={t("yearReview.kpi.profitOverRevenue")}
                                 color={s.totalProfit >= 0 ? "success.main" : "error.main"}
+                                elevation={2}
+                                sx={{ p: 2.5, borderRadius: 2 }}
                             />
                         </Grid>
                     </Grid>

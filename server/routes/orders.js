@@ -8,6 +8,8 @@ import { isValidId, escapeRegex, userLabel, generateNextNumber } from "../lib/he
 
 const router = Router();
 
+const CUSTOMER_FIELDS = "name email phone addressLine1 addressLine2 city state postcode country";
+
 // Find or create a Customer document and return its _id (or null).
 async function findOrCreateCustomer(c) {
     if (!c) return null;
@@ -54,7 +56,6 @@ router.get("/orders", requireAuth, async (req, res) => {
             const customerIds = matchingCustomers.map((c) => c._id);
             filter.$or = [...(customerIds.length ? [{ customer: { $in: customerIds } }] : []), { originOrderId: re }];
         }
-        const CUSTOMER_FIELDS = "name email phone addressLine1 addressLine2 city state postcode country";
         const docs = await Order.find(filter).populate("customer", CUSTOMER_FIELDS).sort({ orderDate: -1, createdAt: -1 }).lean();
         res.json({ orders: docs });
     } catch {
@@ -67,7 +68,6 @@ router.get("/orders/:id", requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: "Invalid ID." });
-        const CUSTOMER_FIELDS = "name email phone addressLine1 addressLine2 city state postcode country";
         const doc = await Order.findById(id).populate("customer", CUSTOMER_FIELDS).populate("createdBy", "firstName lastName").populate("updatedBy", "firstName lastName");
         if (!doc) return res.status(404).json({ error: "Order not found." });
         const o = doc.toObject();
