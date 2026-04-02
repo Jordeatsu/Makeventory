@@ -22,6 +22,9 @@ const customerSettingsSchema = new mongoose.Schema(
 
         // Prefix used when auto-assigning customer numbers (e.g. CST-00000001)
         numberPrefix: { type: String, default: "CST-" },
+
+        // Sequence counter incremented atomically on each new customer creation
+        numberSeq: { type: Number },
     },
     { timestamps: true },
 );

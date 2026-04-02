@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Paper, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -11,7 +11,7 @@ import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import ProductFormModal from "../components/modals/ProductFormModal";
 import { useCurrencyFormatter } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useListData } from "../hooks/useListData";
 import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
@@ -20,45 +20,30 @@ export default function ProductsPage() {
     const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
-    const { toast, showToast, closeToast } = useToast();
+    const {
+        items: products,
+        loading,
+        error,
+        setError,
+        search,
+        setSearch,
+        col,
+        formOpen: dialogOpen,
+        setFormOpen: setDialogOpen,
+        editing,
+        setEditing,
+        deleteTarget,
+        setDeleteTarget,
+        load,
+        toast,
+        showToast,
+        closeToast,
+    } = useListData("/products", "products", { settingsPath: "/settings/products", errorKey: "products.loadError" });
 
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [search, setSearch] = useState("");
     const [tab, setTab] = useState(0);
-    const [colSettings, setColSettings] = useState({});
-
-    // Load column visibility settings
-    useEffect(() => {
-        api.get("/settings/products")
-            .then(({ data }) => {
-                setColSettings(data?.settings?.tableColumns ?? {});
-            })
-            .catch(() => {});
-    }, []);
-
-    const col = (key) => colSettings[key] !== false;
 
     // 2 always-visible columns (Name + Actions) + each enabled optional column
     const visibleColCount = 2 + ["sku", "category", "estMaterialCost", "basePrice", "estMargin", "status"].filter((k) => col(k)).length;
-
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [deleteTarget, setDeleteTarget] = useState(null);
-
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const { data } = await api.get("/products", { params: search ? { search } : {} });
-            setProducts(data.products ?? []);
-        } catch {
-            setError(t("products.loadError"));
-        } finally {
-            setLoading(false);
-        }
-    }, [search]);
 
     useEffect(() => {
         load();

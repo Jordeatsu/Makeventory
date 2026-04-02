@@ -258,6 +258,8 @@ app.post("/api/database/create", async (req, res) => {
                 currency,
                 autoDeductOnOrderComplete: false,
                 trackFractionalQuantities: false,
+                tableColumns: {},
+                numberPrefix: "MTL-",
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });
@@ -276,19 +278,21 @@ app.post("/api/database/create", async (req, res) => {
                     postcode: true,
                     country: true,
                 },
+                tableColumns: {},
+                numberPrefix: "CST-",
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });
 
-            // Seed order settings singleton (placeholder — no fields yet)
+            // Seed order settings singleton
             const orderSettingsCol = client.db(dbName).collection("ordersettings");
             await orderSettingsCol.deleteMany({});
-            await orderSettingsCol.insertOne({ createdAt: new Date(), updatedAt: new Date() });
+            await orderSettingsCol.insertOne({ tableColumns: {}, numberPrefix: "ORD-", createdAt: new Date(), updatedAt: new Date() });
 
-            // Seed product settings singleton (placeholder — no fields yet)
+            // Seed product settings singleton
             const productSettingsCol = client.db(dbName).collection("productsettings");
             await productSettingsCol.deleteMany({});
-            await productSettingsCol.insertOne({ createdAt: new Date(), updatedAt: new Date() });
+            await productSettingsCol.insertOne({ tableColumns: {}, numberPrefix: "PRD-", createdAt: new Date(), updatedAt: new Date() });
 
             // Seed year-in-review settings singleton (placeholder — no fields yet)
             const yearInReviewSettingsCol = client.db(dbName).collection("yearinreviewsettings");

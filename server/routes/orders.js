@@ -4,9 +4,11 @@ import Order from "../models/Order.js";
 import Customer from "../models/Customer.js";
 import OrderSettings from "../models/OrderSettings.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { isValidId, escapeRegex, userLabel } from "../lib/helpers.js";
+import { isValidId, escapeRegex, userLabel, generateNextNumber } from "../lib/helpers.js";
 
 const router = Router();
+
+const CUSTOMER_FIELDS = "name email phone addressLine1 addressLine2 city state postcode country";
 
 // Find or create a Customer document and return its _id (or null).
 async function findOrCreateCustomer(c) {
@@ -54,7 +56,6 @@ router.get("/orders", requireAuth, async (req, res) => {
             const customerIds = matchingCustomers.map((c) => c._id);
             filter.$or = [...(customerIds.length ? [{ customer: { $in: customerIds } }] : []), { originOrderId: re }];
         }
-        const CUSTOMER_FIELDS = "name email phone addressLine1 addressLine2 city state postcode country";
         const docs = await Order.find(filter).populate("customer", CUSTOMER_FIELDS).sort({ orderDate: -1, createdAt: -1 }).lean();
         res.json({ orders: docs });
     } catch {
@@ -67,7 +68,6 @@ router.get("/orders/:id", requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) return res.status(400).json({ error: "Invalid ID." });
-        const CUSTOMER_FIELDS = "name email phone addressLine1 addressLine2 city state postcode country";
         const doc = await Order.findById(id).populate("customer", CUSTOMER_FIELDS).populate("createdBy", "firstName lastName").populate("updatedBy", "firstName lastName");
         if (!doc) return res.status(404).json({ error: "Order not found." });
         const o = doc.toObject();
@@ -83,16 +83,7 @@ router.post("/orders", requireAuth, async (req, res) => {
         const body = req.body ?? {};
         if (!body.status) body.status = "Pending";
         const { profit, totalMaterialCost } = calcProfit(body);
-        // Auto-assign next order number using the configurable prefix from settings
-        const orderSettings = await OrderSettings.findOne().lean();
-        const prefix = orderSettings?.numberPrefix || "ORD-";
-        const latest = await Order.findOne({ orderNumber: { $ne: null } })
-            .sort({ createdAt: -1 })
-            .select("orderNumber")
-            .lean();
-        const lastSeq = latest?.orderNumber ? parseInt(latest.orderNumber.match(/(\d+)$/)?.[1], 10) || 0 : 0;
-        const nextNumber = `${prefix}${String(lastSeq + 1).padStart(8, "0")}`;
-        const customerId = await findOrCreateCustomer(body.customer);
+        const [nextNumber, customerId] = await Promise.all([generateNextNumber(Order, "orderNumber", OrderSettings, "ORD-"), findOrCreateCustomer(body.customer)]);
         const doc = await Order.create({
             ...body,
             customer: customerId,

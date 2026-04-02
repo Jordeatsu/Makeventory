@@ -10,6 +10,9 @@ const productSettingsSchema = new mongoose.Schema(
 
         // Prefix used when auto-assigning product numbers (e.g. PRD-00000001)
         numberPrefix: { type: String, default: "PRD-" },
+
+        // Sequence counter incremented atomically on each new product creation
+        numberSeq: { type: Number },
     },
     { timestamps: true },
 );

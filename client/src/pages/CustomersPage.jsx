@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Paper, Stack, Tab, Tabs, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -11,7 +11,7 @@ import api from "../api";
 import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import CustomerFormModal from "../components/modals/CustomerFormModal";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useListData } from "../hooks/useListData";
 import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 
@@ -20,42 +20,26 @@ export default function CustomersPage() {
     const { t } = useTranslation();
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
-    const { toast, showToast, closeToast } = useToast();
-
-    const [customers, setCustomers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [search, setSearch] = useState("");
+    const {
+        items: customers,
+        loading,
+        error,
+        search,
+        setSearch,
+        col,
+        formOpen: dialogOpen,
+        setFormOpen: setDialogOpen,
+        editing,
+        setEditing,
+        deleteTarget,
+        setDeleteTarget,
+        load,
+        toast,
+        showToast,
+        closeToast,
+    } = useListData("/customers", "customers", { settingsPath: "/settings/customers", errorKey: "customers.loadError" });
 
     const [tab, setTab] = useState(1);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [deleteTarget, setDeleteTarget] = useState(null);
-    const [colSettings, setColSettings] = useState({});
-
-    // Load column visibility settings
-    useEffect(() => {
-        api.get("/settings/customers")
-            .then(({ data }) => {
-                setColSettings(data?.settings?.tableColumns ?? {});
-            })
-            .catch(() => {});
-    }, []);
-
-    const col = (key) => colSettings[key] !== false;
-
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const { data } = await api.get("/customers", { params: search ? { search } : {} });
-            setCustomers(data.customers ?? []);
-        } catch {
-            setError(t("customers.loadError"));
-        } finally {
-            setLoading(false);
-        }
-    }, [search]);
 
     useEffect(() => {
         load();

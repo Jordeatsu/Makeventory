@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -13,7 +13,7 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { STATUS_COLOURS } from "../theme";
 import CustomerFormModal from "../components/modals/CustomerFormModal";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useDetailData } from "../hooks/useDetailData";
 import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
@@ -86,39 +86,24 @@ export default function CustomerDetailPage() {
     const fmt = useCurrencyFormatter(settings);
     const { activeModules } = useModules();
     const ordersEnabled = activeModules.includes("Orders");
-    const { toast, showToast, closeToast } = useToast();
-
-    const [customer, setCustomer] = useState(null);
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
 
-    const loadCustomer = async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const { data } = await api.get(`/customers/${id}`);
-            setCustomer(data.customer ?? null);
-            setOrders(data.orders ?? []);
-        } catch {
-            setError(t("customers.loadFailed"));
-        } finally {
-            setLoading(false);
-        }
-    };
+    const fetchCustomer = useCallback(async () => {
+        const { data } = await api.get(`/customers/${id}`);
+        return { customer: data.customer ?? null, orders: data.orders ?? [] };
+    }, [id]);
 
-    useEffect(() => {
-        loadCustomer();
-    }, [id]); // eslint-disable-line
+    const { data, loading, error, editOpen, setEditOpen, load, toast, showToast, closeToast } = useDetailData(fetchCustomer, { errorKey: "customers.loadFailed" });
+
+    const customer = data?.customer ?? null;
+    const orders = data?.orders ?? [];
 
     const handleSave = async (form) => {
         try {
             await api.put(`/customers/${id}`, form);
             setEditOpen(false);
             showToast(t("customers.updated"));
-            loadCustomer();
+            load();
         } catch (e) {
             showToast(e.response?.data?.error || t("customers.saveFailed"), "error");
         }

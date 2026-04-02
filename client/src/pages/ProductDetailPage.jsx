@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Chip, CircularProgress, Divider, Grid, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -13,7 +13,7 @@ import ProductFormModal from "../components/modals/ProductFormModal";
 import ProductMaterialsModal from "../components/modals/ProductMaterialsModal";
 import { STATUS_COLOURS } from "../theme";
 import { useCurrencyFormatter, fmtDate } from "../utils/formatting";
-import { useToast } from "../hooks/useToast";
+import { useDetailData } from "../hooks/useDetailData";
 import { useTranslation } from "react-i18next";
 import ToastSnackbar from "../components/common/ToastSnackbar";
 import RecordInfo from "../components/common/RecordInfo";
@@ -30,30 +30,14 @@ export default function ProductDetailPage() {
     const { settings } = useGlobalSettings();
     const fmt = useCurrencyFormatter(settings);
     const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;
-    const { toast, showToast, closeToast } = useToast();
-
-    const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [editOpen, setEditOpen] = useState(false);
     const [matsOpen, setMatsOpen] = useState(false);
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const { data } = await api.get(`/products/${id}/stats`);
-            setStats(data);
-        } catch {
-            setError(t("products.detail.loadFailed"));
-        } finally {
-            setLoading(false);
-        }
+    const fetchStats = useCallback(async () => {
+        const { data } = await api.get(`/products/${id}/stats`);
+        return data;
     }, [id]);
 
-    useEffect(() => {
-        load();
-    }, [load]);
+    const { data: stats, loading, error, setError, editOpen, setEditOpen, load, toast, showToast, closeToast } = useDetailData(fetchStats, { errorKey: "products.detail.loadFailed" });
 
     const handleSave = async (payload) => {
         try {

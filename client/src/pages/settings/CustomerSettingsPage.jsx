@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Divider, Grid, Paper, Stack, Switch, TextField, Tooltip, Typography } from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { Alert, Box, CircularProgress, Divider, Grid, Stack, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import api from "../../api";
+import SectionCard from "../../components/settings/SectionCard";
+import ToggleRow from "../../components/settings/ToggleRow";
+import { useSettingsSave } from "../../hooks/useSettingsSave";
 
 const FIELD_KEYS = ["email", "phone", "addressLine1", "addressLine2", "city", "state", "postcode", "country"];
 
@@ -20,77 +21,17 @@ const DEFAULT_FIELDS = {
 
 const CUST_COL_KEYS = ["location", "orders", "totalSpent", "totalProfit", "firstOrder", "lastOrder"];
 
-function ToggleRow({ label, description, enabled, onChange, disabled }) {
-    return (
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 3, py: 1.75 }}>
-            <Box>
-                <Typography variant="body2" fontWeight={500}>
-                    {label}
-                </Typography>
-                {description && (
-                    <Typography variant="caption" color="text.secondary">
-                        {description}
-                    </Typography>
-                )}
-            </Box>
-            <Tooltip title={disabled ? "Always required" : ""}>
-                <span>
-                    <Switch checked={enabled} onChange={(e) => onChange?.(e.target.checked)} size="small" disabled={disabled} />
-                </span>
-            </Tooltip>
-        </Stack>
-    );
-}
-
-function SectionCard({ title, description, onSave, saving, saved, children }) {
-    return (
-        <Paper variant="outlined" sx={{ overflow: "hidden", height: "100%" }}>
-            <Box sx={{ px: 3, py: 2, bgcolor: "primary.main", color: "primary.contrastText" }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Typography variant="subtitle1" fontWeight={700}>
-                        {title}
-                    </Typography>
-                    {onSave && (
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            color="inherit"
-                            startIcon={saved ? <CheckCircleIcon /> : <SaveIcon />}
-                            onClick={onSave}
-                            disabled={saving}
-                            sx={{ borderColor: "rgba(255,255,255,0.5)", color: "inherit", "&:hover": { borderColor: "white", bgcolor: "rgba(255,255,255,0.1)" } }}
-                        >
-                            {saving ? "Saving…" : saved ? "Saved" : "Save"}
-                        </Button>
-                    )}
-                </Stack>
-                {description && (
-                    <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.85 }}>
-                        {description}
-                    </Typography>
-                )}
-            </Box>
-            <Divider />
-            {children}
-        </Paper>
-    );
-}
-
 export default function CustomerSettingsPage() {
     const { t } = useTranslation();
     const [fields, setFields] = useState(DEFAULT_FIELDS);
     const [tableCols, setTableCols] = useState({});
     const [prefix, setPrefix] = useState("");
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(false);
-    const [colSaving, setColSaving] = useState(false);
-    const [colSaved, setColSaved] = useState(false);
-    const [colError, setColError] = useState(null);
-    const [prefixSaving, setPrefixSaving] = useState(false);
-    const [prefixSaved, setPrefixSaved] = useState(false);
-    const [prefixError, setPrefixError] = useState(null);
+    const [loadError, setLoadError] = useState(null);
+
+    const fields$ = useSettingsSave("/settings/customers", "settings.customerSettings.saveFailed");
+    const prefix$ = useSettingsSave("/settings/customers", "settings.numberPrefix.saveFailed");
+    const cols$ = useSettingsSave("/settings/customers", "settings.tableColumns.saveFailed");
 
     useEffect(() => {
         api.get("/settings/customers")
@@ -101,52 +42,9 @@ export default function CustomerSettingsPage() {
                 setTableCols(data?.settings?.tableColumns ?? {});
                 setPrefix((data?.settings?.numberPrefix ?? "CST-").replace(/-$/, ""));
             })
-            .catch(() => setError(t("settings.customerSettings.loadFailed")))
+            .catch(() => setLoadError(t("settings.customerSettings.loadFailed")))
             .finally(() => setLoading(false));
     }, []);
-
-    const handleSave = async () => {
-        setSaving(true);
-        setError(null);
-        setSuccess(false);
-        try {
-            await api.put("/settings/customers", { fields });
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-        } catch {
-            setError(t("settings.customerSettings.saveFailed"));
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleColSave = async () => {
-        setColSaving(true);
-        setColError(null);
-        try {
-            await api.put("/settings/customers", { tableColumns: tableCols });
-            setColSaved(true);
-            setTimeout(() => setColSaved(false), 3000);
-        } catch {
-            setColError(t("settings.tableColumns.saveFailed"));
-        } finally {
-            setColSaving(false);
-        }
-    };
-
-    const handlePrefixSave = async () => {
-        setPrefixSaving(true);
-        setPrefixError(null);
-        try {
-            await api.put("/settings/customers", { numberPrefix: (prefix.trim() || "CST") + "-" });
-            setPrefixSaved(true);
-            setTimeout(() => setPrefixSaved(false), 3000);
-        } catch {
-            setPrefixError(t("settings.numberPrefix.saveFailed"));
-        } finally {
-            setPrefixSaving(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -156,7 +54,7 @@ export default function CustomerSettingsPage() {
         );
     }
 
-    const errors = [error, colError, prefixError].filter(Boolean);
+    const errors = [loadError, fields$.error, prefix$.error, cols$.error].filter(Boolean);
 
     return (
         <Box>
@@ -169,9 +67,9 @@ export default function CustomerSettingsPage() {
             <Grid container spacing={3} alignItems="flex-start">
                 {/* Left column — Customer Fields */}
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <SectionCard title={t("settings.customerSettings.title")} description={t("settings.customerSettings.subtitle")} onSave={handleSave} saving={saving} saved={success}>
+                    <SectionCard title={t("settings.customerSettings.title")} description={t("settings.customerSettings.subtitle")} onSave={() => fields$.save({ fields })} saving={fields$.saving} saved={fields$.saved} sx={{ height: "100%" }}>
                         <ToggleRow label={t("settings.customerSettings.nameField")} description={t("settings.customerSettings.nameFieldDesc")} enabled disabled />
-                        {FIELD_KEYS.map((key, i) => (
+                        {FIELD_KEYS.map((key) => (
                             <React.Fragment key={key}>
                                 <Divider />
                                 <ToggleRow label={t(`settings.customerSettings.fields.${key}`)} description={t(`settings.customerSettings.fields.${key}Desc`)} enabled={!!fields[key]} onChange={(v) => setFields((prev) => ({ ...prev, [key]: v }))} />
@@ -183,13 +81,19 @@ export default function CustomerSettingsPage() {
                 {/* Right column — Number Prefix + Table Columns */}
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Stack gap={3}>
-                        <SectionCard title={t("settings.numberPrefix.title")} description={t("settings.numberPrefix.descCustomers", { example: `${(prefix || "CST") + "-"}00000001` })} onSave={handlePrefixSave} saving={prefixSaving} saved={prefixSaved}>
+                        <SectionCard
+                            title={t("settings.numberPrefix.title")}
+                            description={t("settings.numberPrefix.descCustomers", { example: `${(prefix || "CST") + "-"}00000001` })}
+                            onSave={() => prefix$.save({ numberPrefix: (prefix.trim() || "CST") + "-" })}
+                            saving={prefix$.saving}
+                            saved={prefix$.saved}
+                        >
                             <Box sx={{ px: 3, py: 2 }}>
                                 <TextField label={t("settings.numberPrefix.label")} value={prefix} onChange={(e) => setPrefix(e.target.value)} size="small" fullWidth inputProps={{ maxLength: 10 }} />
                             </Box>
                         </SectionCard>
 
-                        <SectionCard title={t("settings.tableColumns.title")} description={t("settings.tableColumns.descCustomers")} onSave={handleColSave} saving={colSaving} saved={colSaved}>
+                        <SectionCard title={t("settings.tableColumns.title")} description={t("settings.tableColumns.descCustomers")} onSave={() => cols$.save({ tableColumns: tableCols })} saving={cols$.saving} saved={cols$.saved}>
                             <ToggleRow label={t("customers.col.customer", "Customer")} enabled disabled />
                             {CUST_COL_KEYS.map((key) => (
                                 <React.Fragment key={key}>
